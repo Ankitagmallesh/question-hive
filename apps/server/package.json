@@ -1,0 +1,11 @@
+{
+  "name": "question-hive-server",
+  "scripts": {
+    "dev": "go run main.go",
+    "build": "go build -o bin/server main.go",
+    "start": "./bin/server",
+    "test": "go test ./...",
+    "lint": "golangci-lint run",
+    "check-types": "go vet ./..."
+  }
+}

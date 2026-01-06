@@ -1,0 +1,87 @@
+# Root .gitignore for Question Hive monorepo
+
+# Node / Bun
+node_modules/
+bun.lockb
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+.npmrc
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Build outputs
+/dist/
+/build/
+/.output/
+.out/
+.next/
+.vercel/
+.turbo/
+.vite/
+coverage/
+*.tsbuildinfo
+
+# Temp and caches
+.tmp/
+.temp/
+.cache/
+.eslintcache
+.stylelintcache
+*.log
+
+# Env files
+.env
+.env.*
+!.env.example
+apps/*/.env
+apps/*/.env.*
+packages/*/.env
+packages/*/.env.*
+
+# IDE/editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Images/exports
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.svg
+
+# Go
+**/*.exe
+**/*.exe~
+**/*.dll
+**/*.so
+**/*.dylib
+**/*.test
+*.out
+vendor/
+go.work
+
+# Binaries
+apps/server/bin/
+
+# Next.js specific
+apps/web/.next/
+apps/web/out/
+
+# Drizzle/DB pins
+packages/db/migrations/meta/
+
+# Turborepo
+node_modules/.cache/turbo
+
+# Local runtime
+*.local
