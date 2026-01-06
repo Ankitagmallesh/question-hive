@@ -4,19 +4,27 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from "framer-motion";
 import { 
-  Sparkles, 
+  ArrowRight, 
   Check, 
-  Layers, 
-  Wand2, 
-  FileText, 
-  PieChart, 
-  Database, 
-  Sliders, 
+  CheckCircle2, 
+  ChevronDown, 
+  ChevronRight, 
   FileOutput, 
+  Globe, 
+  Layers, 
+  Layout, 
+  MessageSquare, 
+  Play, 
+  Sparkles, 
+  Wand2, 
+  Zap, 
   School, 
-  GraduationCap, 
-  BookOpen, 
-  Landmark, 
+  Database, 
+  BrainCircuit, 
+  Headphones, 
+  ShieldCheck, 
+  Users, 
+  BookOpen,
   FlaskConical, 
   Microscope,
   Menu,
@@ -27,8 +35,11 @@ import {
   Instagram,
   Timer,
   Loader2,
-  CheckCircle2,
-  Users
+  FileText,
+  PieChart,
+  Sliders,
+  GraduationCap,
+  Landmark
 } from "lucide-react";
 
 // --- Components ---
@@ -504,7 +515,13 @@ export default function LandingPage() {
       <section className="py-20 bg-white border-b border-slate-100" id="pricing">
         <div className="container max-w-[1000px] mx-auto px-6">
             <div className="flex flex-col md:flex-row items-center gap-12">
-                <div className="flex-1 text-center md:text-left">
+                <motion.div 
+                    initial={{ opacity: 0, x: -30 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
+                    className="flex-1 text-center md:text-left"
+                >
                     <span className="inline-block px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold uppercase tracking-wider mb-4">For Tutors</span>
                     <h2 className="text-3xl font-extrabold text-slate-900 mb-4">Teach on your own terms?</h2>
                     <p className="text-lg text-slate-500 mb-6">
@@ -521,10 +538,16 @@ export default function LandingPage() {
                             <CheckCircle2 size={18} className="text-emerald-500" /> Use strictly when needed
                         </li>
                     </ul>
-                </div>
+                </motion.div>
                 
                  {/* Pay As You Go Card */}
-                <div className="w-full md:w-[400px] bg-emerald-50/50 border border-emerald-100 rounded-3xl p-8 flex flex-col hover:shadow-xl transition-all duration-300 relative overflow-hidden">
+                <motion.div 
+                    initial={{ opacity: 0, x: 30 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                    className="w-full md:w-[400px] bg-emerald-50/50 border border-emerald-100 rounded-3xl p-8 flex flex-col hover:shadow-xl transition-all duration-300 relative overflow-hidden"
+                >
                     <div className="absolute top-0 right-0 bg-emerald-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">Zero Commitment</div>
                     <div className="mb-6">
                         <h3 className="text-xl font-bold text-slate-900 mb-2">Individual Credit</h3>
@@ -538,7 +561,7 @@ export default function LandingPage() {
                      <Link href="/auth/register?plan=individual" className="w-full py-4 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition-colors text-center shadow-lg shadow-emerald-200">
                         Start with 100 Credits
                     </Link>
-                </div>
+                </motion.div>
             </div>
         </div>
       </section>
@@ -556,113 +579,206 @@ export default function LandingPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
 
                 {/* Starter Plan */}
-                <div className="bg-white border border-slate-200 rounded-3xl p-8 flex flex-col hover:shadow-xl transition-all duration-300">
-                    <div className="mb-6">
-                        <h3 className="text-xl font-bold text-slate-900 mb-2">Starter</h3>
-                        <p className="text-sm text-slate-500 mb-6">For small coaching institutes</p>
-                        <div className="flex items-baseline gap-1">
-                            <span className="text-4xl font-extrabold text-slate-900">₹20k</span>
-                            <span className="text-slate-500 font-medium">/ year</span>
+                <motion.div 
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.1 }}
+                    className="bg-white border border-slate-200 rounded-3xl flex flex-col hover:shadow-xl transition-all duration-300 overflow-hidden"
+                >
+                    <div className="p-8 pb-0">
+                        <div className="mb-6">
+                            <h3 className="text-xl font-bold text-slate-900 mb-2">Starter</h3>
+                            <p className="text-sm text-slate-500 mb-6">For small coaching institutes</p>
+                            <div className="flex items-baseline gap-1">
+                                <span className="text-4xl font-extrabold text-slate-900">₹20k</span>
+                                <span className="text-slate-500 font-medium">/ year</span>
+                            </div>
+                        </div>
+                        <div className="pt-6 border-t border-slate-100">
+                            <motion.ul 
+                                initial="hidden"
+                                whileInView="visible"
+                                viewport={{ once: true }}
+                                variants={{
+                                    visible: { transition: { staggerChildren: 0.1, delayChildren: 0.3 } }
+                                }}
+                                className="space-y-4 mb-8"
+                            >
+                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                                    <Check size={16} className="text-slate-900 mt-0.5" />
+                                    Up to 3 Faculty Users
+                                </motion.li>
+                                <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                                    <Check size={16} className="text-slate-900 mt-0.5" />
+                                    MCQ Test Creation
+                                </motion.li>
+                                <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                                    <Check size={16} className="text-slate-900 mt-0.5" />
+                                    Standard Exam Templates
+                                </motion.li>
+                                <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                                    <Sparkles size={16} className="text-blue-600 mt-0.5" />
+                                    AI Question Generator (Basic)
+                                </motion.li>
+                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                                    <FileOutput size={16} className="text-blue-600 mt-0.5" />
+                                    Watermark-free PDF Export
+                                </motion.li>
+                            </motion.ul>
                         </div>
                     </div>
-                    <div className="pt-6 border-t border-slate-100 flex-1">
-                        <ul className="space-y-4 mb-8">
-                             <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
-                                <div className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 grid place-items-center mt-0.5"><Check size={12} strokeWidth={3} /></div>
-                                Up to 3 Faculty Users
-                            </li>
-                            <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
-                                <div className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 grid place-items-center mt-0.5"><Check size={12} strokeWidth={3} /></div>
-                                MCQ Test Creation
-                            </li>
-                            <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
-                                <div className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 grid place-items-center mt-0.5"><Check size={12} strokeWidth={3} /></div>
-                                Standard Exam Templates
-                            </li>
-                             <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
-                                <div className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 grid place-items-center mt-0.5"><Check size={12} strokeWidth={3} /></div>
-                                Limited Analytics
-                            </li>
-                        </ul>
+
+                    <div className="mt-auto bg-gradient-to-b from-blue-50/50 to-blue-50 p-8 pt-6 border-t border-blue-100">
+                         <Link href="/auth/register?plan=starter" className="w-full block py-3 rounded-xl border-2 border-slate-200 bg-white font-bold text-slate-700 hover:border-blue-600 hover:text-blue-600 transition-colors text-center">
+                            Get Started
+                        </Link>
                     </div>
-                     <Link href="/auth/register?plan=starter" className="w-full py-3 rounded-xl border-2 border-slate-100 font-bold text-slate-700 hover:border-blue-600 hover:text-blue-600 transition-colors text-center">
-                        Get Started
-                    </Link>
-                </div>
+                </motion.div>
 
                 {/* Growth Plan */}
-                <div className="bg-slate-900 text-white rounded-3xl p-8 flex flex-col shadow-2xl relative overflow-hidden transform md:-translate-y-4">
-                    <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">Most Popular</div>
-                     <div className="mb-6 relative z-10">
-                        <h3 className="text-xl font-bold mb-2">Growth</h3>
-                        <p className="text-slate-400 text-sm mb-6">For medium sized institutes</p>
-                        <div className="flex items-baseline gap-1">
-                            <span className="text-4xl font-extrabold">₹50k</span>
-                            <span className="text-slate-400 font-medium">/ year</span>
+                <motion.div 
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.2 }}
+                    className="bg-slate-900 text-white rounded-3xl flex flex-col shadow-2xl relative overflow-hidden transform md:-translate-y-4"
+                >
+                    <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider z-20">Most Popular</div>
+                     <div className="p-8 pb-0 relative z-10">
+                        <div className="mb-6">
+                            <h3 className="text-xl font-bold mb-2">Growth</h3>
+                            <p className="text-slate-400 text-sm mb-6">For medium sized institutes</p>
+                            <div className="flex items-baseline gap-1">
+                                <span className="text-4xl font-extrabold">₹50k</span>
+                                <span className="text-slate-400 font-medium">/ year</span>
+                            </div>
+                        </div>
+                        <div className="pt-6 border-t border-slate-700/50">
+                            <motion.ul 
+                                initial="hidden"
+                                whileInView="visible"
+                                viewport={{ once: true }}
+                                variants={{
+                                    visible: { transition: { staggerChildren: 0.1, delayChildren: 0.4 } }
+                                }}
+                                className="space-y-4 mb-8"
+                            >
+                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-200">
+                                    <Check size={16} className="text-white mt-0.5" />
+                                    Up to 10 Faculty Users
+                                </motion.li>
+                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-200">
+                                    <Check size={16} className="text-white mt-0.5" />
+                                    <span><span className="font-bold text-white">Unlimited</span> MCQ Tests</span>
+                                </motion.li>
+                                <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-200">
+                                    <Check size={16} className="text-white mt-0.5" />
+                                    Advanced Analytics
+                                </motion.li>
+                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-200">
+                                    <Sparkles size={16} className="text-blue-400 mt-0.5" />
+                                    <span className="font-bold text-white">Unlimited</span> AI Question Generator
+                                </motion.li>
+                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-200">
+                                    <BookOpen size={16} className="text-blue-400 mt-0.5" />
+                                    50k+ Question Bank Access
+                                </motion.li>
+                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-200">
+                                    <BrainCircuit size={16} className="text-blue-400 mt-0.5" />
+                                    Bloom's Taxonomy AI Analysis
+                                </motion.li>
+                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-200">
+                                    <School size={16} className="text-blue-400 mt-0.5" />
+                                    Institute Branding (Logo/Header)
+                                </motion.li>
+                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-200">
+                                    <Headphones size={16} className="text-blue-400 mt-0.5" />
+                                    Priority Email Support
+                                </motion.li>
+                            </motion.ul>
                         </div>
                     </div>
-                    <div className="pt-6 border-t border-slate-700/50 flex-1 relative z-10">
-                        <ul className="space-y-4 mb-8">
-                             <li className="flex items-start gap-3 text-sm font-medium text-slate-200">
-                                <div className="w-5 h-5 rounded-full bg-blue-500 text-white grid place-items-center mt-0.5"><Check size={12} strokeWidth={3} /></div>
-                                Up to 10 Faculty Users
-                            </li>
-                             <li className="flex items-start gap-3 text-sm font-medium text-slate-200">
-                                <div className="w-5 h-5 rounded-full bg-blue-500 text-white grid place-items-center mt-0.5"><Check size={12} strokeWidth={3} /></div>
-                                <span><span className="font-bold text-white">Unlimited</span> MCQ Tests</span>
-                            </li>
-                            <li className="flex items-start gap-3 text-sm font-medium text-slate-200">
-                                <div className="w-5 h-5 rounded-full bg-blue-500 text-white grid place-items-center mt-0.5"><Check size={12} strokeWidth={3} /></div>
-                                Advanced Analytics
-                            </li>
-                             <li className="flex items-start gap-3 text-sm font-medium text-slate-200">
-                                <div className="w-5 h-5 rounded-full bg-blue-500 text-white grid place-items-center mt-0.5"><Check size={12} strokeWidth={3} /></div>
-                                Difficulty & PYQ Controls
-                            </li>
-                        </ul>
+
+                    <div className="mt-auto bg-gradient-to-b from-indigo-900/50 to-indigo-900 p-8 pt-6 border-t border-indigo-800 relative z-10">
+                        <Link href="/auth/register?plan=growth" className="w-full block py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors text-center shadow-lg shadow-blue-900/20">
+                            Get Started
+                        </Link>
                     </div>
-                    <Link href="/auth/register?plan=growth" className="w-full py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors text-center relative z-10 shadow-lg shadow-blue-900/20">
-                        Get Started
-                    </Link>
                     
                     {/* Background decoration */}
                     <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
-                </div>
+                </motion.div>
 
                 {/* Enterprise Plan */}
-                <div className="bg-white border border-slate-200 rounded-3xl p-8 flex flex-col hover:shadow-xl transition-all duration-300">
-                    <div className="mb-6">
-                        <h3 className="text-xl font-bold text-slate-900 mb-2">Enterprise</h3>
-                        <p className="text-sm text-slate-500 mb-6">For large chains & franchises</p>
-                        <div className="flex items-baseline gap-1">
-                            <span className="text-3xl font-extrabold text-slate-900">Custom</span>
+                <motion.div 
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.3 }}
+                    className="bg-white border border-slate-200 rounded-3xl flex flex-col hover:shadow-xl transition-all duration-300 overflow-hidden"
+                >
+                    <div className="p-8 pb-0">
+                        <div className="mb-6">
+                            <h3 className="text-xl font-bold text-slate-900 mb-2">Enterprise</h3>
+                            <p className="text-sm text-slate-500 mb-6">For large chains & franchises</p>
+                            <div className="flex items-baseline gap-1">
+                                <span className="text-3xl font-extrabold text-slate-900">Custom</span>
+                            </div>
+                             <p className="text-xs text-slate-400 mt-1">₹1L – ₹3L / year</p>
                         </div>
-                         <p className="text-xs text-slate-400 mt-1">₹1L – ₹3L / year</p>
+                        <div className="pt-6 border-t border-slate-100">
+                            <motion.ul 
+                                initial="hidden"
+                                whileInView="visible"
+                                viewport={{ once: true }}
+                                variants={{
+                                    visible: { transition: { staggerChildren: 0.1, delayChildren: 0.5 } }
+                                }}
+                                className="space-y-4 mb-8"
+                            >
+                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                                    <Check size={16} className="text-slate-900 mt-0.5" />
+                                    <span><span className="font-bold text-slate-900">Unlimited</span> Faculty Users</span>
+                                </motion.li>
+                                <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                                    <Check size={16} className="text-slate-900 mt-0.5" />
+                                    Dedicated Success Manager
+                                </motion.li>
+                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                                    <Sparkles size={16} className="text-purple-600 mt-0.5" />
+                                    Custom AI Model Fine-tuning
+                                </motion.li>
+                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                                    <Database size={16} className="text-purple-600 mt-0.5" />
+                                    SSO & SCIM Provisioning
+                                </motion.li>
+                                  <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                                    <Globe size={16} className="text-purple-600 mt-0.5" />
+                                    Full White-label Portal
+                                </motion.li>
+                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                                    <ShieldCheck size={16} className="text-purple-600 mt-0.5" />
+                                    Enterprise-grade Security & Audit Logs
+                                </motion.li>
+                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                                    <Users size={16} className="text-purple-600 mt-0.5" />
+                                    Role-Based Access Control (RBAC)
+                                </motion.li>
+                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                                    <Zap size={16} className="text-purple-600 mt-0.5" />
+                                    Unlimited API Access
+                                </motion.li>
+                            </motion.ul>
+                        </div>
                     </div>
-                    <div className="pt-6 border-t border-slate-100 flex-1">
-                        <ul className="space-y-4 mb-8">
-                             <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
-                                <div className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 grid place-items-center mt-0.5"><Check size={12} strokeWidth={3} /></div>
-                                <span><span className="font-bold text-slate-900">Unlimited</span> Faculty Users</span>
-                            </li>
-                            <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
-                                <div className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 grid place-items-center mt-0.5"><Check size={12} strokeWidth={3} /></div>
-                                White-Label Branding
-                            </li>
-                            <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
-                                <div className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 grid place-items-center mt-0.5"><Check size={12} strokeWidth={3} /></div>
-                                Dedicated Support
-                            </li>
-                             <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
-                                <div className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 grid place-items-center mt-0.5"><Check size={12} strokeWidth={3} /></div>
-                                Priority Access (Exam Season)
-                            </li>
-                        </ul>
+
+                    <div className="mt-auto bg-gradient-to-b from-purple-50/50 to-purple-50 p-8 pt-6 border-t border-purple-100">
+                        <Link href="/contact" className="w-full block py-3 rounded-xl border-2 border-slate-200 bg-white font-bold text-slate-700 hover:border-purple-600 hover:text-purple-600 transition-colors text-center">
+                            Contact Sales
+                        </Link>
                     </div>
-                    <Link href="/contact" className="w-full py-3 rounded-xl border-2 border-slate-100 font-bold text-slate-700 hover:border-slate-900 hover:bg-slate-900 hover:text-white transition-all text-center">
-                        Contact Sales
-                    </Link>
-                </div>
+                </motion.div>
             </div>
 
             {/* AI Credits & White Label Add-ons */}
