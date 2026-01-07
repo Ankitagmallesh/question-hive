@@ -238,7 +238,9 @@ export default function PaperDesignerPage() {
                      setSettings(s => ({...s, chapters: urlChapters}));
                 } else if (data.length > 0) {
                      // Default fallback if nothing in URL
-                     setSettings(s => ({...s, chapters: [data[0].name]}));
+                     if (data[0]?.name) {
+                        setSettings(s => ({...s, chapters: [data[0].name]}));
+                     }
                 }
             }
         };
@@ -288,9 +290,10 @@ export default function PaperDesignerPage() {
         }
     }, [searchParams]);
 
+    const [isSaving, setIsSaving] = useState(false);
     const { toast } = useToast();
 
-    const handleSavePaper = () => {
+    const handleSavePaper = async () => {
         if (!settings.title) {
             toast({
                 title: "Validation Error",
@@ -299,31 +302,74 @@ export default function PaperDesignerPage() {
             });
             return;
         }
-        
-        const existingPapers = JSON.parse(localStorage.getItem('saved_papers') || '[]');
-        const savedId = searchParams.get('savedId');
-        
-        const newPaper = {
-            id: savedId || crypto.randomUUID(),
-            settings,
-            paperQuestions,
-            savedAt: new Date().toISOString()
-        };
 
-        if (savedId) {
-            const index = existingPapers.findIndex((p: any) => p.id === savedId);
-            if (index !== -1) existingPapers[index] = newPaper;
-            else existingPapers.push(newPaper);
-        } else {
-            existingPapers.push(newPaper);
+        setIsSaving(true);
+        
+        try {
+            const savedId = searchParams.get('savedId');
+            
+            // Construct Payload
+            const payload = {
+                id: savedId, // If present, API treats as update if numeric, or new if UUID/missing
+                settings,
+                paperQuestions,
+                status: 'Saved'
+            };
+
+            const response = await fetch('/api/question-papers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (!result.success) {
+                throw new Error(result.error || 'Failed to save paper');
+            }
+
+            // Sync with LocalStorage for offline backup (optional but good UX)
+            // We update the 'saved_papers' list with the backend ID if possible
+            const existingPapers = JSON.parse(localStorage.getItem('saved_papers') || '[]');
+            const newPaper = {
+                id: result.paperId ? String(result.paperId) : (savedId || crypto.randomUUID()),
+                settings,
+                paperQuestions,
+                savedAt: new Date().toISOString()
+            };
+
+            if (savedId) {
+                const index = existingPapers.findIndex((p: any) => p.id === savedId);
+                if (index !== -1) existingPapers[index] = newPaper;
+                else existingPapers.push(newPaper);
+            } else {
+                existingPapers.push(newPaper);
+            }
+            localStorage.setItem('saved_papers', JSON.stringify(existingPapers));
+            
+            // Update URL with new ID if created
+            if (result.paperId && (!savedId || savedId !== String(result.paperId))) {
+                const newParams = new URLSearchParams(searchParams.toString());
+                newParams.set('savedId', String(result.paperId));
+                router.replace(`?${newParams.toString()}`);
+            }
+
+            toast({
+                title: "Success",
+                description: "Paper saved to database successfully!",
+                duration: 3000,
+            });
+
+        } catch (error: any) {
+            console.error('Save failed:', error);
+            toast({
+                title: "Error",
+                description: error.message || "Failed to save paper to database.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsSaving(false);
         }
-
-        localStorage.setItem('saved_papers', JSON.stringify(existingPapers));
-        toast({
-            title: "Success",
-            description: "Paper saved successfully!",
-            duration: 3000,
-        });
     };
 
 
