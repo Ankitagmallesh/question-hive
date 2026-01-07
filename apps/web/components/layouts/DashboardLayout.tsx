@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { GraduationCap, Menu, X } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -12,6 +12,22 @@ export default function DashboardLayout({ children, fullScreen = false }: { chil
   const [menuOpen, setMenuOpen] = useState(true); 
   const pathname = usePathname();
   const { user, loading } = useSupabaseAuth();
+
+
+
+  // Restore sidebar state on mount
+  useEffect(() => {
+      const saved = localStorage.getItem('sidebar_open');
+      if (saved !== null) {
+          setMenuOpen(saved === 'true');
+      }
+  }, []);
+
+  const toggleMenu = () => {
+      const newState = !menuOpen;
+      setMenuOpen(newState);
+      localStorage.setItem('sidebar_open', String(newState));
+  };
 
   const isActive = (path: string) => pathname === path || pathname?.startsWith(path + "/");
 
@@ -40,7 +56,7 @@ export default function DashboardLayout({ children, fullScreen = false }: { chil
 
             {/* Toggle Button (Internal) */}
             <button 
-                onClick={() => setMenuOpen(!menuOpen)} 
+                onClick={toggleMenu} 
                 className={`p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-50 transition-colors shrink-0 cursor-pointer`}
             >
                 <Menu className="w-6 h-6" />
@@ -58,7 +74,12 @@ export default function DashboardLayout({ children, fullScreen = false }: { chil
                 <Link 
                     key={item.path}
                     href={item.path} 
-                    onClick={() => window.innerWidth < 1024 && setMenuOpen(false)}
+                    onClick={() => {
+                        if (window.innerWidth < 1024) {
+                            setMenuOpen(false);
+                            localStorage.setItem('sidebar_open', 'false');
+                        }
+                    }}
                     className={`group p-3 rounded-xl flex items-center gap-3 font-medium transition-all duration-300
                     ${isActive(item.path) ? 'bg-indigo-50 text-blue-900 font-bold' : 'text-slate-500 hover:bg-slate-50 hover:text-blue-900'}
                     ${!menuOpen ? 'justify-center px-0' : ''}
@@ -92,7 +113,7 @@ export default function DashboardLayout({ children, fullScreen = false }: { chil
         {/* Mobile Toggle (Floating) - Only visible on Mobile when closed, to reopen */}
         {!menuOpen && (
             <div className="absolute top-6 left-6 z-10 lg:hidden">
-                 <button onClick={() => setMenuOpen(true)} className="p-2 bg-white rounded-lg shadow-sm text-slate-600">
+                 <button onClick={toggleMenu} className="p-2 bg-white rounded-lg shadow-sm text-slate-600">
                     <Menu className="w-6 h-6" />
                  </button>
             </div>
