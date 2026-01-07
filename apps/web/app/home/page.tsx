@@ -44,18 +44,48 @@ const AnimatedProgressBar = ({ width, colorClass }: { width: string, colorClass:
 
 export default function DashboardPage() {
   const currentDate = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-  const [draftPaper, setDraftPaper] = useState<any>(null);
+
+  const [stats, setStats] = useState({
+    totalQuestions: 0,
+    totalPapers: 0,
+    typeBreakdown: [] as any[],
+    difficultyBreakdown: [] as any[],
+    recentPapers: [] as any[]
+  });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-      const saved = localStorage.getItem('current_paper_draft');
-      if (saved) {
-          try {
-              setDraftPaper(JSON.parse(saved));
-          } catch (e) {
-              console.error(e);
-          }
-      }
+    const fetchStats = async () => {
+        try {
+            const res = await fetch('/api/dashboard/stats');
+            const data = await res.json();
+            if (data.success) {
+                setStats(data.stats);
+            }
+        } catch (error) {
+            console.error("Failed to fetch dashboard stats", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    fetchStats();
+
+
   }, []);
+
+  const getCountByType = (typeName: string) => {
+    const type = stats.typeBreakdown.find(t => t.type.toLowerCase().includes(typeName.toLowerCase()));
+    return type ? type.count : 0;
+  };
+
+  const getDifficultyPercent = (levelName: string) => {
+      const totalDBQuestions = stats.difficultyBreakdown.reduce((acc, curr) => acc + curr.count, 0);
+      if (totalDBQuestions === 0) return 0;
+      
+      const level = stats.difficultyBreakdown.find(d => d.difficulty.toLowerCase().includes(levelName.toLowerCase()));
+      return level ? Math.round((level.count / totalDBQuestions) * 100) : 0;
+  };
 
   return (
     <DashboardLayout>
@@ -71,7 +101,7 @@ export default function DashboardPage() {
                 <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Total Questions</p>
                 <div className="flex items-center justify-between">
                     <h2 className="text-4xl font-black mt-1 text-slate-900">
-                       <CountUp to={45} />
+                       <CountUp to={stats.totalQuestions} />
                     </h2>
                     <div className="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-xs font-bold">↑ 12%</div>
                 </div>
@@ -80,7 +110,7 @@ export default function DashboardPage() {
                 <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Exam Papers</p>
                 <div className="flex items-center justify-between">
                     <h2 className="text-4xl font-black mt-1 text-slate-900">
-                       <CountUp to={12} />
+                       <CountUp to={stats.totalPapers} />
                     </h2>
                     <div className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-lg text-xs font-bold">+2 Today</div>
                 </div>
@@ -134,44 +164,7 @@ export default function DashboardPage() {
             </div>
         </section>
 
-        <section className="mb-10">
-            <h3 className="font-bold text-lg text-slate-900 mb-4 flex items-center gap-2">
-                <span className="w-2 h-6 bg-amber-400 rounded-full"></span>
-                Continue Working
-                {draftPaper && (
-                    <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded-full border border-slate-200">1 Draft</span>
-                )}
-            </h3>
-            
-            {/* Dynamic Draft Card */}
-            {draftPaper ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Link href="/question-papers/create?resume=true">
-                        <div className="card-shadow p-5 rounded-[1.5rem] hover-lift cursor-pointer group bg-white border border-indigo-50 hover:border-indigo-200 transition-all">
-                            <div className="flex justify-between items-start mb-3">
-                                <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-xl">📝</div>
-                                <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">Draft</span>
-                            </div>
-                            <h4 className="font-bold text-slate-800 text-sm mb-1 group-hover:text-indigo-600 transition-colors line-clamp-1">
-                                {draftPaper.settings.title}
-                            </h4>
-                            <p className="text-xs text-slate-400 mb-4">
-                                Edited {new Date(draftPaper.lastUpdated).toLocaleDateString()} at {new Date(draftPaper.lastUpdated).toLocaleTimeString()}
-                            </p>
-                            
-                            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mb-2">
-                                <div className="h-full bg-indigo-500 w-2/3"></div>
-                            </div>
-                            <p className="text-[10px] font-bold text-slate-500 text-right">Resume Editing</p>
-                        </div>
-                    </Link>
-                </div>
-            ) : (
-                <div className="p-8 text-center border-2 border-dashed border-slate-200 rounded-3xl text-slate-400">
-                    No active drafts found. Start creating a new paper!
-                </div>
-            )}
-        </section>
+
 
         <section className="mb-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 card-shadow p-8 rounded-[2rem] relative overflow-hidden bg-white">
@@ -180,9 +173,6 @@ export default function DashboardPage() {
                         <h3 className="font-bold text-xl text-slate-900">Question Type Breakdown</h3>
                         <p className="text-xs text-slate-400 font-medium mt-1">Distribution by format across all subjects</p>
                     </div>
-                    <button className="text-indigo-600 font-bold text-xs hover:underline cursor-pointer">
-                        Manage Types
-                    </button>
                 </div>
             
                 <div className="space-y-6 relative z-10">
@@ -202,13 +192,13 @@ export default function DashboardPage() {
                                         <p className="text-xs text-slate-500">Standard 4-option format</p>
                                     </div>
                                     <div className="text-right">
-                                        <span className="text-lg font-black text-slate-900">680</span> <span className="text-[10px] font-bold text-slate-400 uppercase">Qs</span>
+                                        <span className="text-lg font-black text-slate-900"><CountUp to={getCountByType('Multiple Choice')} /></span> <span className="text-[10px] font-bold text-slate-400 uppercase">Qs</span>
                                     </div>
                                 </div>
                                 <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                                      <motion.div 
                                         initial={{ width: 0 }}
-                                        whileInView={{ width: "65%" }}
+                                        whileInView={{ width: `${(stats.totalQuestions > 0 ? (getCountByType('Multiple Choice') / stats.totalQuestions) * 100 : 0)}%` }}
                                         viewport={{ once: true }}
                                         transition={{ duration: 1.5, ease: "easeOut" }}
                                         className="h-full bg-blue-500" 
@@ -233,13 +223,13 @@ export default function DashboardPage() {
                                         <p className="text-xs text-slate-500">Integer type answers</p>
                                     </div>
                                     <div className="text-right">
-                                        <span className="text-lg font-black text-slate-900">210</span> <span className="text-[10px] font-bold text-slate-400 uppercase">Qs</span>
+                                        <span className="text-lg font-black text-slate-900"><CountUp to={getCountByType('Numerical')} /></span> <span className="text-[10px] font-bold text-slate-400 uppercase">Qs</span>
                                     </div>
                                 </div>
                                 <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                                      <motion.div 
                                         initial={{ width: 0 }}
-                                        whileInView={{ width: "25%" }}
+                                        whileInView={{ width: `${(stats.totalQuestions > 0 ? (getCountByType('Numerical') / stats.totalQuestions) * 100 : 0)}%` }}
                                         viewport={{ once: true }}
                                         transition={{ duration: 1.5, ease: "easeOut", delay: 0.2 }}
                                         className="h-full bg-purple-500" 
@@ -264,13 +254,13 @@ export default function DashboardPage() {
                                         <p className="text-xs text-slate-500">Logic based evaluation</p>
                                     </div>
                                     <div className="text-right">
-                                        <span className="text-lg font-black text-slate-900">105</span> <span className="text-[10px] font-bold text-slate-400 uppercase">Qs</span>
+                                        <span className="text-lg font-black text-slate-900"><CountUp to={getCountByType('Reasoning')} /></span> <span className="text-[10px] font-bold text-slate-400 uppercase">Qs</span>
                                     </div>
                                 </div>
                                 <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                                      <motion.div 
                                         initial={{ width: 0 }}
-                                        whileInView={{ width: "12%" }}
+                                        whileInView={{ width: `${(stats.totalQuestions > 0 ? (getCountByType('Reasoning') / stats.totalQuestions) * 100 : 0)}%` }}
                                         viewport={{ once: true }}
                                         transition={{ duration: 1.5, ease: "easeOut", delay: 0.4 }}
                                         className="h-full bg-amber-500" 
@@ -284,7 +274,7 @@ export default function DashboardPage() {
                 <div className="mt-8 pt-6 border-t border-slate-100 flex justify-between items-center z-10 relative">
                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Most Used Format</span>
                      <div className="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-xs font-bold">
-                        MCQs (65%)
+                        MCQs ({Math.round((stats.totalQuestions > 0 ? (getCountByType('Multiple Choice') / stats.totalQuestions) * 100 : 0))}%)
                      </div>
                 </div>
             </div>
@@ -295,16 +285,13 @@ export default function DashboardPage() {
                         <h3 className="font-bold text-lg text-slate-900">Question Bank</h3>
                         <p className="text-xs text-slate-400 font-medium mt-1">Difficulty Distribution</p>
                     </div>
-                    <button className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 transition-colors cursor-pointer">
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
-                    </button>
                 </div>
 
                 <div className="flex items-center gap-6 z-10">
                     <div className="relative w-32 h-32 rounded-full flex items-center justify-center hover:scale-105 transition-transform duration-500" 
-                         style={{ background: 'conic-gradient(#4f46e5 0% 35%, #10b981 35% 65%, #f59e0b 65% 100%)' }}>
+                         style={{ background: `conic-gradient(#4f46e5 0% ${getDifficultyPercent('Hard')}%, #10b981 ${getDifficultyPercent('Hard')}% ${getDifficultyPercent('Hard') + getDifficultyPercent('Medium')}%, #f59e0b ${getDifficultyPercent('Hard') + getDifficultyPercent('Medium')}% 100%)` }}>
                         <div className="w-24 h-24 bg-white rounded-full flex flex-col items-center justify-center shadow-inner">
-                            <span className="text-2xl font-black text-slate-800">1.2k</span>
+                            <span className="text-2xl font-black text-slate-800"><CountUp to={stats.difficultyBreakdown.reduce((acc, curr) => acc + curr.count, 0)} /></span>
                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total</span>
                         </div>
                     </div>
@@ -315,21 +302,21 @@ export default function DashboardPage() {
                                 <span className="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
                                 <span className="text-xs font-bold text-slate-600">Hard</span>
                             </div>
-                            <span className="text-xs font-bold text-slate-900"><CountUp to={35} />%</span>
+                            <span className="text-xs font-bold text-slate-900"><CountUp to={getDifficultyPercent('Hard')} />%</span>
                         </div>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
                                 <span className="text-xs font-bold text-slate-600">Med</span>
                             </div>
-                            <span className="text-xs font-bold text-slate-900"><CountUp to={30} />%</span>
+                            <span className="text-xs font-bold text-slate-900"><CountUp to={getDifficultyPercent('Medium')} />%</span>
                         </div>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <span className="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
                                 <span className="text-xs font-bold text-slate-600">Easy</span>
                             </div>
-                            <span className="text-xs font-bold text-slate-900"><CountUp to={35} />%</span>
+                            <span className="text-xs font-bold text-slate-900"><CountUp to={getDifficultyPercent('Easy')} />%</span>
                         </div>
                     </div>
                 </div>
@@ -344,70 +331,53 @@ export default function DashboardPage() {
             </div>
         </section>
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 pb-10">
-            <div className="xl:col-span-2 card-shadow p-8 rounded-3xl">
+        <div className="grid grid-cols-1 gap-8 pb-10">
+            <div className="w-full card-shadow p-8 rounded-3xl">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="font-bold text-xl text-slate-900">Recent Assessments</h3>
                     <button className="text-indigo-600 font-bold text-sm hover:underline cursor-pointer">View All</button>
                 </div>
                 <div className="space-y-3">
-                    <div className="p-4 border border-slate-100 bg-slate-50/50 rounded-2xl flex items-center justify-between group cursor-pointer hover:bg-white transition-all shadow-sm">
-                        <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">📐</div>
-                            <p className="font-bold text-slate-900 text-sm">Mathematics - Unit Test 04</p>
+                    {loading ? (
+                        <div className="p-8 text-center text-slate-400">Loading recent papers...</div>
+                    ) : stats.recentPapers.length > 0 ? (
+                        stats.recentPapers.map((paper: any) => (
+                            <Link href={`/question-papers/create?savedId=${paper.id}`} key={paper.id}>
+                                <div className="p-4 border border-slate-100 bg-slate-50/50 rounded-2xl flex items-center justify-between group cursor-pointer hover:bg-white transition-all shadow-sm mb-3">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-xl">
+                                            {paper.title.toLowerCase().includes('math') ? '📐' : 
+                                             paper.title.toLowerCase().includes('chem') ? '🧪' :
+                                             paper.title.toLowerCase().includes('phy') ? '⚡' : '📝'}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-slate-900 text-sm">{paper.title}</p>
+                                            <p className="text-[10px] text-slate-400">Edited {new Date(paper.updatedAt).toLocaleDateString()}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded ${
+                                            paper.status === 'Published' ? 'bg-green-100 text-green-700' : 
+                                            paper.status === 'Saved' ? 'bg-indigo-100 text-indigo-700' : 
+                                            'bg-slate-200 text-slate-600'
+                                        }`}>
+                                            {paper.status || 'Draft'}
+                                        </span>
+                                        <svg className="w-5 h-5 text-slate-300 group-hover:text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                    </div>
+                                </div>
+                            </Link>
+                        ))
+                    ) : (
+                         <div className="p-8 text-center border-2 border-dashed border-slate-200 rounded-3xl text-slate-400">
+                            No recent assessments found. Create your first paper!
                         </div>
-                        <div className="flex items-center gap-4">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">PDF Ready</span>
-                            <svg className="w-5 h-5 text-slate-300 group-hover:text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                        </div>
-                    </div>
-                    <div className="p-4 border border-slate-100 bg-slate-50/50 rounded-2xl flex items-center justify-between group cursor-pointer hover:bg-white transition-all shadow-sm">
-                        <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">🧪</div>
-                            <p className="font-bold text-slate-900 text-sm">NEET Chemistry #12 (Mock)</p>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Draft</span>
-                            <svg className="w-5 h-5 text-slate-300 group-hover:text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                        </div>
-                    </div>
+                    )}
                 </div>
             </div>
 
             
-            <div className="bg-indigo-900 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/20 rounded-full -mr-16 -mt-16"></div>
-                <h3 className="font-bold text-lg mb-6 flex items-center gap-3">
-                    <span className="w-2 h-2 bg-indigo-400 rounded-full animate-pulse"></span>
-                    AI Live Preview
-                </h3> 
-                <div className="space-y-6 relative z-10">
-                    <div>
-                        <div className="flex justify-between text-[10px] font-bold text-indigo-200 mb-2 uppercase tracking-widest">
-                            <span>Topic: Thermodynamics</span>
-                            <span>80%</span>
-                        </div>
-                        <div className="w-full bg-indigo-800/50 h-2 rounded-full">
-                            <motion.div 
-                                initial={{ width: 0 }}
-                                animate={{ width: "80%" }}
-                                transition={{ duration: 2, ease: "easeOut" }}
-                                className="bg-white h-full rounded-full shadow-[0_0_15px_rgba(255,255,255,0.4)]" 
-                            />
-                        </div>
-                    </div>
-                    <div className="bg-indigo-800/40 p-4 rounded-2xl border border-indigo-700/50">
-                        <p className="text-xs text-indigo-100 leading-relaxed italic">"Adding 5 high-difficulty numerical problems from previous JEE papers..."</p>
-                    </div>
-                    <div className="flex justify-center pt-2">
-                        <div className="flex gap-1">
-                            <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></span>
-                            <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
-                            <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+
         </div>
     </DashboardLayout>
   );
