@@ -84,7 +84,7 @@ If a request is inappropriate or non-educational, politely redirect: "I'm Questi
 
     // Make request to Gemini API
     const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: {
@@ -109,7 +109,7 @@ If a request is inappropriate or non-educational, politely redirect: "I'm Questi
     if (!geminiResponse.ok) {
       const errorData = await geminiResponse.text()
       console.error("Gemini API Error:", errorData)
-      return NextResponse.json({ error: "Failed to generate questions", details: errorData }, { status: 500 })
+      return NextResponse.json({ error: "Failed to generate questions" }, { status: 500 })
     }
 
     const geminiData = await geminiResponse.json()

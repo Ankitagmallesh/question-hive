@@ -17,53 +17,44 @@ Question Hive is a comprehensive question paper generation platform designed for
 - **Icons**: Lucide React for consistent iconography
 - **Deployment**: Vercel for seamless frontend hosting
 
-### **Backend Architecture**
-- **Framework**: Gin web framework (with consideration for Fiber for enhanced performance)
-- **ORM**: GORM (Go ORM) for database operations and migrations
-- **Database**: PostgreSQL 15+ for robust data storage
-- **Authentication**: JWT tokens with OAuth2 integration for NextAuth compatibility
-- **Validation**: go-playground/validator for input validation
-- **Configuration**: Viper for environment and configuration management
-- **Testing**: Testify + Ginkgo for comprehensive testing
-- **API Documentation**: Swagger/OpenAPI with gin-swagger for auto-generated docs
+### **Application Architecture**
+- **Framework**: Next.js 15 (Monorepo)
+- **Database Access**: Drizzle ORM (Direct access via Server Components/Actions)
+- **Authentication**: NextAuth.js v5 (Auth.js)
+- **API**: Next.js Route Handlers (`app/api/*`)
+- **Validation**: Zod (Shared between Front/Back)
+- **Testing**: Vitest / Playwright
 
 ### **Database & Storage Solutions**
-- **Primary Database**: PostgreSQL 15+ with GORM for ORM operations
-- **Caching Layer**: Redis 7+ for session management and performance optimization
-- **File Storage**: AWS S3 or Cloudinary for document and media storage
-- **Search Engine**: PostgreSQL Full-Text Search (with future ElasticSearch integration)
+- **Primary Database**: PostgreSQL 15+ (Supabase)
+- **ORM**: Drizzle ORM (Type-safe schema & queries)
+- **Caching Layer**: Redis 7+ (Optional)
+- **File Storage**: AWS S3 or Cloudinary
 
 ### **External Services & AI**
 - **AI Integration**: Google Gemini API for intelligent question generation
-- **PDF Processing**: wkhtmltopdf or Puppeteer for server-side PDF generation
-- **Email Services**: Resend or SendGrid for transactional emails
-- **Analytics**: PostHog or Mixpanel for user behavior tracking
+- **PDF Processing**: @react-pdf/renderer (Client-side) or Puppeteer (Server-side)
+- **Email Services**: Resend or SendGrid
+- **Analytics**: PostHog or Mixpanel
 
 ## 🏗️ **System Architecture**
 
-The application follows a modern three-tier architecture:
+The application follows a modern **Next.js Monolith** architecture:
 
-**Frontend Layer (Next.js 14)**
-- NextAuth.js handles authentication and session management
-- shadcn/ui + Tailwind provides responsive, accessible UI components
-- React Query manages server state and caching
-- @dnd-kit enables drag-and-drop functionality for question paper building
-- React Hook Form + Zod ensures type-safe form validation
-- @react-pdf/renderer handles client-side PDF preview
-
-**Backend Layer (Go + GORM)**
-- Gin/Fiber web framework provides RESTful API endpoints
-- GORM manages database operations and automatic migrations
-- JWT + OAuth2 integration ensures secure authentication
-- Swagger generates comprehensive API documentation
-- Viper handles configuration management across environments
+**Unified Application Layer (Next.js 15)**
+- **App Router**: Handles both UI pages and API endpoints
+- **Server Actions**: Manages secure data mutations and server-side logic
+- **NextAuth.js**: Handles authentication (Client side + Server validation)
+- **shadcn/ui + Tailwind**: Responsive, accessible UI components
+- **@dnd-kit**: Drag-and-drop functionality for paper builder
+- **React Hook Form + Zod**: Type-safe form validation
 
 **Data & Services Layer**
-- PostgreSQL 15+ serves as the primary database with full ACID compliance
-- Redis 7+ provides high-performance caching and session storage
-- AWS S3/Cloudinary handles file storage and CDN distribution
-- Google Gemini API powers AI-driven question generation
-- Resend manages reliable email delivery
+- **Drizzle ORM**: Type-safe database access and migrations
+- **PostgreSQL**: Primary database (Supabase)
+- **Google Gemini API**: Artificial Intelligence for question generation
+- **Redis (Optional)**: Caching layer if needed for high-scale
+
 
 ## 🗄️ **Database Design**
 
@@ -126,21 +117,15 @@ The application follows a modern three-tier architecture:
 
 ## 🚀 **Deployment Strategy**
 
-**Frontend Deployment**
+**Unified Deployment**
 - Vercel hosting for optimal Next.js performance
 - Automatic deployments from Git repositories
 - Global CDN distribution for fast loading times
-- Environment-specific configurations
-
-**Backend Deployment**
-- Containerized Go application using Docker
-- Kubernetes orchestration for scalability
-- Database migrations handled automatically by GORM
-- Environment variable management for secure configuration
+- Environment-specific configurations for different stages (Dev, Staging, Prod)
 
 **Database & Storage**
 - Managed PostgreSQL for reliability and backup
-- Redis cluster for high availability caching
+- Redis cluster for high availability caching (if needed)
 - Cloud storage integration for file management
 - Regular backup schedules and disaster recovery
 
