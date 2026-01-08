@@ -53,53 +53,46 @@ export default function SavedPapersPage() {
                         </Link>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="space-y-4">
                         {savedPapers.map((paper) => (
-                            <div key={paper.id} className="bg-white rounded-2xl p-6 border border-slate-200 hover:border-indigo-300 transition-all shadow-sm hover:shadow-md group flex flex-col h-full">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
-                                        📄
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button 
-                                            onClick={(e) => handleDelete(paper.id, e)}
-                                            className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
-                                            title="Delete"
-                                        >
-                                            <i className="ri-delete-bin-line"></i>
-                                        </button>
-                                    </div>
+                            <div key={paper.id} className="bg-white rounded-2xl p-5 border border-slate-200 hover:border-indigo-300 transition-all shadow-sm hover:shadow-md group flex items-center gap-6">
+                                <div className="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-2xl shrink-0">
+                                    📄
                                 </div>
                                 
-                                <h3 className="font-bold text-slate-900 text-lg mb-2 line-clamp-2">{paper.settings.title}</h3>
-                                
-                                <div className="flex flex-wrap gap-2 mb-4">
-                                    <span className="px-2 py-1 rounded bg-slate-100 text-slate-600 text-xs font-bold">{paper.settings.chapters.length} Chapters</span>
-                                    <span className="px-2 py-1 rounded bg-slate-100 text-slate-600 text-xs font-bold">{paper.paperQuestions.length} Questions</span>
-                                    <span className="px-2 py-1 rounded bg-slate-100 text-slate-600 text-xs font-bold">{paper.settings.difficulty.toUpperCase()}</span>
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="font-bold text-slate-900 text-xl mb-2 truncate">{paper.settings.title}</h3>
+                                    <div className="flex flex-wrap gap-2 text-xs font-bold text-slate-500">
+                                        <span className="bg-slate-100 px-2 py-1 rounded">{paper.settings.chapters.length} Chapters</span>
+                                        <span className="bg-slate-100 px-2 py-1 rounded">{paper.paperQuestions.length} Questions</span>
+                                        <span className="bg-slate-100 px-2 py-1 rounded uppercase">{paper.settings.difficulty}</span>
+                                        <span className="text-slate-400 font-medium ml-2 py-1">Saved {new Date(paper.savedAt).toLocaleDateString()}</span>
+                                    </div>
                                 </div>
 
-                                <div className="mt-auto pt-4 border-t border-slate-100 flex gap-3">
+                                <div className="flex items-center gap-3">
                                     <Link 
                                         href={`/question-papers/create?savedId=${paper.id}`}
-                                        className="flex-1 bg-white border border-slate-200 text-slate-700 py-2.5 rounded-xl font-bold text-sm hover:border-indigo-500 hover:text-indigo-600 transition-all text-center flex items-center justify-center gap-2"
+                                        className="h-10 px-5 bg-white border-2 border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:border-indigo-600 hover:text-indigo-600 transition-all flex items-center gap-2"
                                     >
                                         <i className="ri-edit-line"></i> Edit
                                     </Link>
                                     <button 
                                         onClick={() => {
-                                             // Temporary print logic since actual PDF generation depends on the preview state
-                                             // Ideally, this would open a preview page specifically for printing
                                              window.open(`/question-papers/create?savedId=${paper.id}&print=true`, '_blank');
                                         }}
-                                        className="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all text-center flex items-center justify-center gap-2"
+                                        className="h-10 px-5 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-200"
                                     >
                                         <i className="ri-printer-line"></i> PDF
                                     </button>
+                                     <button 
+                                        onClick={(e) => handleDelete(paper.id, e)}
+                                        className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                                        title="Delete"
+                                    >
+                                        <i className="ri-delete-bin-line text-lg"></i>
+                                    </button>
                                 </div>
-                                <p className="text-[10px] text-slate-400 mt-3 text-center">
-                                    Saved on {new Date(paper.savedAt).toLocaleDateString()}
-                                </p>
                             </div>
                         ))}
                     </div>
