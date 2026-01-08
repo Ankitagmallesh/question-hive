@@ -133,10 +133,10 @@ label {
 
 .q-card {
     background: white; border: 1px solid var(--border); border-radius: 12px; padding: 16px;
-    margin-bottom: 12px; cursor: pointer; transition: all 0.2s;
+    margin-bottom: 12px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
 }
 .q-card:hover { border-color: var(--primary); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
-.q-card.added { opacity: 0.5; background: #f9fafb; pointer-events: none; border-style: dashed; }
+.q-card.added { background: #f9fafb; pointer-events: none; }
 
 .badges { display: flex; gap: 6px; margin-bottom: 8px; }
 .badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; }
@@ -146,20 +146,46 @@ label {
 
 /* --- Right: Preview Panel --- */
 .preview-panel {
-    flex: 1; background: #e2e8f0; padding: 40px; overflow-y: auto;
-    display: flex; flex-direction: column; align-items: center; position: relative;
+    flex: 1; 
+    background: #e2e8f0; 
+    padding: 20px; 
+    overflow-y: auto;
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    position: relative;
 }
 
 .paper-sheet {
-    background: white; width: 100%; max-width: 595px; /* A4 Ratio */ min-height: 842px;
-    padding: 48px; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); border-radius: 2px;
-    display: flex; flex-direction: column; transition: padding 0.3s;
+    background: white; 
+    width: 100%; 
+    max-width: 595px; /* A4 width at 72dpi, scaled to fit preview */
+    min-height: 842px; /* A4 height at 72dpi */
+    padding: 40px; 
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); 
+    border-radius: 2px;
+    display: flex; 
+    flex-direction: column; 
+    transition: padding 0.3s;
+    transform-origin: top center;
 }
 
-.paper-header { margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 16px; }
-.p-institution { font-size: 12px; font-weight: 600; text-transform: uppercase; color: #666; margin-bottom: 8px; letter-spacing: 1px; display: none; }
-.p-title { font-size: 20px; font-weight: 800; text-transform: uppercase; margin-bottom: 8px; }
-.p-meta { font-size: 11px; display: flex; justify-content: space-between; font-weight: 700; }
+.paper-header { 
+    margin-bottom: 20px; 
+    border-bottom: 2px solid #000; 
+    padding-bottom: 12px; 
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+.p-institution { 
+    font-size: 11px; 
+    font-weight: 600; 
+    text-transform: uppercase; 
+    color: #666; 
+    margin-bottom: 6px; 
+    letter-spacing: 1px; 
+}
+.p-title { font-size: 18px; font-weight: 800; text-transform: uppercase; margin-bottom: 6px; }
+.p-meta { font-size: 11px; display: flex; justify-content: space-between; font-weight: 600; }
 
 .paper-sheet.t-modern .paper-header { border-bottom: 4px solid var(--primary); text-align: left; }
 .paper-sheet.t-modern .p-title { color: var(--primary); }
@@ -168,10 +194,10 @@ label {
 .paper-sheet.t-minimal .p-title { font-weight: 600; }
 
 .paper-content { flex: 1; }
-.paper-item { padding: 12px 0; border-bottom: 1px dashed #eee; position: relative; cursor: grab; }
+.paper-item { padding: 10px 0; border-bottom: 1px dashed #ddd; position: relative; cursor: grab; }
 .paper-item:active { cursor: grabbing; }
 .paper-item:hover .remove-item { opacity: 1; }
-.p-q-num { font-weight: 700; margin-right: 6px; }
+.p-q-num { font-weight: 700; margin-right: 8px; font-size: inherit; }
 .remove-item { 
     position: absolute; right: -20px; top: 12px; color: #ef4444; cursor: pointer; opacity: 0; transition: 0.2s; 
 }
@@ -210,3 +236,258 @@ label {
     background-color: #cbd5e1;
     border-radius: 20px;
 }
+
+/* --- PRINT STYLES --- */
+@media print {
+    @page {
+        margin: 0;
+        size: A4 portrait;
+    }
+
+    /* Reset everything */
+    html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+        overflow: visible !important;
+        height: auto !important;
+        width: 100% !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Hide sidebar, navigation, and all non-content elements */
+    aside,
+    nav,
+    header:not(.paper-header),
+    footer,
+    .editor-panel,
+    .resizer,
+    .fab-export,
+    .editor-header,
+    .header-actions,
+    .modal-overlay,
+    .close-modal,
+    .remove-item,
+    .no-print,
+    .toast-viewport,
+    .min-h-screen > aside,
+    .absolute.top-6,
+    .fixed,
+    [class*="ProfileMenu"] {
+        display: none !important;
+    }
+
+    /* Reset the main wrapper from DashboardLayout */
+    main,
+    .min-h-screen,
+    [class*="flex-1"],
+    .min-h-screen > main {
+        margin: 0 !important;
+        margin-left: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        position: static !important;
+        transform: none !important;
+    }
+
+    /* Hide the entire left column */
+    .main-container {
+        display: block !important;
+        height: auto !important;
+        overflow: visible !important;
+        width: 100% !important;
+        grid-template-columns: 1fr !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .main-container > .editor-panel {
+        display: none !important;
+    }
+
+    .main-container > .resizer {
+        display: none !important;
+    }
+
+    /* Style the preview panel for print */
+    .preview-panel {
+        position: static !important;
+        width: 100% !important;
+        height: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: white !important;
+        overflow: visible !important;
+        display: block !important;
+    }
+
+    /* Remove all gaps and padding from the paper container */
+    .flex.flex-col.gap-8,
+    .flex.flex-col.gap-8.items-center,
+    .preview-panel > div {
+        gap: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Paper sheet styling for print - proper A4 dimensions */
+    .paper-sheet {
+        box-shadow: none !important;
+        margin: 0 !important;
+        border: none !important;
+        border-radius: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: auto !important;
+        height: auto !important;
+        padding: 15mm 12mm !important;
+        page-break-after: always;
+        break-after: page;
+        background: white !important;
+        page-break-inside: avoid;
+    }
+
+    .paper-sheet:last-child {
+        page-break-after: auto;
+        break-after: auto;
+    }
+
+    /* Preserve paper header styling */
+    .paper-header {
+        margin-top: 0 !important;
+        margin-bottom: 15px !important;
+        padding-bottom: 10px !important;
+        padding-top: 0 !important;
+    }
+
+    .paper-sheet.t-modern .paper-header {
+        border-bottom: 3px solid #4f46e5 !important;
+    }
+
+    .paper-sheet.t-classic .paper-header {
+        border-bottom: 2px solid #000 !important;
+        text-align: center !important;
+    }
+
+    .paper-sheet.t-minimal .paper-header {
+        border-bottom: none !important;
+    }
+
+    .p-institution {
+        font-size: 10px !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+        margin-bottom: 4px !important;
+        margin-top: 0 !important;
+    }
+
+    .p-title {
+        font-size: 14px !important;
+        font-weight: 800 !important;
+        text-transform: uppercase !important;
+        margin-bottom: 4px !important;
+    }
+
+    .paper-sheet.t-modern .p-title {
+        color: #4f46e5 !important;
+    }
+
+    .p-meta {
+        font-size: 9px !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        font-weight: 600 !important;
+    }
+
+    /* Paper content */
+    .paper-content {
+        display: block !important;
+    }
+
+    .paper-item {
+        border-bottom: 1px dashed #ddd !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+        padding: 6px 0 !important;
+        margin: 0 !important;
+    }
+
+    .paper-item:last-child {
+        border-bottom: none !important;
+    }
+
+    /* Hide remove buttons */
+    .paper-item .remove-item,
+    .ri-delete-bin-line {
+        display: none !important;
+    }
+
+    /* Preserve grid layout for MCQ options */
+    .paper-item .grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 2px 12px !important;
+        margin-top: 4px !important;
+    }
+
+    /* Page number footer - hide it for cleaner output */
+    .paper-sheet .absolute.bottom-6 {
+        display: none !important;
+    }
+
+    /* Ensure text colors print correctly */
+    .text-slate-900, .font-bold {
+        color: #000 !important;
+    }
+
+    .text-slate-600, .text-slate-500 {
+        color: #333 !important;
+    }
+
+    /* Question text styling */
+    .paper-item .font-semibold,
+    .paper-item .font-bold {
+        font-size: 11px !important;
+        line-height: 1.4 !important;
+    }
+
+    /* Option text styling */
+    .paper-item .text-xs {
+        font-size: 10px !important;
+    }
+}
+
+
+
+
+/* --- Rich Text Editor --- */
+.rich-editor-container {
+    border: 1px solid var(--border); border-radius: var(--radius-input);
+    background: var(--input-bg); overflow: hidden; transition: all 0.2s;
+}
+.rich-editor-container:focus-within {
+    background-color: white; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light);
+}
+.editor-toolbar {
+    display: flex; gap: 4px; padding: 6px; border-bottom: 1px solid var(--border); background: #f8fafc;
+}
+.tool-btn {
+    padding: 4px 8px; border: 1px solid transparent; background: white; border-radius: 4px;
+    cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-main);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center;
+}
+.tool-btn:hover { background: #e2e8f0; }
+.editor-area {
+    min-height: 80px; padding: 10px; outline: none; font-size: 13px; line-height: 1.5;
+    color: var(--text-main); overflow-y: auto;
+}
+
+/* Checkboxes */
+.checkbox-label {
+    display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-main); cursor: pointer; user-select: none;
+}
+.checkbox-label input { accent-color: var(--primary); width: 16px; height: 16px; border-radius: 4px; cursor: pointer; }
+.checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
