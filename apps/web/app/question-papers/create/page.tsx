@@ -42,6 +42,7 @@ import {
     Download
 } from 'lucide-react';
 import './create.css';
+import { RichTextEditor } from './RichTextEditor';
 
 // --- Types ---
 interface Question {
@@ -71,6 +72,23 @@ interface PaperSettings {
     template: 'classic' | 'modern' | 'minimal';
     margin: 'S' | 'M' | 'L';
     fontSize: number;
+
+    // Instructions & Content
+    date: string;
+    instructions: string;
+    watermark: string;
+    
+    // Student Details
+    studentName: boolean;
+    rollNumber: boolean;
+    classSection: boolean;
+    dateField: boolean;
+    invigilatorSign: boolean;
+    
+    // Footer
+    footerText: string;
+    roughWorkArea: 'none' | 'right' | 'bottom';
+    pageNumbering: 'page-x-of-y' | 'x-slash-y' | 'hidden';
 }
 
 // --- Components ---
@@ -101,20 +119,20 @@ const SortableQuestionItem = ({ question, index, onRemove }: { question: Questio
         >
             <i className="ri-delete-bin-line remove-item" onClick={(e) => { e.stopPropagation(); onRemove(question.id); }}></i>
             <div className="flex gap-3">
-                <span className="font-bold text-slate-900 w-6 shrink-0">{index + 1}.</span>
+                <span className="font-bold text-slate-900 shrink-0">{index + 1}.</span>
                 <div className="flex-1 pr-16">
                     <div 
-                        className="font-semibold text-slate-900 text-sm mb-1 leading-relaxed"
-                        style={{ color: '#000000', minHeight: '1.2em' }}
+                        className="font-medium text-slate-900 mb-1 leading-relaxed"
+                        style={{ minHeight: '1.2em' }}
                     >
                         {question.text || 'Question Text Missing'}
-                        {question.marks ? <span className="float-right text-xs font-normal text-slate-500">[{question.marks} marks]</span> : null}
+                        {question.marks ? <span className="float-right font-normal text-slate-500" style={{ fontSize: '0.85em' }}>[{question.marks} marks]</span> : null}
                     </div>
                     {question.options && question.options.length > 0 && (
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2">
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2" style={{ fontSize: '0.9em' }}>
                              {question.options.map((opt, idx) => (
-                                <div key={opt.id} className="text-xs text-slate-600">
-                                    <span className="font-medium mr-1">({String.fromCharCode(65 + idx)})</span> 
+                                <div key={opt.id} className="text-slate-600">
+                                    <span className="font-semibold mr-1 text-indigo-600">({String.fromCharCode(65 + idx)})</span> 
                                     {opt.text}
                                 </div>
                              ))}
@@ -203,10 +221,27 @@ export default function PaperDesignerPage() {
         font: 'jakarta',
         template: 'classic',
         margin: 'M',
-        fontSize: 14
+        fontSize: 14,
+        
+        date: new Date().toISOString().split('T')[0],
+        instructions: '<ul><li>All questions are compulsory.</li><li>Calculators are not allowed.</li></ul>',
+        watermark: '',
+        
+        studentName: true,
+        rollNumber: true,
+        classSection: false,
+        dateField: false,
+        invigilatorSign: false,
+        
+        footerText: '',
+        roughWorkArea: 'none',
+        pageNumbering: 'page-x-of-y'
     });
 
     const [showBranding, setShowBranding] = useState(false);
+    const [showInstructions, setShowInstructions] = useState(false);
+    const [showStudent, setShowStudent] = useState(false);
+    const [showFooter, setShowFooter] = useState(false);
     const [activeTab, setActiveTab] = useState<'select' | 'auto'>('select');
     const [searchQuery, setSearchQuery] = useState('');
     const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -216,6 +251,9 @@ export default function PaperDesignerPage() {
     const [sourceQuestions, setSourceQuestions] = useState<Question[]>([]);
     const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
     const searchParams = useSearchParams();
+
+    // Sync instructions to editor (only when not focused to prevent cursor jumps)
+
 
     // --- Effects ---
     useEffect(() => {
@@ -236,16 +274,22 @@ export default function PaperDesignerPage() {
                 
                 if (urlChapters.length > 0) {
                      setSettings(s => ({...s, chapters: urlChapters}));
-                } else if (data.length > 0) {
+                } else if (data.length > 0 && data[0]?.name) {
                      // Default fallback if nothing in URL
-                     if (data[0]?.name) {
-                        setSettings(s => ({...s, chapters: [data[0].name]}));
-                     }
+                     setSettings(s => ({...s, chapters: [data[0].name]}));
                 }
             }
         };
         fetchChapters();
-        fetchChapters();
+    }, [searchParams]);
+
+    // Auto-Print Effect
+    useEffect(() => {
+        if (searchParams.get('print') === 'true') {
+            setTimeout(() => {
+                window.print();
+            }, 800);
+        }
     }, [searchParams]);
 
     // --- Draft Persistence ---
@@ -271,7 +315,7 @@ export default function PaperDesignerPage() {
             if (saved) {
                 try {
                     const parsed = JSON.parse(saved);
-                    if (parsed.settings) setSettings(parsed.settings);
+                    if (parsed.settings) setSettings(s => ({...s, ...parsed.settings}));
                     if (parsed.paperQuestions) setPaperQuestions(parsed.paperQuestions);
                 } catch (e) { console.error(e); }
             }
@@ -282,7 +326,7 @@ export default function PaperDesignerPage() {
                     const papers = JSON.parse(allSaved);
                     const found = papers.find((p: any) => p.id === savedId);
                     if (found) {
-                        setSettings(found.settings);
+                        setSettings(s => ({...s, ...found.settings}));
                         setPaperQuestions(found.paperQuestions);
                     }
                 } catch (e) { console.error(e); }
@@ -328,8 +372,7 @@ export default function PaperDesignerPage() {
                 throw new Error(result.error || 'Failed to save paper');
             }
 
-            // Sync with LocalStorage for offline backup (optional but good UX)
-            // We update the 'saved_papers' list with the backend ID if possible
+            // Sync with LocalStorage for offline backup
             const existingPapers = JSON.parse(localStorage.getItem('saved_papers') || '[]');
             const newPaper = {
                 id: result.paperId ? String(result.paperId) : (savedId || crypto.randomUUID()),
@@ -643,44 +686,142 @@ export default function PaperDesignerPage() {
         return settings.font === 'jakarta' ? "'Plus Jakarta Sans', sans-serif" : "'Merriweather', serif";
     };
 
+    // --- PDF Export Function using Puppeteer API ---
+    const handleExportPDF = async () => {
+        if (paperQuestions.length === 0) {
+            toast({
+                title: 'No questions to export',
+                description: 'Please add some questions to your paper first.',
+                variant: 'destructive'
+            });
+            return;
+        }
+
+        try {
+            toast({
+                title: 'Generating PDF...',
+                description: 'This may take a few seconds.',
+            });
+
+            // Prepare data for the API
+            const paperData = {
+                title: settings.title,
+                institution: settings.institution,
+                duration: settings.duration,
+                totalMarks: settings.totalMarks,
+                template: settings.template,
+                font: settings.font,
+                fontSize: settings.fontSize,
+                margin: settings.margin,
+                date: settings.date,
+                instructions: settings.instructions,
+                watermark: settings.watermark,
+                studentName: settings.studentName,
+                rollNumber: settings.rollNumber,
+                classSection: settings.classSection,
+                dateField: settings.dateField,
+                invigilatorSign: settings.invigilatorSign,
+                footerText: settings.footerText,
+                roughWorkArea: settings.roughWorkArea,
+                pageNumbering: settings.pageNumbering,
+                questions: paperQuestions.map(q => ({
+                    id: q.id,
+                    text: q.text,
+                    marks: q.marks,
+                    options: q.options?.map(opt => ({
+                        id: opt.id,
+                        text: opt.text
+                    }))
+                }))
+            };
+
+            // Call the Puppeteer API
+            const response = await fetch('/api/export-pdf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(paperData),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to generate PDF');
+            }
+
+            // Get the PDF blob
+            const pdfBlob = await response.blob();
+            
+            // Create download link
+            const url = window.URL.createObjectURL(pdfBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${settings.title.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+            toast({
+                title: 'PDF Downloaded!',
+                description: 'Your paper has been saved successfully.',
+            });
+        } catch (error) {
+            console.error('PDF export error:', error);
+            toast({
+                title: 'Export failed',
+                description: 'There was an error generating the PDF. Please try again.',
+                variant: 'destructive'
+            });
+        }
+    };
+
     const paginateQuestions = (questions: Question[]) => {
         if (questions.length === 0) return [];
 
         const pages: Question[][] = [];
         let currentPage: Question[] = [];
         
-        const PAGE_HEIGHT = 842; // A4 px at 96dpi approx
-        const MARGIN = getMargins();
-        const CONTENT_WIDTH = 595 - (2 * MARGIN);
-        const HEADER_HEIGHT = 160; // Title, meta, inst
-        const FOOTER_HEIGHT = 50;
+        // A4 in mm: 210 × 297mm
+        // Converting to approximate px at 96dpi: 1mm ≈ 3.78px
+        const MM_TO_PX = 3.78;
+        const PAGE_HEIGHT_MM = 297;
+        const PAGE_HEIGHT = PAGE_HEIGHT_MM * MM_TO_PX; // ~1122px
+        const MARGIN_MM = 10; // 10mm padding we set in CSS
+        const MARGIN = MARGIN_MM * MM_TO_PX;
+        
+        const HEADER_HEIGHT = 100; // Title, meta, institution (smaller estimate)
+        const FOOTER_HEIGHT = 40; // Page number footer
         
         let availableHeight = PAGE_HEIGHT - (2 * MARGIN) - HEADER_HEIGHT - FOOTER_HEIGHT;
         let currentHeight = 0;
 
         questions.forEach((q) => {
-            // Estimate Height
-            // Base padding + number (20px) + spacing
-            const charWidth = settings.fontSize * 0.6;
-            const charsPerLine = Math.floor((CONTENT_WIDTH - 40) / charWidth); // -40 for numbering indent
-            const textLines = Math.ceil(q.text.length / charsPerLine);
-            const textHeight = textLines * (settings.fontSize * 1.5);
+            // More accurate height estimation
+            const fontSize = settings.fontSize;
+            const lineHeight = fontSize * 1.4;
             
+            // Estimate question text lines (more generous chars per line)
+            const charsPerLine = 70; // Approximate for A4 width
+            const textLines = Math.ceil(q.text.length / charsPerLine);
+            const textHeight = Math.max(textLines, 1) * lineHeight;
+            
+            // Options height (2 columns, so divide by 2)
             let optionsHeight = 0;
             if (q.options && q.options.length > 0) {
-                const optsLines = Math.ceil(q.options.length / 2); // 2 col grid
-                optionsHeight = optsLines * 24; // approx 24px per row
+                const optsRows = Math.ceil(q.options.length / 2);
+                optionsHeight = optsRows * 20; // ~20px per row
             }
 
-            const itemHeight = textHeight + optionsHeight + 30; // 30 buffer/padding/margins
+            // Item height = text + options + padding (reduced from 30 to 20)
+            const itemHeight = textHeight + optionsHeight + 20;
 
             if (currentHeight + itemHeight > availableHeight) {
                 // Push current page and start new
                 pages.push(currentPage);
                 currentPage = [];
                 currentHeight = 0;
-                // Next pages don't have the big header
-                availableHeight = PAGE_HEIGHT - (2 * MARGIN) - 40 - FOOTER_HEIGHT; // 40 small margin top
+                // Subsequent pages have more space (no header)
+                availableHeight = PAGE_HEIGHT - (2 * MARGIN) - 30 - FOOTER_HEIGHT;
             }
 
             currentPage.push(q);
@@ -752,32 +893,99 @@ export default function PaperDesignerPage() {
                                 {pageIndex === 0 && (
                                     <div className="paper-header">
                                         <div className="p-institution" style={{display: settings.institution ? 'block' : 'none'}}>{settings.institution}</div>
-                                        <div className="p-title">{settings.title}</div>
-                                        <div className="p-meta">
-                                            <span>Duration: {settings.duration}</span>
-                                            <span>Max Marks: {settings.totalMarks}</span>
+                                        <div className="p-title mb-4">{settings.title}</div>
+                                        
+                                        <div className="p-meta grid grid-cols-2 gap-x-8 gap-y-2 mb-6 pb-4 border-b border-slate-900/10">
+                                            <div className="flex justify-between"><span>Duration:</span> <span>{settings.duration}</span></div>
+                                            <div className="flex justify-between"><span>Max Marks:</span> <span>{settings.totalMarks}</span></div>
+                                            
+                                            {/* Student Details */}
+                                            {/* Student Details - Rendered dynamically based on settings */}
+                                            {settings.studentName && (
+                                                <div className="border-b border-slate-400 pb-1 flex justify-between items-end mt-3">
+                                                    <span className="font-semibold text-slate-700">Name:</span> 
+                                                    <span className="flex-1"></span>
+                                                </div>
+                                            )}
+                                            {settings.rollNumber && (
+                                                <div className="border-b border-slate-400 pb-1 flex justify-between items-end mt-3">
+                                                    <span className="font-semibold text-slate-700">Roll No:</span> 
+                                                    <span className="flex-1"></span>
+                                                </div>
+                                            )}
+                                            {settings.classSection && (
+                                                <div className="border-b border-slate-400 pb-1 flex justify-between items-end mt-3">
+                                                    <span className="font-semibold text-slate-700">Class/Sec:</span> 
+                                                    <span className="flex-1"></span>
+                                                </div>
+                                            )}
+                                            {settings.dateField && (
+                                                <div className="border-b border-slate-400 pb-1 flex justify-between items-end mt-3">
+                                                    <span className="font-semibold text-slate-700">Date:</span> 
+                                                    <span className="flex-1 text-right">{settings.date}</span>
+                                                </div>
+                                            )}
+                                            {settings.invigilatorSign && (
+                                                <div className="border-b border-slate-400 pb-1 flex justify-between items-end mt-3">
+                                                    <span className="font-semibold text-slate-700">Invigilator:</span> 
+                                                    <span className="flex-1"></span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Instructions */}
+                                        {settings.instructions && (
+                                            <div className="mb-6">
+                                                <div className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Instructions</div>
+                                                <div className="text-sm leading-relaxed instruction-content" dangerouslySetInnerHTML={{__html: settings.instructions}}></div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Watermark */}
+                                {settings.watermark && (
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 opacity-[0.04] overflow-hidden select-none">
+                                        <div className="transform -rotate-45 text-6xl font-bold whitespace-nowrap text-slate-900 border-4 border-slate-900 p-4 rounded-xl">
+                                            {settings.watermark}
                                         </div>
                                     </div>
                                 )}
 
-                                <div className="paper-content">
-                                    {pageQuestions.map((q) => {
-                                        const currentIndex = globalIndex;
-                                        globalIndex++;
-                                        return (
-                                            <SortableQuestionItem 
-                                                key={q.id} 
-                                                question={q} 
-                                                index={currentIndex} 
-                                                onRemove={removeFromPaper}
-                                            />
-                                        );
-                                    })}
+                                <div className={`paper-content relative z-10 ${settings.roughWorkArea === 'right' ? 'flex items-stretch' : ''}`}>
+                                    <div className={settings.roughWorkArea === 'right' ? 'w-[75%] pr-6 border-r border-dashed border-slate-200' : 'w-full'}>
+                                        {pageQuestions.map((q) => {
+                                            const currentIndex = globalIndex;
+                                            globalIndex++;
+                                            return (
+                                                <SortableQuestionItem 
+                                                    key={q.id} 
+                                                    question={q} 
+                                                    index={currentIndex} 
+                                                    onRemove={removeFromPaper}
+                                                />
+                                            );
+                                        })}
+                                    </div>
+                                    {settings.roughWorkArea === 'right' && (
+                                        <div className="w-[25%] pl-4">
+                                            <div className="text-[10px] text-slate-300 font-bold uppercase tracking-wider text-center sticky top-0">Rough Work</div>
+                                        </div>
+                                    )}
                                 </div>
 
-                                <div className="absolute bottom-6 left-0 w-full text-center text-[10px] text-slate-400 font-medium border-t border-slate-100 pt-2 px-12">
-                                    Page {pageIndex + 1} of {pages.length}
-                                </div>
+                                {/* Footer */}
+                                {settings.pageNumbering !== 'hidden' && (
+                                    <div className="absolute bottom-6 left-0 w-full px-12">
+                                        <div className="flex justify-between items-center text-[10px] text-slate-400 font-medium border-t border-slate-200 pt-2">
+                                            <div>{settings.footerText}</div>
+                                            <div>
+                                                {settings.pageNumbering === 'page-x-of-y' && `Page ${pageIndex + 1} of ${pages.length}`}
+                                                {settings.pageNumbering === 'x-slash-y' && `${pageIndex + 1} / ${pages.length}`}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </SortableContext>
@@ -803,6 +1011,7 @@ export default function PaperDesignerPage() {
                         </div>
                         <div className="header-actions">
                             <button className="btn-action" onClick={() => setShowPreviewModal(true)}><i className="ri-eye-line"></i> Preview</button>
+                            <button className="btn-action" onClick={handleExportPDF}><i className="ri-file-pdf-line"></i> Export PDF</button>
                             <button className="btn-action" onClick={handleSavePaper}><i className="ri-save-line"></i> Save</button>
                         </div>
                     </div>
@@ -917,6 +1126,80 @@ export default function PaperDesignerPage() {
                                 </div>
                             </div>
                         </div>
+
+                        <div className="section-divider"></div>
+                        <div className="section-header" onClick={() => setShowInstructions(!showInstructions)}>
+                            <i className={`ri-arrow-down-s-line dropdown-icon ${showInstructions ? 'rotated' : ''}`}></i>
+                            <div className="section-title"><i className="ri-file-list-3-line"></i> Instructions & Content</div>
+                        </div>
+                        <div className={`collapsible-content ${showInstructions ? 'show' : ''}`}>
+                            <div className="col">
+                                <label>General Instructions</label>
+                                <div className="rich-editor-container">
+                                    <div className="editor-toolbar">
+                                        <button className="tool-btn" onClick={() => document.execCommand('bold', false, '')}><b>B</b></button>
+                                        <button className="tool-btn" onClick={() => document.execCommand('italic', false, '')}><i>I</i></button>
+                                        <button className="tool-btn" onClick={() => document.execCommand('insertUnorderedList', false, '')}><i className="ri-list-unordered"></i></button>
+                                    </div>
+                                    <RichTextEditor 
+                                        initialValue={settings.instructions}
+                                        onChange={(html) => setSettings(prev => ({...prev, instructions: html}))}
+                                    />
+                                </div>
+                            </div>
+                            <div className="row" style={{marginTop: '12px'}}>
+                                <div className="col">
+                                    <label>Watermark Text</label>
+                                    <input type="text" className="input-box" placeholder="e.g. CONFIDENTIAL" value={settings.watermark || ''} onChange={e => setSettings({...settings, watermark: e.target.value})} />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="section-divider"></div>
+                        <div className="section-header" onClick={() => setShowStudent(!showStudent)}>
+                            <i className={`ri-arrow-down-s-line dropdown-icon ${showStudent ? 'rotated' : ''}`}></i>
+                            <div className="section-title"><i className="ri-user-smile-line"></i> Student Details</div>
+                        </div>
+                        <div className={`collapsible-content ${showStudent ? 'show' : ''}`}>
+                            <div className="checkbox-grid">
+                                <label className="checkbox-label"><input type="checkbox" checked={settings.studentName} onChange={e => setSettings({...settings, studentName: e.target.checked})} /> Student Name</label>
+                                <label className="checkbox-label"><input type="checkbox" checked={settings.rollNumber} onChange={e => setSettings({...settings, rollNumber: e.target.checked})} /> Roll Number</label>
+                                <label className="checkbox-label"><input type="checkbox" checked={settings.classSection} onChange={e => setSettings({...settings, classSection: e.target.checked})} /> Class/Section</label>
+                                <label className="checkbox-label"><input type="checkbox" checked={settings.dateField} onChange={e => setSettings({...settings, dateField: e.target.checked})} /> Date</label>
+                                <label className="checkbox-label"><input type="checkbox" checked={settings.invigilatorSign} onChange={e => setSettings({...settings, invigilatorSign: e.target.checked})} /> Invigilator Sign</label>
+                            </div>
+                        </div>
+
+                        <div className="section-divider"></div>
+                        <div className="section-header" onClick={() => setShowFooter(!showFooter)}>
+                            <i className={`ri-arrow-down-s-line dropdown-icon ${showFooter ? 'rotated' : ''}`}></i>
+                            <div className="section-title"><i className="ri-layout-bottom-2-line"></i> Footer & Layout</div>
+                        </div>
+                        <div className={`collapsible-content ${showFooter ? 'show' : ''}`}>
+                            <div className="row">
+                                <div className="col">
+                                    <label>Footer Text</label>
+                                    <input type="text" className="input-box" placeholder="e.g. Please Turn Over" value={settings.footerText} onChange={e => setSettings({...settings, footerText: e.target.value})} />
+                                </div>
+                            </div>
+                            <div className="row">
+                                <div className="col">
+                                    <label>Rough Work Area</label>
+                                    <div className="toggle-container">
+                                        <button className={`toggle-btn ${settings.roughWorkArea === 'none' ? 'active' : ''}`} onClick={() => setSettings({...settings, roughWorkArea: 'none'})}>None</button>
+                                        <button className={`toggle-btn ${settings.roughWorkArea === 'right' ? 'active' : ''}`} onClick={() => setSettings({...settings, roughWorkArea: 'right'})}>Right Col</button>
+                                    </div>
+                                </div>
+                                <div className="col">
+                                    <label>Page Numbering</label>
+                                    <select className="input-box" value={settings.pageNumbering} onChange={e => setSettings({...settings, pageNumbering: e.target.value as any})}>
+                                        <option value="page-x-of-y">Page 1 of 5</option>
+                                        <option value="x-slash-y">1 / 5</option>
+                                        <option value="hidden">Hidden</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="tab-group">
@@ -970,96 +1253,103 @@ export default function PaperDesignerPage() {
                     )}
 
                     <div id="source-list">
-                        {isLoadingQuestions ? (
+                        {isLoadingQuestions && (
                             <div style={{textAlign: 'center', padding: '20px', color: '#999'}}>
                                 <i className="ri-loader-4-line animate-spin mb-2" style={{fontSize: '24px'}}></i>
                                 <div className="text-xs font-semibold">Loading Question Bank...</div>
                             </div>
-                        ) : (
-                            <>
-                                {filteredQuestions.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center py-10 text-slate-400 text-center">
-                                        <i className="ri-inbox-2-line text-4xl mb-2 opacity-50"></i>
-                                        {settings.difficulty === 'easy' ? (
-                                             <div className="max-w-[200px]">
-                                                <div className="font-medium text-slate-600 mb-1">No easy questions found</div>
-                                                <div className="text-xs">Please try selecting <strong>Medium</strong> or <strong>Hard</strong> from the Difficulty Mix.</div>
-                                             </div>
-                                        ) : (
-                                            <div>No questions found matching your criteria.</div>
-                                        )}
+                        )}
+
+                        {!isLoadingQuestions && filteredQuestions.length === 0 && (
+                            <div className="flex flex-col items-center justify-center py-10 text-slate-400 text-center">
+                                <i className="ri-inbox-2-line text-4xl mb-2 opacity-50"></i>
+                                {settings.difficulty === 'easy' ? (
+                                    <div className="max-w-[200px]">
+                                        <div className="font-medium text-slate-600 mb-1">No easy questions found</div>
+                                        <div className="text-xs">Please try selecting <strong>Medium</strong> or <strong>Hard</strong> from the Difficulty Mix.</div>
                                     </div>
                                 ) : (
-                                    filteredQuestions.map(q => {
-                                        const isAdded = paperQuestions.some(pq => pq.id === q.id);
-                                        // Badge Colors
-                                        const getTypeStyle = (t: string) => {
-                                            if (t === 'mcq') return { bg: '#EFF6FF', col: '#2563EB' }; // Blue
-                                            return { bg: '#F3F4F6', col: '#4B5563' }; // Gray
-                                        };
-                                        const getDiffStyle = (d: string) => {
-                                            if (d === 'easy') return { bg: '#DCFCE7', col: '#16A34A' }; // Green
-                                            if (d === 'medium') return { bg: '#FEF9C3', col: '#CA8A04' }; // Yellow
-                                            if (d === 'hard') return { bg: '#FEE2E2', col: '#DC2626' }; // Red
-                                            return { bg: '#F3F4F6', col: '#4B5563' };
-                                        };
-
-                                        const tStyle = getTypeStyle(q.type?.toLowerCase() || '');
-                                        const dStyle = getDiffStyle(q.difficulty?.toLowerCase() || '');
-
-                                        return (
-                                            <div 
-                                                key={q.id} 
-                                                className={`q-card ${isAdded ? 'added' : ''}`} 
-                                                onClick={() => !isAdded && addToPaper(q)}
-                                            >
-                                                <div className="badges">
-                                                    <div 
-                                                        className="badge" 
-                                                        style={{background: tStyle.bg, color: tStyle.col}}
-                                                    >
-                                                        {q.type?.toUpperCase() || 'Q'}
-                                                    </div>
-                                                    <div 
-                                                        className="badge" 
-                                                        style={{background: dStyle.bg, color: dStyle.col}}
-                                                    >
-                                                        {q.difficulty?.toUpperCase()}
-                                                    </div>
-                                                    {q.chapter && <div className="badge" style={{background: '#EEF2FF', color: '#6366F1'}}>{q.chapter}</div>}
-                                                </div>
-                                                <div className="q-text mb-2">{q.text}</div>
-                                                {q.options && q.options.length > 0 && (
-                                                    <div className="text-xs text-slate-500 flex flex-col gap-1 pl-1 border-l-2 border-slate-200">
-                                                        {q.options.map((opt, idx) => (
-                                                            <div key={opt.id}>
-                                                                <span className="font-semibold text-slate-400 mr-1">{String.fromCharCode(65 + idx)})</span>
-                                                                {opt.text}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })
+                                    <div>No questions found matching your criteria.</div>
                                 )}
-                                    <div className="flex justify-between items-center mt-4 pt-4 border-t border-slate-200 text-xs font-medium text-slate-500">
-                                        <button 
-                                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
-                                            disabled={currentPage === 1}
-                                            className="px-3 py-1.5 rounded hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            </div>
+                        )}
+
+                        {!isLoadingQuestions && filteredQuestions.length > 0 && (
+                            <>
+                                {filteredQuestions.map(q => {
+                                    const isAdded = paperQuestions.some(pq => pq.id === q.id);
+                                    // Badge Colors
+                                    const getTypeStyle = (t: string) => {
+                                        if (t === 'mcq') return { bg: '#EFF6FF', col: '#2563EB' }; // Blue
+                                        return { bg: '#F3F4F6', col: '#4B5563' }; // Gray
+                                    };
+                                    const getDiffStyle = (d: string) => {
+                                        if (d === 'easy') return { bg: '#DCFCE7', col: '#16A34A' }; // Green
+                                        if (d === 'medium') return { bg: '#FEF9C3', col: '#CA8A04' }; // Yellow
+                                        if (d === 'hard') return { bg: '#FEE2E2', col: '#DC2626' }; // Red
+                                        return { bg: '#F3F4F6', col: '#4B5563' };
+                                    };
+
+                                    const tStyle = getTypeStyle(q.type?.toLowerCase() || '');
+                                    const dStyle = getDiffStyle(q.difficulty?.toLowerCase() || '');
+
+                                    return (
+                                        <div 
+                                            key={q.id} 
+                                            className={`q-card ${isAdded ? 'added' : ''}`} 
+                                            onClick={() => !isAdded && addToPaper(q)}
                                         >
-                                            <i className="ri-arrow-left-line mr-1"></i> Previous
-                                        </button>
-                                        <span>Page {currentPage} of {Math.ceil(totalCount / PAGE_SIZE) || 1}</span>
-                                        <button 
-                                            onClick={() => setCurrentPage(p => p + 1)} 
-                                            disabled={!hasMore && (currentPage * PAGE_SIZE >= totalCount)}
-                                            className="px-3 py-1.5 rounded hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                        >
-                                            Next <i className="ri-arrow-right-line ml-1"></i>
-                                        </button>
-                                    </div>
+                                            <div className="badges">
+                                                <div 
+                                                    className="badge" 
+                                                    style={{background: tStyle.bg, color: tStyle.col}}
+                                                >
+                                                    {q.type?.toUpperCase() || 'Q'}
+                                                </div>
+                                                <div 
+                                                    className="badge" 
+                                                    style={{background: dStyle.bg, color: dStyle.col}}
+                                                >
+                                                    {q.difficulty?.toUpperCase()}
+                                                </div>
+                                                {q.chapter && <div className="badge" style={{background: '#EEF2FF', color: '#6366F1'}}>{q.chapter}</div>}
+                                            </div>
+                                            {isAdded && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-10 font-bold text-slate-900/60 text-sm uppercase tracking-wider backdrop-blur-[1px]">
+                                                    Selected
+                                                </div>
+                                            )}
+                                            <div className="q-text mb-2">{q.text}</div>
+                                            {q.options && q.options.length > 0 && (
+                                                <div className="text-xs text-slate-500 flex flex-col gap-1 pl-1 border-l-2 border-slate-200">
+                                                    {q.options.map((opt, idx) => (
+                                                        <div key={opt.id}>
+                                                            <span className="font-semibold text-slate-400 mr-1">{String.fromCharCode(65 + idx)})</span>
+                                                            {opt.text}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                                <div className="flex justify-between items-center mt-4 pt-4 border-t border-slate-200 text-xs font-medium text-slate-500">
+                                    <button 
+                                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                                        disabled={currentPage === 1}
+                                        className="px-3 py-1.5 rounded hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        <i className="ri-arrow-left-line mr-1"></i> Previous
+                                    </button>
+                                    <span>Page {currentPage} of {Math.ceil(totalCount / PAGE_SIZE) || 1}</span>
+                                    <button 
+                                        onClick={() => setCurrentPage(p => p + 1)} 
+                                        disabled={!hasMore && (currentPage * PAGE_SIZE >= totalCount)}
+                                        className="px-3 py-1.5 rounded hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        Next <i className="ri-arrow-right-line ml-1"></i>
+                                    </button>
+                                </div>
                             </>
                         )}
                     </div>
@@ -1071,7 +1361,7 @@ export default function PaperDesignerPage() {
                 <div className="preview-panel" data-lenis-prevent>
                     <PaperContent />
                     
-                    <button className="fab-export"><i className="ri-file-pdf-line"></i> Export PDF</button>
+                    <button className="fab-export" onClick={handleExportPDF}><i className="ri-file-pdf-line"></i> Export PDF</button>
                 </div>
 
                 <div className={`modal-overlay ${showPreviewModal ? 'active' : ''}`}>
