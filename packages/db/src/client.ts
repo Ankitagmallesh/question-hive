@@ -49,4 +49,4 @@ export const db = new Proxy({}, {
 }) as any;
 export * from './schema';
 // Re-export Drizzle helpers from this package to ensure a single instance is used by dependents
-export { eq, and, or, asc, desc, sql, inArray } from 'drizzle-orm';
+export { eq, and, or, asc, desc, sql, inArray, isNotNull, gt } from 'drizzle-orm';
