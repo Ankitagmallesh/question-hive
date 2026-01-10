@@ -66,13 +66,23 @@ interface PaperSettings {
     totalMarks: string;
     difficulty: 'easy' | 'mixed' | 'hard';
     
-    // Branding
+    // Branding & Layout
     institution: string;
-    font: 'jakarta' | 'merriweather';
+    logo: string | null;
+    logoPosition: 'left' | 'center' | 'right';
+    font: 'jakarta' | 'merriweather' | 'inter' | 'mono';
     template: 'classic' | 'modern' | 'minimal';
+    layout: 'single' | 'double';
     margin: 'S' | 'M' | 'L';
     fontSize: number;
-
+    lineHeight: number;
+    metaFontSize: number;
+    
+    // Formatting
+    pageBorder: 'none' | 'border-simple' | 'border-double';
+    answerSpace: 'none' | 'lines' | 'box';
+    separator: 'none' | 'solid' | 'double' | 'dashed';
+    
     // Instructions & Content
     date: string;
     instructions: string;
@@ -218,10 +228,19 @@ export default function PaperDesignerPage() {
         totalMarks: '0',
         difficulty: 'mixed',
         institution: "St. Xavier's High School",
+        logo: null,
+        logoPosition: 'right',
         font: 'jakarta',
         template: 'classic',
+        layout: 'single',
         margin: 'M',
         fontSize: 14,
+        lineHeight: 1.5,
+        metaFontSize: 12,
+        
+        pageBorder: 'none',
+        answerSpace: 'none',
+        separator: 'none',
         
         date: new Date().toISOString().split('T')[0],
         instructions: '<ul><li>All questions are compulsory.</li><li>Calculators are not allowed.</li></ul>',
@@ -686,6 +705,18 @@ export default function PaperDesignerPage() {
         return settings.font === 'jakarta' ? "'Plus Jakarta Sans', sans-serif" : "'Merriweather', serif";
     };
 
+    // --- Logo Upload ---
+    const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setSettings(s => ({...s, logo: reader.result as string}));
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     // --- PDF Export Function using Puppeteer API ---
     const handleExportPDF = async () => {
         if (paperQuestions.length === 0) {
@@ -713,6 +744,17 @@ export default function PaperDesignerPage() {
                 font: settings.font,
                 fontSize: settings.fontSize,
                 margin: settings.margin,
+                
+                // New Branding Fields
+                logo: settings.logo,
+                logoPosition: settings.logoPosition,
+                layout: settings.layout,
+                lineHeight: settings.lineHeight,
+                answerSpace: settings.answerSpace,
+                separator: settings.separator,
+                pageBorder: settings.pageBorder,
+                metaFontSize: settings.metaFontSize,
+
                 date: settings.date,
                 instructions: settings.instructions,
                 watermark: settings.watermark,
@@ -881,63 +923,88 @@ export default function PaperDesignerPage() {
                         {pages.map((pageQuestions, pageIndex) => (
                             <div 
                                 key={pageIndex}
-                                className={`paper-sheet ${settings.template === 'modern' ? 't-modern' : settings.template === 'minimal' ? 't-minimal' : 't-classic'}`}
+                                className={`paper-sheet ${settings.template === 'modern' ? 't-modern' : settings.template === 'minimal' ? 't-minimal' : 't-classic'} ${settings.pageBorder}`}
                                 style={{ 
                                     fontFamily,
                                     padding: `${marginPx}px`,
                                     fontSize: `${settings.fontSize}px`,
+                                    lineHeight: settings.lineHeight,
                                     position: 'relative'
                                 }}
                             >
                                 {/* Only Page 1 gets full header */}
                                 {pageIndex === 0 && (
-                                    <div className="paper-header">
-                                        <div className="p-institution" style={{display: settings.institution ? 'block' : 'none'}}>{settings.institution}</div>
-                                        <div className="p-title mb-4">{settings.title}</div>
+                                    <div className="paper-header relative">
+                                        {/* Logo Rendering */}
+                                        {settings.logo && (
+                                            <img 
+                                                src={settings.logo} 
+                                                alt="Logo" 
+                                                className="absolute object-contain"
+                                                style={{
+                                                    width: '60px', 
+                                                    height: '60px',
+                                                    objectFit: 'contain',
+                                                    position: settings.logoPosition === 'center' ? 'relative' : 'absolute',
+                                                    top: settings.logoPosition === 'center' ? '-10px' : '0',
+                                                    left: settings.logoPosition === 'left' ? '0' : 'auto',
+                                                    right: settings.logoPosition === 'right' ? '0' : 'auto',
+                                                    margin: settings.logoPosition === 'center' ? '0 auto' : '0',
+                                                    display: 'block'
+                                                }}
+                                            />
+                                        )}
+                                        
+                                        <div className={`p-institution ${settings.logoPosition === 'center' ? 'mt-2' : ''}`} style={{display: settings.institution ? 'block' : 'none', textAlign: 'center'}}>{settings.institution}</div>
+                                        <div className="p-title mb-4 text-center">{settings.title}</div>
                                         
                                         <div className="p-meta grid grid-cols-2 gap-x-8 gap-y-2 mb-6 pb-4 border-b border-slate-900/10">
                                             <div className="flex justify-between"><span>Duration:</span> <span>{settings.duration}</span></div>
                                             <div className="flex justify-between"><span>Max Marks:</span> <span>{settings.totalMarks}</span></div>
                                             
-                                            {/* Student Details */}
-                                            {/* Student Details - Rendered dynamically based on settings */}
-                                            {settings.studentName && (
-                                                <div className="border-b border-slate-400 pb-1 flex justify-between items-end mt-3">
-                                                    <span className="font-semibold text-slate-700">Name:</span> 
-                                                    <span className="flex-1"></span>
-                                                </div>
-                                            )}
-                                            {settings.rollNumber && (
-                                                <div className="border-b border-slate-400 pb-1 flex justify-between items-end mt-3">
-                                                    <span className="font-semibold text-slate-700">Roll No:</span> 
-                                                    <span className="flex-1"></span>
-                                                </div>
-                                            )}
-                                            {settings.classSection && (
-                                                <div className="border-b border-slate-400 pb-1 flex justify-between items-end mt-3">
-                                                    <span className="font-semibold text-slate-700">Class/Sec:</span> 
-                                                    <span className="flex-1"></span>
-                                                </div>
-                                            )}
-                                            {settings.dateField && (
-                                                <div className="border-b border-slate-400 pb-1 flex justify-between items-end mt-3">
-                                                    <span className="font-semibold text-slate-700">Date:</span> 
-                                                    <span className="flex-1 text-right">{settings.date}</span>
-                                                </div>
-                                            )}
-                                            {settings.invigilatorSign && (
-                                                <div className="border-b border-slate-400 pb-1 flex justify-between items-end mt-3">
-                                                    <span className="font-semibold text-slate-700">Invigilator:</span> 
-                                                    <span className="flex-1"></span>
-                                                </div>
-                                            )}
                                         </div>
+
+                                        {/* Student Details Section */}
+                                        {(settings.studentName || settings.rollNumber || settings.classSection || settings.dateField || settings.invigilatorSign) && (
+                                            <div className="grid grid-cols-2 gap-x-12 gap-y-4 mb-6 pb-4 border-b border-slate-900/10 text-sm" style={{fontSize: `${settings.metaFontSize}px`}}>
+                                                {settings.studentName && (
+                                                    <div className="flex justify-between items-end">
+                                                        <span className="font-semibold text-slate-700 whitespace-nowrap mr-2">Name:</span> 
+                                                        <span className="flex-1 border-b border-slate-300"></span>
+                                                    </div>
+                                                )}
+                                                {settings.rollNumber && (
+                                                    <div className="flex justify-between items-end">
+                                                        <span className="font-semibold text-slate-700 whitespace-nowrap mr-2">Roll No:</span> 
+                                                        <span className="flex-1 border-b border-slate-300"></span>
+                                                    </div>
+                                                )}
+                                                {settings.classSection && (
+                                                    <div className="flex justify-between items-end">
+                                                        <span className="font-semibold text-slate-700 whitespace-nowrap mr-2">Class/Sec:</span> 
+                                                        <span className="flex-1 border-b border-slate-300"></span>
+                                                    </div>
+                                                )}
+                                                {settings.dateField && (
+                                                    <div className="flex justify-between items-end">
+                                                        <span className="font-semibold text-slate-700 whitespace-nowrap mr-2">Date:</span> 
+                                                        <span className="flex-1 border-b border-slate-300 text-right px-1">{settings.date}</span>
+                                                    </div>
+                                                )}
+                                                {settings.invigilatorSign && (
+                                                    <div className="flex justify-between items-end">
+                                                        <span className="font-semibold text-slate-700 whitespace-nowrap mr-2">Invigilator:</span> 
+                                                        <span className="flex-1 border-b border-slate-300"></span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
 
                                         {/* Instructions */}
                                         {settings.instructions && (
-                                            <div className="mb-6">
-                                                <div className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Instructions</div>
-                                                <div className="text-sm leading-relaxed instruction-content" dangerouslySetInnerHTML={{__html: settings.instructions}}></div>
+                                            <div className="mb-6 text-left" style={{fontSize: `${settings.metaFontSize}px`}}>
+                                                <div className="text-center text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Instructions</div>
+                                                <div className="text-sm leading-relaxed instruction-content text-left" dangerouslySetInnerHTML={{__html: settings.instructions}}></div>
                                             </div>
                                         )}
                                     </div>
@@ -954,18 +1021,24 @@ export default function PaperDesignerPage() {
 
                                 <div className={`paper-content relative z-10 ${settings.roughWorkArea === 'right' ? 'flex items-stretch' : ''}`}>
                                     <div className={settings.roughWorkArea === 'right' ? 'w-[75%] pr-6 border-r border-dashed border-slate-200' : 'w-full'}>
-                                        {pageQuestions.map((q) => {
-                                            const currentIndex = globalIndex;
-                                            globalIndex++;
-                                            return (
-                                                <SortableQuestionItem 
-                                                    key={q.id} 
-                                                    question={q} 
-                                                    index={currentIndex} 
-                                                    onRemove={removeFromPaper}
-                                                />
-                                            );
-                                        })}
+                                        <div className={`questions-area ${settings.layout === 'double' ? 'layout-double' : ''}`}>
+                                            {pageQuestions.map((q) => {
+                                                const currentIndex = globalIndex;
+                                                globalIndex++;
+                                                return (
+                                                    <div key={q.id} className={`q-wrapper ${settings.separator !== 'none' ? 'q-separator-' + settings.separator : ''}`} style={{breakInside: 'avoid'}}>
+                                                        <SortableQuestionItem 
+                                                            question={q} 
+                                                            index={currentIndex} 
+                                                            onRemove={removeFromPaper}
+                                                        />
+                                                        {settings.answerSpace !== 'none' && (
+                                                            <div className={`answer-space-${settings.answerSpace}`}></div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                     {settings.roughWorkArea === 'right' && (
                                         <div className="w-[25%] pl-4">
@@ -1073,42 +1146,122 @@ export default function PaperDesignerPage() {
                             <div className="section-title"><i className="ri-layout-masonry-line"></i> Formatting & Branding</div>
                         </div>
 
-                        <div className={`collapsible-content ${showBranding ? 'show' : ''}`}>
+                        <div className={`collapsible-content ${showBranding ? 'show' : ''}`} id="content-branding">
                             <div className="row">
                                 <div className="col" style={{flex: 2}}>
                                     <label>Institution Name</label>
                                     <input type="text" className="input-box" placeholder="e.g. St. Xavier's High School" value={settings.institution} onChange={e => setSettings({...settings, institution: e.target.value})} />
                                 </div>
                                 <div className="col">
-                                    <label>Font</label>
-                                    <select className="input-box" value={settings.font} onChange={e => setSettings({...settings, font: e.target.value as any})}>
-                                        <option value="jakarta">Jakarta (Sans)</option>
-                                        <option value="merriweather">Merriweather (Serif)</option>
+                                    <label>Logo Image</label>
+                                    <div className="file-upload-box" onClick={() => document.getElementById('logoInput')?.click()}>
+                                        <i className="ri-upload-cloud-2-line file-icon"></i>
+                                        <span style={{fontSize: '10px', fontWeight: 600, color: '#64748b'}}>
+                                            {settings.logo ? 'Change' : 'Upload'}
+                                        </span>
+                                        <input type="file" id="logoInput" hidden accept="image/*" onChange={handleLogoUpload} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="row">
+                                <div className="col">
+                                    <label>Logo Position</label>
+                                    <div className="visual-select">
+                                        {['left', 'center', 'right'].map((pos) => (
+                                            <div 
+                                                key={pos}
+                                                className={`visual-option ${settings.logoPosition === pos ? 'active' : ''}`}
+                                                onClick={() => setSettings({...settings, logoPosition: pos as any})}
+                                            >
+                                                <i className={`ri-align-${pos === 'center' ? 'center' : pos}`}></i>
+                                                <span className="capitalize">{pos}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="col">
+                                    <label>Page Layout</label>
+                                    <div className="visual-select">
+                                        <div className={`visual-option ${settings.layout === 'single' ? 'active' : ''}`} onClick={() => setSettings({...settings, layout: 'single'})}>
+                                            <div className="icon-box icon-1-col"></div> <span>Single</span>
+                                        </div>
+                                        <div className={`visual-option ${settings.layout === 'double' ? 'active' : ''}`} onClick={() => setSettings({...settings, layout: 'double'})}>
+                                            <div className="icon-box icon-2-col"></div> <span>2-Col</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="row">
+                                <div className="col">
+                                    <label>Font Size <span className="range-value">{settings.fontSize}px</span></label>
+                                    <div className="range-slider-container">
+                                        <input type="range" className="range-slider" min="10" max="18" value={settings.fontSize} onInput={(e) => setSettings({...settings, fontSize: Number(e.currentTarget.value)})} />
+                                    </div>
+                                </div>
+                                <div className="col">
+                                    <label>Line Height <span className="range-value">{settings.lineHeight}</span></label>
+                                    <div className="range-slider-container">
+                                        <input type="range" className="range-slider" min="1.0" max="2.0" step="0.1" value={settings.lineHeight} onInput={(e) => setSettings({...settings, lineHeight: Number(e.currentTarget.value)})} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="row">
+                                <div className="col">
+                                    <label>Answer Space</label>
+                                    <select className="input-box" value={settings.answerSpace} onChange={e => setSettings({...settings, answerSpace: e.target.value as any})}>
+                                        <option value="none">None</option>
+                                        <option value="lines">Dotted Lines (2)</option>
+                                        <option value="box">Empty Box</option>
+                                    </select>
+                                </div>
+                                <div className="col">
+                                    <label>Separator Line</label>
+                                    <select className="input-box" value={settings.separator} onChange={e => setSettings({...settings, separator: e.target.value as any})}>
+                                        <option value="none">Hidden</option>
+                                        <option value="solid">Solid Black</option>
+                                        <option value="double">Double Line</option>
+                                        <option value="dashed">Dashed</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div className="row">
                                 <div className="col">
-                                    <label>Template Layout</label>
-                                    <div className="template-grid">
-                                        {['classic', 'modern', 'minimal'].map(t => (
-                                            <div 
-                                                key={t} 
-                                                className={`template-option t-${t} ${settings.template === t ? 'active' : ''}`}
-                                                onClick={() => setSettings({...settings, template: t as any})}
-                                            >
-                                                <div className="template-icon"></div> {t.charAt(0).toUpperCase() + t.slice(1)}
-                                            </div>
-                                        ))}
-                                    </div>
+                                    <label>Page Border</label>
+                                    <select className="input-box" value={settings.pageBorder} onChange={e => setSettings({...settings, pageBorder: e.target.value as any})}>
+                                        <option value="none">None</option>
+                                        <option value="border-simple">Simple Line</option>
+                                        <option value="border-double">Double Line</option>
+                                    </select>
                                 </div>
                                 <div className="col">
-                                    <label>Margin Size</label>
+                                    <label>Font Family</label>
+                                    <select className="input-box" value={settings.font} onChange={e => setSettings({...settings, font: e.target.value as any})}>
+                                        <option value="jakarta">Jakarta Sans</option>
+                                        <option value="merriweather">Merriweather (Serif)</option>
+                                        <option value="inter">Inter</option>
+                                        <option value="mono">Mono</option>
+                                    </select>
+                                </div>
+                            </div>
+                             <div className="row">
+                                <div className="col">
+                                    <label>Template</label>
+                                    <select className="input-box" value={settings.template} onChange={e => setSettings({...settings, template: e.target.value as any})}>
+                                        <option value="classic">Classic</option>
+                                        <option value="modern">Modern</option>
+                                        <option value="minimal">Minimal</option>
+                                    </select>
+                                </div>
+                                <div className="col">
+                                    <label>Margin</label>
                                     <div className="toggle-container">
                                         {['S', 'M', 'L'].map(m => (
                                             <button 
-                                                key={m} 
+                                                key={m}
                                                 className={`toggle-btn ${settings.margin === m ? 'active' : ''}`}
                                                 onClick={() => setSettings({...settings, margin: m as any})}
                                             >
@@ -1116,13 +1269,10 @@ export default function PaperDesignerPage() {
                                             </button>
                                         ))}
                                     </div>
-                                    <label style={{marginTop: '8px'}}>Font Size</label>
-                                    <input 
-                                        type="range" min="12" max="18" 
-                                        value={settings.fontSize} 
-                                        style={{width: '100%', accentColor: 'var(--primary)'}}
-                                        onChange={e => setSettings({...settings, fontSize: parseInt(e.target.value)})}
-                                    />
+                                    <label style={{marginTop: '8px'}}>Content Font Size</label>
+                                    <div className="range-slider-container">
+                                        <input type="range" className="range-slider" min="10" max="16" value={settings.metaFontSize} onInput={(e) => setSettings({...settings, metaFontSize: Number(e.currentTarget.value)})} />
+                                    </div>
                                 </div>
                             </div>
                         </div>
