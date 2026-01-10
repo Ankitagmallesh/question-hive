@@ -9,24 +9,16 @@ import { signOut } from '../../app/lib/google-auth';
 import ProfileMenu from '../ProfileMenu';
 
 export default function DashboardLayout({ children, fullScreen = false }: { children: React.ReactNode, fullScreen?: boolean }) {
-  const [menuOpen, setMenuOpen] = useState(true); 
+  const [menuOpen, setMenuOpen] = useState(false); 
   const pathname = usePathname();
   const { user, loading } = useSupabaseAuth();
 
-
-
-  // Restore sidebar state on mount
-  useEffect(() => {
-      const saved = localStorage.getItem('sidebar_open');
-      if (saved !== null) {
-          setMenuOpen(saved === 'true');
-      }
-  }, []);
+  // Removed localStorage restoration to ensure it always starts closed as requested
 
   const toggleMenu = () => {
       const newState = !menuOpen;
       setMenuOpen(newState);
-      localStorage.setItem('sidebar_open', String(newState));
+      // localStorage.setItem('sidebar_open', String(newState)); // Don't persist if we always want it closed on refresh
   };
 
   const isActive = (path: string) => pathname === path || pathname?.startsWith(path + "/");
@@ -44,6 +36,8 @@ export default function DashboardLayout({ children, fullScreen = false }: { chil
         className={`fixed top-0 left-0 bottom-0 bg-white border-r border-slate-200 flex flex-col z-50 transition-all duration-300 shadow-xl lg:shadow-none overflow-hidden
         ${menuOpen ? 'translate-x-0 w-64' : '-translate-x-full lg:translate-x-0 lg:w-20'}
         `}
+        onMouseEnter={() => setMenuOpen(true)}
+        onMouseLeave={() => setMenuOpen(false)}
       >
         <div className={`flex items-center h-20 px-4 transition-all duration-300 ${menuOpen ? 'justify-between' : 'justify-center border-b border-transparent'}`}>
             {/* Logo Section - Visible only when Open */}
@@ -55,9 +49,10 @@ export default function DashboardLayout({ children, fullScreen = false }: { chil
             </div>
 
             {/* Toggle Button (Internal) */}
+            {/* Hidden since we use hover/auto-close now, but kept for mobile logic if needed */}
             <button 
-                onClick={toggleMenu} 
-                className={`p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-50 transition-colors shrink-0 cursor-pointer`}
+                onClick={() => setMenuOpen(!menuOpen)} 
+                className={`p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-50 transition-colors shrink-0 cursor-pointer ${!menuOpen ? 'hidden' : ''}`}
             >
                 <Menu className="w-6 h-6" />
             </button>
@@ -74,12 +69,7 @@ export default function DashboardLayout({ children, fullScreen = false }: { chil
                 <Link 
                     key={item.path}
                     href={item.path} 
-                    onClick={() => {
-                        if (window.innerWidth < 1024) {
-                            setMenuOpen(false);
-                            localStorage.setItem('sidebar_open', 'false');
-                        }
-                    }}
+                    onClick={() => setMenuOpen(false)}
                     className={`group p-3 rounded-xl flex items-center gap-3 font-medium transition-all duration-300
                     ${isActive(item.path) ? 'bg-indigo-50 text-blue-900 font-bold' : 'text-slate-500 hover:bg-slate-50 hover:text-blue-900'}
                     ${!menuOpen ? 'justify-center px-0' : ''}

@@ -295,7 +295,7 @@ export default function PaperDesignerPage() {
                      setSettings(s => ({...s, chapters: urlChapters}));
                 } else if (data.length > 0 && data[0]?.name) {
                      // Default fallback if nothing in URL
-                     setSettings(s => ({...s, chapters: [data[0].name]}));
+                     setSettings(s => ({...s, chapters: [data[0]?.name || '']}));
                 }
             }
         };
@@ -1001,7 +1001,8 @@ export default function PaperDesignerPage() {
                                         )}
 
                                         {/* Instructions */}
-                                        {settings.instructions && (
+                                        {/* Instructions */}
+                                        {settings.instructions && settings.instructions.replace(/<[^>]*>/g, '').trim().length > 0 && (
                                             <div className="mb-6 text-left" style={{fontSize: `${settings.metaFontSize}px`}}>
                                                 <div className="text-center text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Instructions</div>
                                                 <div className="text-sm leading-relaxed instruction-content text-left" dangerouslySetInnerHTML={{__html: settings.instructions}}></div>
