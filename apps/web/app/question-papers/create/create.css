@@ -158,9 +158,9 @@ label {
 
 .paper-sheet {
     background: white; 
-    width: 100%; 
-    max-width: 595px; /* A4 width at 72dpi, scaled to fit preview */
-    min-height: 842px; /* A4 height at 72dpi */
+    width: 210mm; 
+    max-width: none;
+    min-height: 297mm;
     padding: 40px; 
     box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); 
     border-radius: 2px;
@@ -168,6 +168,8 @@ label {
     flex-direction: column; 
     transition: padding 0.3s;
     transform-origin: top center;
+    transform: scale(0.7);
+    margin-bottom: -30%; /* Compensate for empty space at bottom after scaling */
 }
 
 .paper-header { 
