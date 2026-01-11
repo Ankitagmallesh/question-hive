@@ -111,7 +111,7 @@ function generatePaperHTML(data: PaperData): string {
         </div>
     `;
 
-    const instructionsHTML = data.instructions ? `
+    const instructionsHTML = (data.instructions && data.instructions.replace(/<[^>]*>/g, '').trim().length > 0) ? `
         <div class="instructions-section">
             <div class="inst-label">Instructions</div>
             <div class="inst-content">${data.instructions}</div>
