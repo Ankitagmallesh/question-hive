@@ -291,9 +291,10 @@ export async function POST(req: Request) {
 
         const getMarginMM = (m: string) => {
              switch(m) {
-                 case 'compact': return '10mm';
-                 case 'wide': return '30mm';
-                 case 'standard': default: return '20mm';
+                 case 'S': return '7mm';   // ~24px (Preview padding)
+                 case 'M': return '12.7mm'; // ~48px (Preview padding)
+                 case 'L': return '19mm';  // ~72px (Preview padding)
+                 default: return '12.7mm';
              }
         };
         const marginValue = getMarginMM(data.margin);
