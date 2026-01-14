@@ -344,11 +344,13 @@ label {
         max-width: 100% !important;
         min-height: auto !important;
         height: auto !important;
-        padding: 15mm 12mm !important;
+        padding: 8mm 12mm !important; /* Reduced from 15mm to match preview (40px ≈ 10.5mm) and account for browser margins */
         page-break-after: always;
         break-after: page;
         background: white !important;
         page-break-inside: avoid;
+        transform: none !important; /* Reset the 0.7 scale */
+        margin-bottom: 0 !important;
     }
 
     .paper-sheet:last-child {
