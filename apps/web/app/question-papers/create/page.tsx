@@ -718,6 +718,7 @@ export default function PaperDesignerPage() {
     };
 
     // --- PDF Export Function using Puppeteer API ---
+    // --- PDF Export Function using Puppeteer API ---
     const handleExportPDF = async () => {
         if (paperQuestions.length === 0) {
             toast({
