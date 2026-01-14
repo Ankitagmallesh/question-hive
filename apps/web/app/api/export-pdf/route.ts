@@ -153,18 +153,22 @@ function generatePaperHTML(data: PaperData): string {
         .watermark-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; align-items: center; justify-content: center;
-            z-index: -1; pointer-events: none; opacity: 0.04;
+            z-index: 50; pointer-events: none; opacity: 0.08; /* Increased opacity slightly and z-index */
         }
         .watermark-text {
             transform: rotate(-45deg); font-size: 80px; font-weight: 800; 
             border: 4px solid #000; padding: 20px 40px; border-radius: 20px; text-transform: uppercase;
+            color: #000; mix-blend-mode: multiply;
         }
 
         /* Header */
-        .paper-header { margin-bottom: 24px; border-bottom: 1px solid #ddd; padding-bottom: 12px; position: relative; }
+        /* Removed border-bottom from paper-header to avoid double lines with meta/student details */
+        .paper-header { margin-bottom: 20px; position: relative; } 
         .p-institution { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #666; letter-spacing: 1px; margin-bottom: 4px; display: ${data.institution ? 'block' : 'none'}; }
         .p-title { font-size: 18px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; }
-        .p-meta { display: flex; justify-content: space-between; font-weight: 600; font-size: 12px; border-bottom: 1px solid #eee; padding-bottom: 12px; margin-bottom: 12px; }
+        
+        /* Meta: Added strong border to separate header from content */
+        .p-meta { display: flex; justify-content: space-between; font-weight: 600; font-size: 12px; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 20px; }
         
         /* Template Styles */
         .t-modern .paper-header { ${templateStyles.headerBorder} ${templateStyles.headerAlign} }
@@ -173,16 +177,33 @@ function generatePaperHTML(data: PaperData): string {
         .t-classic .paper-header { ${templateStyles.headerBorder} ${templateStyles.headerAlign} }
 
         /* Student Details */
-        .student-details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 40px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #e2e8f0; font-size: ${data.metaFontSize || 12}px; }
+        /* Removed bottom border to reduce clutter */
+        .student-details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 40px; margin-bottom: 24px; font-size: ${data.metaFontSize || 12}px; }
         .detail-item { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid #94a3b8; padding-bottom: 4px; }
         .detail-item span:first-child { font-weight: 600; color: #334155; }
         .detail-item .line { flex: 1; text-align: right; }
 
         /* Instructions */
-        .instructions-section { margin-bottom: 16px; page-break-inside: avoid; text-align: left; }
-        .inst-label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 4px; }
-        .inst-content { font-size: ${data.metaFontSize || 12}px; text-align: left; }
-        .inst-content ul, .inst-content ol { padding-left: 20px; }
+        .instructions-section { 
+            margin-bottom: 24px; 
+            page-break-inside: avoid; 
+            text-align: left;
+        }
+        .inst-label { 
+            font-size: 10px; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            color: #64748b; 
+            margin-bottom: 8px; 
+            text-align: center; /* Centered title like preview */
+            letter-spacing: 1px;
+        }
+        .inst-content { font-size: ${data.metaFontSize || 12}px; text-align: left; line-height: 1.6; }
+        /* Explicit List Styles */
+        .inst-content ul { list-style-type: disc !important; padding-left: 20px; margin: 4px 0; }
+        .inst-content ol { list-style-type: decimal !important; padding-left: 20px; margin: 4px 0; }
+        .inst-content li { margin-bottom: 4px; padding-left: 4px; }
+        .inst-content p { margin-bottom: 8px; }
 
         /* Layout with Rough Column */
         .layout-with-rough-col { display: flex; }
@@ -235,8 +256,8 @@ function generatePaperHTML(data: PaperData): string {
                 <span>Duration: ${data.duration}</span>
                 <span>Max Marks: ${data.totalMarks}</span>
             </div>
-            ${studentDetailsHTML}
             ${instructionsHTML}
+            ${studentDetailsHTML}
         </div>
 
         <div class="${contentWrapperClass}">
