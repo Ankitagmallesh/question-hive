@@ -911,7 +911,7 @@ export default function PaperDesignerPage() {
         let globalIndex = 0;
 
         return (
-            <div className="flex flex-col gap-8 items-center pb-20">
+            <div className="flex flex-col items-center pb-20">
                 <DndContext 
                     sensors={sensors} 
                     collisionDetection={closestCenter} 
