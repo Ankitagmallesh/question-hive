@@ -20,9 +20,16 @@ export default function QuestionsPage() {
     const { user, loading: authLoading } = useSupabaseAuth(); // Keep for auth check
     const [questions, setQuestions] = useState<Question[]>([]);
     const [loading, setLoading] = useState(true);
+    
+    // Filters & Pagination State
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState<string>('all');
     const [filterDifficulty, setFilterDifficulty] = useState<string>('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+
+    const LIMIT = 20;
 
     useEffect(() => {
         if (authLoading) return;
@@ -30,44 +37,55 @@ export default function QuestionsPage() {
             router.push('/auth/login');
             return;
         }
-        (async () => {
-            await loadQuestions();
-            setLoading(false);
-        })();
-    }, [authLoading, user, router]);
+        // Debounce search
+        const timeoutId = setTimeout(() => {
+            loadQuestions();
+        }, 300);
+        return () => clearTimeout(timeoutId);
+    }, [authLoading, user, router, currentPage, searchTerm, filterType, filterDifficulty]);
 
     const loadQuestions = async () => {
+        setLoading(true);
         try {
-            const res = await fetch('/api/questions');
+            const params = new URLSearchParams({
+                page: String(currentPage),
+                limit: String(LIMIT),
+                search: searchTerm,
+                type: filterType,
+                difficulty: filterDifficulty
+            });
+
+            const res = await fetch(`/api/questions?${params.toString()}`);
             const json = await res.json();
+            
             if (json.success) {
-                // adapt to Question shape minimally if needed
                 const mapped: Question[] = json.data.map((q: any) => ({
                     id: q.id,
                     text: q.content,
-                    subject: '—', // could be enriched via join with subjects
-                    chapter: '—', // could be enriched via join with chapters
+                    subject: '—', 
+                    chapter: '—', 
                     type: (q.questionType || 'mcq').toLowerCase(),
                     difficulty: (q.difficulty || 'medium').toLowerCase(),
                     marks: Number(q.marks) || 1,
-                    createdAt: new Date().toISOString(),
+                    createdAt: q.createdAt,
                 }));
                 setQuestions(mapped);
+                if (json.pagination) {
+                    setTotalPages(json.pagination.totalPages);
+                    setTotalCount(json.pagination.total);
+                }
             }
         } catch (error) {
             console.error('Failed to load questions:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const filteredQuestions = questions.filter(question => {
-        const matchesSearch = question.text.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            question.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            question.chapter.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesType = filterType === 'all' || question.type === filterType;
-        const matchesDifficulty = filterDifficulty === 'all' || question.difficulty === filterDifficulty;
-
-        return matchesSearch && matchesType && matchesDifficulty;
-    });
+    // Reset page on filter change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, filterType, filterDifficulty]);
 
     const getDifficultyColor = (difficulty: string) => {
         switch (difficulty) {
@@ -166,7 +184,7 @@ export default function QuestionsPage() {
 
                 {/* Questions List */}
                 <div className="space-y-4">
-                    {filteredQuestions.length === 0 ? (
+                    {questions.length === 0 ? (
                         <Card>
                             <CardContent className="text-center py-8">
                                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -180,7 +198,7 @@ export default function QuestionsPage() {
                             </CardContent>
                         </Card>
                     ) : (
-                        filteredQuestions.map((question) => (
+                        questions.map((question) => (
                             <Card key={question.id} className="hover:shadow-md transition-shadow">
                                 <CardContent className="p-6">
                                     <div className="flex justify-between items-start mb-4">
@@ -228,25 +246,35 @@ export default function QuestionsPage() {
                     )}
                 </div>
 
-                {/* Pagination (placeholder) */}
-                {filteredQuestions.length > 0 && (
-                    <div className="mt-8 flex justify-center">
+                {/* Pagination */}
+                {questions.length > 0 && (
+                    <div className="mt-8 flex flex-col items-center gap-2">
                         <div className="flex space-x-2">
-                            <Button variant="outline" size="sm" disabled>
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                disabled={currentPage === 1}
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            >
                                 Previous
                             </Button>
-                            <Button variant="outline" size="sm" className="bg-blue-600 text-white">
-                                1
-                            </Button>
-                            <Button variant="outline" size="sm">
-                                2
-                            </Button>
-                            <Button variant="outline" size="sm">
-                                3
-                            </Button>
-                            <Button variant="outline" size="sm">
+                            
+                            {/* Simple Page Indicator for now */}
+                            <div className="flex items-center px-4 text-sm font-medium text-gray-700">
+                                Page {currentPage} of {totalPages}
+                            </div>
+
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                disabled={currentPage === totalPages}
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            >
                                 Next
                             </Button>
+                        </div>
+                        <div className="text-xs text-slate-500">
+                            Showing {(currentPage - 1) * LIMIT + 1} - {Math.min(currentPage * LIMIT, totalCount)} of {totalCount} questions
                         </div>
                     </div>
                 )}
