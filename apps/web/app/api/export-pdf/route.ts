@@ -164,11 +164,11 @@ function generatePaperHTML(data: PaperData): string {
         /* Header */
         /* Removed border-bottom from paper-header to avoid double lines with meta/student details */
         .paper-header { margin-bottom: 20px; position: relative; } 
-        .p-institution { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #666; letter-spacing: 1px; margin-bottom: 4px; display: ${data.institution ? 'block' : 'none'}; }
-        .p-title { font-size: 18px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; }
+        .p-institution { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #666; letter-spacing: 1px; margin-bottom: 4px; display: ${data.institution ? 'block' : 'none'}; margin-top: 0; }
+        .p-title { font-size: 18px; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; margin-top: 0; }
         
         /* Meta: Added strong border to separate header from content */
-        .p-meta { display: flex; justify-content: space-between; font-weight: 600; font-size: 12px; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 20px; }
+        .p-meta { display: flex; justify-content: space-between; font-weight: 600; font-size: 12px; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 12px; }
         
         /* Template Styles */
         .t-modern .paper-header { ${templateStyles.headerBorder} ${templateStyles.headerAlign} }
@@ -178,7 +178,7 @@ function generatePaperHTML(data: PaperData): string {
 
         /* Student Details */
         /* Removed bottom border to reduce clutter */
-        .student-details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 40px; margin-bottom: 24px; font-size: ${data.metaFontSize || 12}px; }
+        .student-details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 40px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #000; font-size: ${data.metaFontSize || 12}px; }
         .detail-item { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid #94a3b8; padding-bottom: 4px; }
         .detail-item span:first-child { font-weight: 600; color: #334155; }
         .detail-item .line { flex: 1; text-align: right; }
@@ -236,12 +236,13 @@ function generatePaperHTML(data: PaperData): string {
         .layout-double .questions-area { column-count: 2; column-gap: 40px; column-rule: 1px solid #e2e8f0; }
         
         /* Page Border */
-        .paper-sheet.border-simple { border: 1px solid #0f172a; margin: 20px auto; padding: 20px; box-sizing: border-box; }
-        .paper-sheet.border-double { border: 4px double #0f172a; margin: 20px auto; padding: 20px; box-sizing: border-box; }
+        /* Page Border - Removed top margin to pull border up */
+        .paper-sheet.border-simple { border: 1px solid #0f172a; margin: 0 auto 20px auto; padding: 20px; box-sizing: border-box; }
+        .paper-sheet.border-double { border: 4px double #0f172a; margin: 0 auto 20px auto; padding: 20px; box-sizing: border-box; }
 
         @media print {
             body { -webkit-print-color-adjust: exact; }
-            .paper-sheet { margin: 0; padding: 0; border: none !important; } /* Page borders usually for preview, but user might want printable? Browsers handle print margins separately. */
+            .paper-sheet { margin: 0; padding: 0; } /* Removed border: none to allow user-selected borders */
         }
     </style>
 </head>
@@ -256,8 +257,8 @@ function generatePaperHTML(data: PaperData): string {
                 <span>Duration: ${data.duration}</span>
                 <span>Max Marks: ${data.totalMarks}</span>
             </div>
-            ${instructionsHTML}
             ${studentDetailsHTML}
+            ${instructionsHTML}
         </div>
 
         <div class="${contentWrapperClass}">
@@ -345,7 +346,8 @@ export async function POST(req: Request) {
             headerTemplate: '<div></div>',
             footerTemplate: footerTemplate,
             margin: {
-                top: data.pageBorder && data.pageBorder !== 'none' ? '15mm' : marginValue, // Adjust for border
+                // Reduced top margin for bordered pages to minimize white space above border
+                top: data.pageBorder && data.pageBorder !== 'none' ? '10mm' : marginValue, 
                 bottom: '15mm',
                 left: marginValue,
                 right: marginValue
