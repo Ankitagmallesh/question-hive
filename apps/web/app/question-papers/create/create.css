@@ -169,7 +169,11 @@ label {
     transition: padding 0.3s;
     transform-origin: top center;
     transform: scale(0.7);
-    margin-bottom: -30%; /* Compensate for empty space at bottom after scaling */
+    margin-bottom: -80mm; /* Compensate for empty space (297mm * 0.3 = ~89mm). -80mm leaves ~9mm gap */
+}
+
+.paper-sheet:last-child {
+    margin-bottom: 0 !important;
 }
 
 .paper-header { 
@@ -183,11 +187,12 @@ label {
     font-weight: 600; 
     text-transform: uppercase; 
     color: #666; 
-    margin-bottom: 6px; 
+    margin-bottom: 4px; 
     letter-spacing: 1px; 
+    margin-top: 0;
 }
-.p-title { font-size: 18px; font-weight: 800; text-transform: uppercase; margin-bottom: 6px; }
-.p-meta { font-size: 11px; display: flex; justify-content: space-between; font-weight: 600; }
+.p-title { font-size: 18px; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; margin-top: 0; }
+.p-meta { font-size: 11px; display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 12px; border-bottom: 2px solid #000; padding-bottom: 12px; }
 
 .paper-sheet.t-modern .paper-header { border-bottom: 4px solid var(--primary); text-align: left; }
 .paper-sheet.t-modern .p-title { color: var(--primary); }
@@ -499,8 +504,16 @@ label {
 /* --- Advanced Formatting & Branding --- */
 
 /* Page Border Styles */
-.paper-sheet.border-simple { border: 1px solid #0f172a; margin: 24px auto; }
-.paper-sheet.border-double { border: 4px double #0f172a; margin: 24px auto; }
+.paper-sheet.border-simple { 
+    border: 1px solid #0f172a; 
+    margin: 24px auto;
+    margin-bottom: -80mm !important; /* Preserve scale compensation */
+}
+.paper-sheet.border-double { 
+    border: 4px double #0f172a; 
+    margin: 24px auto;
+    margin-bottom: -80mm !important; /* Preserve scale compensation */
+}
 
 /* Fonts Extended */
 .t-classic { font-family: 'Times New Roman', Times, serif; }
