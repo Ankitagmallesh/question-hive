@@ -94,6 +94,10 @@ interface PaperSettings {
     classSection: boolean;
     dateField: boolean;
     invigilatorSign: boolean;
+    studentDetailsGap?: number;
+
+    // Content Alignment
+    contentAlignment?: 'left' | 'center' | 'justify';
     
     // Footer
     footerText: string;
@@ -251,6 +255,8 @@ export default function PaperDesignerPage() {
         classSection: false,
         dateField: false,
         invigilatorSign: false,
+        studentDetailsGap: 12,
+        contentAlignment: 'left',
         
         footerText: '',
         roughWorkArea: 'none',
@@ -265,6 +271,7 @@ export default function PaperDesignerPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [showPreviewModal, setShowPreviewModal] = useState(false);
     const [priorityChapter, setPriorityChapter] = useState<string | null>(null);
+    const [zoomLevel, setZoomLevel] = useState(100);
 
     const [paperQuestions, setPaperQuestions] = useState<Question[]>([]);
     const [sourceQuestions, setSourceQuestions] = useState<Question[]>([]);
@@ -758,12 +765,14 @@ export default function PaperDesignerPage() {
 
                 date: settings.date,
                 instructions: settings.instructions,
+                contentAlignment: settings.contentAlignment,
                 watermark: settings.watermark,
                 studentName: settings.studentName,
                 rollNumber: settings.rollNumber,
                 classSection: settings.classSection,
                 dateField: settings.dateField,
                 invigilatorSign: settings.invigilatorSign,
+                studentDetailsGap: settings.studentDetailsGap,
                 footerText: settings.footerText,
                 roughWorkArea: settings.roughWorkArea,
                 pageNumbering: settings.pageNumbering,
@@ -817,6 +826,10 @@ export default function PaperDesignerPage() {
             });
         }
     };
+
+    const handleZoomIn = () => setZoomLevel(prev => Math.min(prev + 10, 200));
+    const handleZoomOut = () => setZoomLevel(prev => Math.max(prev - 10, 50));
+    const handleZoomReset = () => setZoomLevel(100);
 
     const paginateQuestions = (questions: Question[]) => {
         if (questions.length === 0) return [];
@@ -959,15 +972,24 @@ export default function PaperDesignerPage() {
                                         <div className={`p-institution ${settings.logoPosition === 'center' ? 'mt-2' : ''}`} style={{display: settings.institution ? 'block' : 'none', textAlign: 'center'}}>{settings.institution}</div>
                                         <div className="p-title mb-4 text-center">{settings.title}</div>
                                         
-                                        <div className="p-meta grid grid-cols-2 gap-x-8 gap-y-2 mb-6 pb-4 border-b border-slate-900/10">
+                                        <div 
+                                            className="p-meta grid grid-cols-2 gap-x-8 gap-y-2 pb-4 border-b border-slate-900/10"
+                                            style={{ marginBottom: `${settings.studentDetailsGap || 12}px` }}
+                                        >
                                             <div className="flex justify-between"><span>Duration:</span> <span>{settings.duration}</span></div>
                                             <div className="flex justify-between"><span>Max Marks:</span> <span>{settings.totalMarks}</span></div>
-                                            
                                         </div>
 
                                         {/* Student Details Section */}
                                         {(settings.studentName || settings.rollNumber || settings.classSection || settings.dateField || settings.invigilatorSign) && (
-                                            <div className="grid grid-cols-2 gap-x-12 gap-y-4 mb-6 pb-4 border-b border-slate-900/10 text-sm" style={{fontSize: `${settings.metaFontSize}px`}}>
+                                            <div 
+                                                className="grid grid-cols-2 mb-6 pb-4 border-b border-slate-900/10 text-sm" 
+                                                style={{
+                                                    fontSize: `${settings.metaFontSize}px`,
+                                                    columnGap: '40px',
+                                                    rowGap: `${settings.studentDetailsGap || 12}px`
+                                                }}
+                                            >
                                                 {settings.studentName && (
                                                     <div className="flex justify-between items-end">
                                                         <span className="font-semibold text-slate-700 whitespace-nowrap mr-2">Name:</span> 
@@ -1004,9 +1026,13 @@ export default function PaperDesignerPage() {
                                         {/* Instructions */}
                                         {/* Instructions */}
                                         {settings.instructions && settings.instructions.replace(/<[^>]*>/g, '').trim().length > 0 && (
-                                            <div className="mb-6 text-left" style={{fontSize: `${settings.metaFontSize}px`}}>
+                                            <div className="mb-6" style={{fontSize: `${settings.metaFontSize}px`, textAlign: settings.contentAlignment || 'left'}}>
                                                 <div className="text-center text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Instructions</div>
-                                                <div className="text-sm leading-relaxed instruction-content text-left" dangerouslySetInnerHTML={{__html: settings.instructions}}></div>
+                                                <div 
+                                                    className="text-sm leading-relaxed instruction-content" 
+                                                    style={{textAlign: settings.contentAlignment || 'left'}} 
+                                                    dangerouslySetInnerHTML={{__html: settings.instructions}}
+                                                ></div>
                                             </div>
                                         )}
                                     </div>
@@ -1086,7 +1112,19 @@ export default function PaperDesignerPage() {
                         </div>
                         <div className="header-actions">
                             <button className="btn-action" onClick={() => setShowPreviewModal(true)}><i className="ri-eye-line"></i> Preview</button>
-                            <button className="btn-action" onClick={handleExportPDF}><i className="ri-file-pdf-line"></i> Export PDF</button>
+                            <div className="flex items-center gap-1 bg-slate-100 rounded-lg px-2 py-1">
+                                <button className="p-1 hover:bg-slate-200 rounded text-slate-600 transition-colors" onClick={handleZoomOut} title="Zoom Out">
+                                    <i className="ri-subtract-line"></i>
+                                </button>
+                                <span className="text-xs font-bold w-10 text-center text-slate-700">{zoomLevel}%</span>
+                                <button className="p-1 hover:bg-slate-200 rounded text-slate-600 transition-colors" onClick={handleZoomIn} title="Zoom In">
+                                    <i className="ri-add-line"></i>
+                                </button>
+                                <div className="w-px h-3 bg-slate-300 mx-1"></div>
+                                <button className="p-1.5 hover:bg-slate-200 rounded text-slate-600 text-[10px] font-semibold transition-colors uppercase tracking-wider" onClick={handleZoomReset}>
+                                    Reset
+                                </button>
+                            </div>
                             <button className="btn-action" onClick={handleSavePaper}><i className="ri-save-line"></i> Save</button>
                         </div>
                     </div>
@@ -1301,6 +1339,21 @@ export default function PaperDesignerPage() {
                             </div>
                             <div className="row" style={{marginTop: '12px'}}>
                                 <div className="col">
+                                    <label>Content Alignment</label>
+                                    <div className="visual-select">
+                                        {['left', 'center', 'justify'].map((align) => (
+                                            <div 
+                                                key={align}
+                                                className={`visual-option ${settings.contentAlignment === align ? 'active' : ''}`}
+                                                onClick={() => setSettings({...settings, contentAlignment: align as any})}
+                                            >
+                                                <i className={`ri-align-${align}`}></i>
+                                                <span className="capitalize">{align}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="col">
                                     <label>Watermark Text</label>
                                     <input type="text" className="input-box" placeholder="e.g. CONFIDENTIAL" value={settings.watermark || ''} onChange={e => setSettings({...settings, watermark: e.target.value})} />
                                 </div>
@@ -1319,6 +1372,23 @@ export default function PaperDesignerPage() {
                                 <label className="checkbox-label"><input type="checkbox" checked={settings.classSection} onChange={e => setSettings({...settings, classSection: e.target.checked})} /> Class/Section</label>
                                 <label className="checkbox-label"><input type="checkbox" checked={settings.dateField} onChange={e => setSettings({...settings, dateField: e.target.checked})} /> Date</label>
                                 <label className="checkbox-label"><input type="checkbox" checked={settings.invigilatorSign} onChange={e => setSettings({...settings, invigilatorSign: e.target.checked})} /> Invigilator Sign</label>
+                            </div>
+                            
+                            <div className="row" style={{marginTop: '16px'}}>
+                                <div className="col">
+                                    <label>Row Spacing <span className="range-value">{settings.studentDetailsGap || 12}px</span></label>
+                                    <div className="range-slider-container">
+                                        <input 
+                                            type="range" 
+                                            className="range-slider" 
+                                            min="8" 
+                                            max="40" 
+                                            step="4"
+                                            value={settings.studentDetailsGap || 12} 
+                                            onInput={(e) => setSettings({...settings, studentDetailsGap: Number(e.currentTarget.value)})} 
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -1510,8 +1580,20 @@ export default function PaperDesignerPage() {
 
                 <div className="resizer" onMouseDown={handleResizeMouseDown}></div>
 
-                <div className="preview-panel" data-lenis-prevent>
-                    <PaperContent />
+                <div className="preview-panel" data-lenis-prevent style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+
+                    <div className={`flex-1 bg-slate-50/50 p-8 flex ${zoomLevel <= 100 ? 'overflow-auto justify-start' : 'overflow-auto justify-center'}`}>
+                        <div 
+                            style={{ 
+                                transform: `scale(${zoomLevel / 100})`, 
+                                transformOrigin: 'top center',
+                                transition: 'transform 0.2s cubic-bezier(0.2, 0, 0, 1)',
+                                minHeight: '100%'
+                            }}
+                        >
+                            <PaperContent />
+                        </div>
+                    </div>
                     
                     <button className="fab-export" onClick={handleExportPDF}><i className="ri-file-pdf-line"></i> Export PDF</button>
                 </div>
