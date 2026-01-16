@@ -44,6 +44,8 @@ interface PaperData {
     footerText?: string;
     roughWorkArea?: 'none' | 'right';
     pageNumbering?: 'hidden' | 'page-x-of-y' | 'x-slash-y';
+    studentDetailsGap?: number;
+    contentAlignment?: 'left' | 'center' | 'justify';
 }
 
 function getTemplateStyles(template: string): { headerBorder: string; headerAlign: string; titleColor: string } {
@@ -168,7 +170,7 @@ function generatePaperHTML(data: PaperData): string {
         .p-title { font-size: 18px; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; margin-top: 0; }
         
         /* Meta: Added strong border to separate header from content */
-        .p-meta { display: flex; justify-content: space-between; font-weight: 600; font-size: 12px; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 12px; }
+        .p-meta { display: flex; justify-content: space-between; font-weight: 600; font-size: 12px; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: ${data.studentDetailsGap || 12}px; }
         
         /* Template Styles */
         .t-modern .paper-header { ${templateStyles.headerBorder} ${templateStyles.headerAlign} }
@@ -178,7 +180,7 @@ function generatePaperHTML(data: PaperData): string {
 
         /* Student Details */
         /* Removed bottom border to reduce clutter */
-        .student-details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 40px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #000; font-size: ${data.metaFontSize || 12}px; }
+        .student-details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: ${data.studentDetailsGap || 12}px 40px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #000; font-size: ${data.metaFontSize || 12}px; }
         .detail-item { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid #94a3b8; padding-bottom: 4px; }
         .detail-item span:first-child { font-weight: 600; color: #334155; }
         .detail-item .line { flex: 1; text-align: right; }
@@ -187,7 +189,7 @@ function generatePaperHTML(data: PaperData): string {
         .instructions-section { 
             margin-bottom: 24px; 
             page-break-inside: avoid; 
-            text-align: left;
+            text-align: ${data.contentAlignment || 'left'};
         }
         .inst-label { 
             font-size: 10px; 
@@ -198,7 +200,7 @@ function generatePaperHTML(data: PaperData): string {
             text-align: center; /* Centered title like preview */
             letter-spacing: 1px;
         }
-        .inst-content { font-size: ${data.metaFontSize || 12}px; text-align: left; line-height: 1.6; }
+        .inst-content { font-size: ${data.metaFontSize || 12}px; text-align: ${data.contentAlignment || 'left'}; line-height: 1.6; }
         /* Explicit List Styles */
         .inst-content ul { list-style-type: disc !important; padding-left: 20px; margin: 4px 0; }
         .inst-content ol { list-style-type: decimal !important; padding-left: 20px; margin: 4px 0; }
