@@ -109,9 +109,11 @@ export default function DashboardLayout({ children, fullScreen = false }: { chil
             </div>
         )}
         
-        <div className="absolute top-6 right-6 z-20">
-            <ProfileMenu user={user} onLogout={handleLogout} />
-        </div>
+        {!fullScreen && (
+            <div className="absolute top-6 right-6 z-20">
+                <ProfileMenu user={user} onLogout={handleLogout} />
+            </div>
+        )}
 
         <div className={fullScreen ? "pt-20 lg:pt-0" : "p-6 lg:p-10 pt-20 lg:pt-12"}>
             {children}
