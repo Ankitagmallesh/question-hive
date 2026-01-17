@@ -8,34 +8,14 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
-    const search = searchParams.get('search') || '';
-    const type = searchParams.get('type') || 'all';
-    const difficulty = searchParams.get('difficulty') || 'all';
+    // Search and filter logic removed as per request
+    // const search = searchParams.get('search') || '';
+    // const type = searchParams.get('type') || 'all';
+    // const difficulty = searchParams.get('difficulty') || 'all';
 
+    const conditions: any[] = [];
     const offset = (page - 1) * limit;
 
-    // Build conditions
-    const conditions = [];
-    
-    if (search) {
-      // Drizzle currently doesn't have a simple ILIKE for all DBs, but use 'like' or 'ilike' depending on driver. 
-      // Assuming Postgres (based on context), using ilike.
-      // If generic, might need sql template.
-      // Let's use basic 'like' or check if content contains string for simplicity if driver varies, 
-      // but strictly, search usually implies 'ilike'.
-      // Using sql`...` for flexibility or specific operators.
-      conditions.push(sql`${questions.content} ILIKE ${'%' + search + '%'}`);
-    }
-
-    if (type !== 'all') {
-      // We need to join to filter by type name, or just filter by typeId if we had it. 
-      // API receives "mcq", "short", etc. We need to filter on the joined name.
-      conditions.push(eq(sql`lower(${questionTypes.name})`, type.toLowerCase()));
-    }
-
-    if (difficulty !== 'all') {
-       conditions.push(eq(sql`lower(${difficultyLevels.name})`, difficulty.toLowerCase()));
-    }
 
     // Base Query for Data
     const baseQuery = db
