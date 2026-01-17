@@ -283,12 +283,11 @@ export default function QuestionsPage() {
             </main>
         </div>
 
-            {/* Create Question Modal */}
             <CreateQuestionModal 
                 isOpen={showCreateModal}
                 onClose={() => setShowCreateModal(false)}
                 onSuccess={loadQuestions}
-                userId={user?.id || 1}
+                userId={typeof user?.id === 'number' ? user.id : 1}
             />
         </DashboardLayout>
     );
