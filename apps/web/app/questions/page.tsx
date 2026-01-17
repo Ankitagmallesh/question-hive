@@ -14,6 +14,7 @@ import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
 import { Question } from '../lib/questions-data';
 import AppLoader from '../../components/ui/AppLoader';
+import CreateQuestionModal from './CreateQuestionModal';
 
 export default function QuestionsPage() {
     const router = useRouter();
@@ -28,6 +29,7 @@ export default function QuestionsPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
     const LIMIT = 20;
 
@@ -128,7 +130,7 @@ export default function QuestionsPage() {
                                 <h2 className="text-3xl font-bold text-gray-900">Questions</h2>
                                 <p className="mt-2 text-gray-600">Manage your question bank and create new questions</p>
                             </div>
-                            <Button className="bg-blue-600 hover:bg-blue-700">
+                            <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setShowCreateModal(true)}>
                                 <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                                 </svg>
@@ -280,6 +282,14 @@ export default function QuestionsPage() {
                 )}
             </main>
         </div>
+
+            {/* Create Question Modal */}
+            <CreateQuestionModal 
+                isOpen={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+                onSuccess={loadQuestions}
+                userId={user?.id || 1}
+            />
         </DashboardLayout>
     );
 }
