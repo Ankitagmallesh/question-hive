@@ -8,14 +8,8 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
-    // Search and filter logic removed as per request
-    // const search = searchParams.get('search') || '';
-    // const type = searchParams.get('type') || 'all';
-    // const difficulty = searchParams.get('difficulty') || 'all';
 
-    const conditions: any[] = [];
     const offset = (page - 1) * limit;
-
 
     // Base Query for Data
     const baseQuery = db
@@ -28,18 +22,13 @@ export async function GET(request: Request) {
         questionType: questionTypes.name,
         questionTypeId: questions.questionTypeId,
         createdAt: questions.createdAt,
-        // chapters: chapters.name // If needed later
       })
       .from(questions)
       .leftJoin(difficultyLevels, eq(questions.difficultyLevelId, difficultyLevels.id))
       .leftJoin(questionTypes, eq(questions.questionTypeId, questionTypes.id))
-      // .leftJoin(chapters, ...) // If chapter filter needed
       
-    // Apply filters
+    // Apply filters - logic removed
     let queryWithFilters: any = baseQuery;
-    if (conditions.length > 0) {
-      queryWithFilters = queryWithFilters.where(and(...conditions));
-    }
 
     // Get Total Count (separate query or window function)
     // Drizzle doesn't support easy window functions yet for count(*), so easier to run a count query.
@@ -50,10 +39,6 @@ export async function GET(request: Request) {
       .leftJoin(difficultyLevels, eq(questions.difficultyLevelId, difficultyLevels.id))
       .leftJoin(questionTypes, eq(questions.questionTypeId, questionTypes.id));
     
-    if (conditions.length > 0) {
-        // @ts-ignore - Valid Drizzle usage despite type noise
-        countQuery.where(and(...conditions));
-    }
     
     const [totalResult] = await countQuery;
     const total = Number(totalResult?.count || 0);
