@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, animate, useInView } from "framer-motion";
+import { GraduationCap, Landmark, Trash2 } from "lucide-react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 
 // CountUp Component
@@ -86,6 +87,36 @@ export default function DashboardPage() {
       const level = stats.difficultyBreakdown.find(d => d.difficulty.toLowerCase().includes(levelName.toLowerCase()));
       return level ? Math.round((level.count / totalDBQuestions) * 100) : 0;
   };
+
+  const handleDelete = async (e: React.MouseEvent, id: number) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (!confirm('Are you sure you want to delete this assessment? This action cannot be undone.')) {
+          return;
+      }
+
+      try {
+          const res = await fetch(`/api/question-papers/${id}`, {
+              method: 'DELETE'
+          });
+          const data = await res.json();
+          
+          if (data.success) {
+              setStats(prev => ({
+                  ...prev,
+                  recentPapers: prev.recentPapers.filter(p => p.id !== id),
+                  totalPapers: Math.max(0, prev.totalPapers - 1)
+              }));
+          } else {
+              alert('Failed to delete: ' + data.error);
+          }
+      } catch (error) {
+          console.error("Delete failed", error);
+          alert('An error occurred while deleting.');
+      }
+  };
+
 
   return (
     <DashboardLayout>
@@ -364,6 +395,13 @@ export default function DashboardPage() {
                                             {paper.status || 'Draft'}
                                         </span>
                                         <svg className="w-5 h-5 text-slate-300 group-hover:text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                        <button 
+                                            onClick={(e) => handleDelete(e, paper.id)}
+                                            className="p-2 -mr-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+                                            title="Delete"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
                                     </div>
                                 </div>
                             </Link>
