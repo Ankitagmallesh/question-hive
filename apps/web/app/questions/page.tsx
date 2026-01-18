@@ -5,9 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { GraduationCap } from 'lucide-react';
 import { Button } from "../components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
-import { Input } from "../components/ui/input";
 import { Separator } from "../components/ui/separator";
 import type { User } from '@repo/types';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
@@ -23,9 +22,6 @@ export default function QuestionsPage() {
     const [loading, setLoading] = useState(true);
     
     // Filters & Pagination State
-    const [searchTerm, setSearchTerm] = useState('');
-    const [filterType, setFilterType] = useState<string>('all');
-    const [filterDifficulty, setFilterDifficulty] = useState<string>('all');
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
@@ -39,22 +35,15 @@ export default function QuestionsPage() {
             router.push('/auth/login');
             return;
         }
-        // Debounce search
-        const timeoutId = setTimeout(() => {
             loadQuestions();
-        }, 300);
-        return () => clearTimeout(timeoutId);
-    }, [authLoading, user, router, currentPage, searchTerm, filterType, filterDifficulty]);
+    }, [authLoading, user, router, currentPage]);
 
     const loadQuestions = async () => {
         setLoading(true);
         try {
             const params = new URLSearchParams({
                 page: String(currentPage),
-                limit: String(LIMIT),
-                search: searchTerm,
-                type: filterType,
-                difficulty: filterDifficulty
+                limit: String(LIMIT)
             });
 
             const res = await fetch(`/api/questions?${params.toString()}`);
@@ -84,10 +73,7 @@ export default function QuestionsPage() {
         }
     };
 
-    // Reset page on filter change
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [searchTerm, filterType, filterDifficulty]);
+
 
     const getDifficultyColor = (difficulty: string) => {
         switch (difficulty) {
@@ -139,50 +125,7 @@ export default function QuestionsPage() {
                         </div>
                     </div>
 
-                {/* Filters */}
-                <Card className="mb-6">
-                    <CardHeader>
-                        <CardTitle>Search & Filter</CardTitle>
-                        <CardDescription>Find questions by text, subject, or chapter</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div className="md:col-span-2">
-                                <Input
-                                    placeholder="Search questions..."
-                                    value={searchTerm}
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-                                    className="w-full"
-                                />
-                            </div>
-                            <div>
-                                <select
-                                    value={filterType}
-                                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilterType(e.target.value)}
-                                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                >
-                                    <option value="all">All Types</option>
-                                    <option value="mcq">Multiple Choice</option>
-                                    <option value="short">Short Answer</option>
-                                    <option value="long">Long Answer</option>
-                                    <option value="numerical">Numerical</option>
-                                </select>
-                            </div>
-                            <div>
-                                <select
-                                    value={filterDifficulty}
-                                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilterDifficulty(e.target.value)}
-                                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                >
-                                    <option value="all">All Levels</option>
-                                    <option value="easy">Easy</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="hard">Hard</option>
-                                </select>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+
 
                 {/* Questions List */}
                 <div className="space-y-4">
@@ -195,8 +138,7 @@ export default function QuestionsPage() {
                                     </svg>
                                 </div>
                                 <h3 className="text-lg font-medium text-gray-900 mb-2">No questions found</h3>
-                                <p className="text-gray-600 mb-4">Try adjusting your search or filter criteria</p>
-                                <Button variant="outline">Clear Filters</Button>
+                                <p className="text-gray-600 mb-4">Click 'Create Question' to add one</p>
                             </CardContent>
                         </Card>
                     ) : (
