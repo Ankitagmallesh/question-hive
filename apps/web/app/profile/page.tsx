@@ -1,235 +1,255 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { apiClient } from '../lib/api';
-import type { User } from '@repo/types';
-import { Button } from "../components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
-import { Badge } from "../components/ui/badge";
+import { useState, useEffect } from "react";
+import DashboardLayout from "../../components/layouts/DashboardLayout";
+import { useSupabaseAuth } from "../hooks/useSupabaseAuth";
+import { Loader2, Save, User as UserIcon, Mail, Phone, MapPin, FileText, Pencil } from "lucide-react";
+import { toast } from "sonner";
 
 export default function ProfilePage() {
-    const router = useRouter();
-    const [user, setUser] = useState<User | null>(null);
+    const { user: authUser, loading: authLoading } = useSupabaseAuth();
+    const [profile, setProfile] = useState({
+        bio: '',
+        phone: '',
+        address: '',
+        avatarUrl: ''
+    });
+    const [dbUser, setDbUser] = useState({ name: '', email: '' });
+    const [stats, setStats] = useState({ papers: 0, questions: 0 });
     const [loading, setLoading] = useState(true);
-    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-    const [deleteConfirmation, setDeleteConfirmation] = useState('');
-    const [isDeleting, setIsDeleting] = useState(false);
+    const [saving, setSaving] = useState(false);
 
     useEffect(() => {
-        const checkAuth = async () => {
-            const token = localStorage.getItem('auth_token');
-            if (!token) {
-                router.push('/auth/login');
-                return;
-            }
+        if (!authLoading && authUser?.email) {
+            fetchProfile(authUser.email);
+        } else if (!authLoading && !authUser) {
+             setLoading(false); // No user logged in
+        }
+    }, [authLoading, authUser]);
 
-            apiClient.setAuthToken(token);
-
-            try {
-                const response = await apiClient.auth.getProfile();
-                if (response.success && response.data) {
-                    // Check if there's updated profile data in localStorage
-                    const savedProfile = localStorage.getItem('user_profile');
-                    if (savedProfile) {
-                        const parsedProfile = JSON.parse(savedProfile);
-                        setUser({ ...response.data, ...parsedProfile });
-                    } else {
-                        setUser(response.data);
-                    }
-                } else {
-                    router.push('/auth/login');
-                }
-            } catch (error) {
-                router.push('/auth/login');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        checkAuth();
-    }, [router]);
-
-    const handleDeleteAccount = async () => {
-        setIsDeleting(true);
+    const fetchProfile = async (email: string) => {
         try {
-            // TODO: Replace with actual API call when backend endpoint is ready
-            // await apiClient.auth.deleteAccount();
-            
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // Clear all local storage
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('user_profile');
-            apiClient.removeAuthToken();
-            
-            // Redirect to landing page
-            router.push('/');
+            const res = await fetch(`/api/profile?email=${email}`);
+            const data = await res.json();
+            if (data.success) {
+                setDbUser({
+                    name: data.user.name || authUser?.name || '',
+                    email: data.user.email
+                });
+                setProfile(prev => ({ ...prev, ...data.profile }));
+                if (data.stats) {
+                    setStats(data.stats);
+                }
+            } else {
+                console.error("Failed to fetch profile:", data.error);
+                // Maybe user doesn't exist in DB yet but is in Auth?
+                setDbUser({ name: authUser?.name || '', email: email });
+            }
         } catch (error) {
-            console.error('Failed to delete account:', error);
-            setIsDeleting(false);
+            console.error("Error fetching profile:", error);
+        } finally {
+            setLoading(false);
         }
     };
 
-    if (loading) {
+    const handleSave = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSaving(true);
+        try {
+            const res = await fetch('/api/profile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: dbUser.email,
+                    name: dbUser.name, 
+                    ...profile
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                toast.success("Profile updated successfully");
+            } else {
+                toast.error("Failed to update profile: " + data.error);
+            }
+        } catch (error) {
+            console.error("Save error:", error);
+            toast.error("An error occurred while saving.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    if (authLoading || loading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            </div>
+            <DashboardLayout>
+                <div className="flex h-[80vh] items-center justify-center">
+                    <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+                </div>
+            </DashboardLayout>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8">
-            <div className="max-w-4xl mx-auto px-4">
-                <div className="mb-8">
-                    <Button 
-                        variant="default" 
-                        onClick={() => router.back()}
-                        className="mb-4 bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 shadow-md"
-                    >
-                        ← Back
-                    </Button>
-                    <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
-                    <p className="text-gray-600 mt-2">View and manage your account information and preferences</p>
-                </div>
+        <DashboardLayout>
+            <div className="max-w-4xl mx-auto">
+                <header className="mb-8">
+                    <h1 className="text-3xl font-bold text-slate-900">My Profile</h1>
+                    <p className="text-slate-500 mt-2">Manage your personal information and preferences.</p>
+                </header>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Profile Information Card */}
-                    <Card className="lg:col-span-2">
-                        <CardHeader>
-                            <CardTitle>Profile Information</CardTitle>
-                            <CardDescription>
-                                Your account details and information
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm font-medium text-gray-600">Name:</span>
-                                    <span className="text-sm font-semibold text-gray-900">{user?.name || user?.email?.split('@')[0] || 'N/A'}</span>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {/* Left Column: Avatar & Basic Info */}
+                    <div className="md:col-span-1 space-y-6">
+                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
+                            <div className="relative group">
+                                <div className="w-24 h-24 rounded-full bg-indigo-100 flex items-center justify-center mb-4 text-indigo-600 border-4 border-white shadow-lg overflow-hidden">
+                                    {profile.avatarUrl ? (
+                                        <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-3xl font-bold">{dbUser.name ? dbUser.name.charAt(0).toUpperCase() : 'U'}</span>
+                                    )}
                                 </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm font-medium text-gray-600">Email:</span>
-                                    <span className="text-sm font-semibold text-gray-900">{user?.email || 'N/A'}</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm font-medium text-gray-600">Role:</span>
-                                    <Badge variant="secondary">{user?.role || 'User'}</Badge>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm font-medium text-gray-600">Status:</span>
-                                    <Badge variant={user?.isActive ? "default" : "destructive"}>
-                                        {user?.isActive ? 'Active' : 'Inactive'}
-                                    </Badge>
-                                </div>
-                                {user?.lastLoginAt && (
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm font-medium text-gray-600">Last Login:</span>
-                                        <span className="text-sm font-semibold text-gray-900">
-                                            {new Date(user.lastLoginAt).toLocaleDateString()}
-                                        </span>
-                                    </div>
-                                )}
-                                {user?.institution && (
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm font-medium text-gray-600">Institution:</span>
-                                        <span className="text-sm font-semibold text-gray-900">{user.institution.name}</span>
-                                    </div>
-                                )}
+                                <label className="absolute bottom-4 right-0 p-1.5 bg-white rounded-full shadow-md border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors text-slate-600">
+                                    <Pencil size={14} />
+                                    <input 
+                                        type="file" 
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                if (file.size > 2 * 1024 * 1024) { 
+                                                    toast.error("Image size should be less than 2MB");
+                                                    return;
+                                                }
+                                                const reader = new FileReader();
+                                                reader.onloadend = () => {
+                                                    setProfile(prev => ({ ...prev, avatarUrl: reader.result as string }));
+                                                };
+                                                reader.readAsDataURL(file);
+                                            }
+                                        }}
+                                    />
+                                </label>
                             </div>
-                        </CardContent>
-                    </Card>
+                            <h2 className="text-xl font-bold text-slate-900">{dbUser.name}</h2>
+                            <p className="text-sm text-slate-500">{dbUser.email}</p>
+                            
+                            <div className="mt-4 w-full pt-4 border-t border-slate-100 grid grid-cols-2 gap-4">
+                                <div className="text-center">
+                                    <p className="font-bold text-slate-900">{stats.papers}</p>
+                                    <p className="text-xs text-slate-500">Papers</p>
+                                </div>
+                                <div className="text-center">
+                                    <p className="font-bold text-slate-900">{stats.questions}</p>
+                                    <p className="text-xs text-slate-500">Questions</p>
+                                </div>
+                            </div>
+                            
+                            <div className="mt-6 w-full bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 text-center">Plan Credits</p>
+                                <div className="flex justify-between text-sm font-medium text-slate-700 mb-1">
+                                    <span>Used</span>
+                                    <span>450 / 1000</span>
+                                </div>
+                                <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                                    <div className="bg-indigo-500 h-full w-[45%]"></div>
+                                </div>
+                            </div>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Account Settings</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                            <Button 
-                                variant="outline" 
-                                className="w-full"
-                                onClick={() => router.push('/profile/edit')}
-                            >
-                                Edit Profile
-                            </Button>
-                            <Button 
-                                variant="outline" 
-                                className="w-full"
-                                onClick={() => router.push('/profile/password')}
-                            >
-                                Change Password
-                            </Button>
-                            <Button 
-                                variant="outline" 
-                                className="w-full"
-                                onClick={() => router.push('/profile/notifications')}
-                            >
-                                Notification Settings
-                            </Button>
-                            <Button 
-                                variant="destructive" 
-                                className="w-full"
-                                onClick={() => setShowDeleteDialog(true)}
-                            >
-                                Delete Account
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </div>
 
-                {/* Delete Account Confirmation Dialog */}
-                {showDeleteDialog && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                        <Card className="w-full max-w-md">
-                            <CardHeader className="text-center">
-                                <CardTitle className="text-red-600 text-xl">Delete Account</CardTitle>
-                                <CardDescription className="text-center mt-2">
-                                    This action cannot be undone. This will permanently delete your account and remove all your data.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
+                        </div>
+                    </div>
+
+                    {/* Right Column: Edit Form */}
+                    <div className="md:col-span-2">
+                        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                                <h3 className="font-bold text-slate-900">Personal Details</h3>
+                            </div>
+                            
+                            <form onSubmit={handleSave} className="p-6 space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                            <UserIcon size={16} className="text-slate-400" /> Full Name
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            value={dbUser.name} 
+                                            onChange={(e) => setDbUser(prev => ({ ...prev, name: e.target.value }))}
+                                            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                                            placeholder="Enter your full name"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                            <Mail size={16} className="text-slate-400" /> Email
+                                        </label>
+                                        <input 
+                                            type="email" 
+                                            value={dbUser.email} 
+                                            disabled 
+                                            className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-500 cursor-not-allowed focus:outline-none"
+                                        />
+                                    </div>
+                                </div>
+
                                 <div>
-                                    <Label htmlFor="deleteConfirm" className="text-sm font-medium text-gray-700">
-                                        Please type <span className="font-bold text-red-600">delete</span> to confirm:
-                                    </Label>
-                                    <Input
-                                        id="deleteConfirm"
-                                        value={deleteConfirmation}
-                                        onChange={(e) => setDeleteConfirmation(e.target.value)}
-                                        placeholder="Type 'delete' to confirm"
-                                        className="mt-2"
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                        <FileText size={16} className="text-slate-400" /> Bio
+                                    </label>
+                                    <textarea 
+                                        rows={4}
+                                        value={profile.bio || ''}
+                                        onChange={(e) => setProfile(prev => ({ ...prev, bio: e.target.value }))}
+                                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-300"
+                                        placeholder="Tell us a bit about yourself..."
                                     />
                                 </div>
-                                <div className="flex gap-3 pt-2">
-                                    <Button
-                                        variant="outline"
-                                        className="flex-1"
-                                        onClick={() => {
-                                            setShowDeleteDialog(false);
-                                            setDeleteConfirmation('');
-                                        }}
-                                        disabled={isDeleting}
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        variant="destructive"
-                                        className="flex-1"
-                                        onClick={handleDeleteAccount}
-                                        disabled={isDeleting || deleteConfirmation !== 'delete'}
-                                    >
-                                        {isDeleting ? 'Deleting...' : 'Delete Account'}
-                                    </Button>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                            <Phone size={16} className="text-slate-400" /> Phone
+                                        </label>
+                                        <input 
+                                            type="tel"
+                                            value={profile.phone || ''}
+                                            onChange={(e) => setProfile(prev => ({ ...prev, phone: e.target.value }))}
+                                            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                                            placeholder="+1 (555) 000-0000"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                            <MapPin size={16} className="text-slate-400" /> Address
+                                        </label>
+                                        <input 
+                                            type="text"
+                                            value={profile.address || ''}
+                                            onChange={(e) => setProfile(prev => ({ ...prev, address: e.target.value }))}
+                                            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                                            placeholder="City, Country"
+                                        />
+                                    </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+
+                                <div className="pt-4 border-t border-slate-100 flex justify-end">
+                                    <button 
+                                        type="submit" 
+                                        disabled={saving}
+                                        className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:hover:translate-y-0"
+                                    >
+                                        {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                                        Save Changes
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                )}
+                </div>
             </div>
-        </div>
+        </DashboardLayout>
     );
 }
