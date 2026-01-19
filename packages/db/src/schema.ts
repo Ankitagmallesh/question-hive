@@ -223,3 +223,17 @@ export const questionStatistics = pgTable('question_statistics', {
   averageMarks: numeric('average_marks'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
+
+export const profiles = pgTable('profiles', {
+  id: bigint('id', { mode: 'number' }).primaryKey().notNull(),
+  userId: bigint('user_id', { mode: 'number' }).notNull().references(() => users.id),
+  bio: text('bio'),
+  phone: text('phone'),
+  address: text('address'),
+  avatarUrl: text('avatar_url'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (t) => ({
+  profilesUserIdUnique: uniqueIndex('profiles_user_id_key').on(t.userId),
+}));
+
