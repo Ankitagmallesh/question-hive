@@ -22,7 +22,7 @@ import {
     useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useToast } from '../../../components/ui/use-toast';
+import { toast } from 'sonner';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { getSupabase } from '../../lib/supabase-client';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
@@ -321,23 +321,27 @@ export default function PaperDesigner() {
     // --- Draft Persistence ---
     // 1. Auto-save to LocalStorage
     useEffect(() => {
+        if (!user?.id) return;
+
         if (settings.chapters.length > 0 || paperQuestions.length > 0) {
             const draft = {
                 settings,
                 paperQuestions,
                 lastUpdated: new Date().toISOString()
             };
-            localStorage.setItem('current_paper_draft', JSON.stringify(draft));
+            localStorage.setItem(`current_paper_draft_${user.id}`, JSON.stringify(draft));
         }
-    }, [settings, paperQuestions]);
+    }, [settings, paperQuestions, user]);
 
     // 2. Load from LocalStorage if resume=true OR savedId is present
     useEffect(() => {
+        if (!user?.id) return;
+
         const resume = searchParams.get('resume') === 'true';
         const savedId = searchParams.get('savedId');
 
         if (resume) {
-            const saved = localStorage.getItem('current_paper_draft');
+            const saved = localStorage.getItem(`current_paper_draft_${user.id}`);
             if (saved) {
                 try {
                     const parsed = JSON.parse(saved);
@@ -346,7 +350,7 @@ export default function PaperDesigner() {
                 } catch (e) { console.error(e); }
             }
         } else if (savedId) {
-            const allSaved = localStorage.getItem('saved_papers');
+            const allSaved = localStorage.getItem(`saved_papers_${user.id}`);
             if (allSaved) {
                 try {
                     const papers = JSON.parse(allSaved);
@@ -358,18 +362,14 @@ export default function PaperDesigner() {
                 } catch (e) { console.error(e); }
             }
         }
-    }, [searchParams]);
+    }, [searchParams, user]);
 
     const [isSaving, setIsSaving] = useState(false);
-    const { toast } = useToast();
+    // Removed useToast hook
 
     const handleSavePaper = async () => {
         if (!settings.title) {
-            toast({
-                title: "Validation Error",
-                description: "Please enter a paper title",
-                variant: "destructive",
-            });
+            toast.error("Please enter a paper title");
             return;
         }
 
@@ -399,22 +399,25 @@ export default function PaperDesigner() {
             }
 
             // Sync with LocalStorage for offline backup
-            const existingPapers = JSON.parse(localStorage.getItem('saved_papers') || '[]');
-            const newPaper = {
-                id: result.paperId ? String(result.paperId) : (savedId || crypto.randomUUID()),
-                settings,
-                paperQuestions,
-                savedAt: new Date().toISOString()
-            };
+            if (user?.id) {
+                const storageKey = `saved_papers_${user.id}`;
+                const existingPapers = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                const newPaper = {
+                    id: result.paperId ? String(result.paperId) : (savedId || crypto.randomUUID()),
+                    settings,
+                    paperQuestions,
+                    savedAt: new Date().toISOString()
+                };
 
-            if (savedId) {
-                const index = existingPapers.findIndex((p: any) => p.id === savedId);
-                if (index !== -1) existingPapers[index] = newPaper;
-                else existingPapers.push(newPaper);
-            } else {
-                existingPapers.push(newPaper);
+                if (savedId) {
+                    const index = existingPapers.findIndex((p: any) => p.id === savedId);
+                    if (index !== -1) existingPapers[index] = newPaper;
+                    else existingPapers.push(newPaper);
+                } else {
+                    existingPapers.push(newPaper);
+                }
+                localStorage.setItem(storageKey, JSON.stringify(existingPapers));
             }
-            localStorage.setItem('saved_papers', JSON.stringify(existingPapers));
             
             // Update URL with new ID if created
             if (result.paperId && (!savedId || savedId !== String(result.paperId))) {
@@ -423,19 +426,11 @@ export default function PaperDesigner() {
                 router.replace(`?${newParams.toString()}`);
             }
 
-            toast({
-                title: "Success",
-                description: "Paper saved to database successfully!",
-                duration: 3000,
-            });
+            toast.success("Paper saved to database successfully!");
 
         } catch (error: any) {
             console.error('Save failed:', error);
-            toast({
-                title: "Error",
-                description: error.message || "Failed to save paper to database.",
-                variant: "destructive",
-            });
+            toast.error(error.message || "Failed to save paper to database.");
         } finally {
             setIsSaving(false);
         }
@@ -728,18 +723,15 @@ export default function PaperDesigner() {
     // --- PDF Export Function using Puppeteer API ---
     const handleExportPDF = async () => {
         if (paperQuestions.length === 0) {
-            toast({
-                title: 'No questions to export',
-                description: 'Please add some questions to your paper first.',
-                variant: 'destructive'
+            toast.error('No questions to export', {
+                description: 'Please add some questions to your paper first.'
             });
             return;
         }
 
         try {
-            toast({
-                title: 'Generating PDF...',
-                description: 'This may take a few seconds.',
+            toast.info('Generating PDF...', {
+                description: 'This may take a few seconds.'
             });
 
             // Prepare data for the API
@@ -813,16 +805,13 @@ export default function PaperDesigner() {
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
 
-            toast({
-                title: 'PDF Downloaded!',
-                description: 'Your paper has been saved successfully.',
+            toast.success('PDF Downloaded!', {
+                description: 'Your paper has been saved successfully.'
             });
         } catch (error) {
             console.error('PDF export error:', error);
-            toast({
-                title: 'Export failed',
-                description: 'There was an error generating the PDF. Please try again.',
-                variant: 'destructive'
+            toast.error('Export failed', {
+                description: 'There was an error generating the PDF. Please try again.'
             });
         }
     };
@@ -948,37 +937,52 @@ export default function PaperDesigner() {
                             >
                                 {/* Only Page 1 gets full header */}
                                 {pageIndex === 0 && (
-                                    <div className="paper-header relative">
-                                        {/* Logo Rendering */}
-                                        {settings.logo && (
-                                            <img 
-                                                src={settings.logo} 
-                                                alt="Logo" 
-                                                className="absolute object-contain"
-                                                style={{
-                                                    width: '60px', 
-                                                    height: '60px',
-                                                    objectFit: 'contain',
-                                                    position: settings.logoPosition === 'center' ? 'relative' : 'absolute',
-                                                    top: settings.logoPosition === 'center' ? '-10px' : '0',
-                                                    left: settings.logoPosition === 'left' ? '0' : 'auto',
-                                                    right: settings.logoPosition === 'right' ? '0' : 'auto',
-                                                    margin: settings.logoPosition === 'center' ? '0 auto' : '0',
-                                                    display: 'block'
-                                                }}
-                                            />
-                                        )}
-                                        
-                                        <div className={`p-institution ${settings.logoPosition === 'center' ? 'mt-2' : ''}`} style={{display: settings.institution ? 'block' : 'none', textAlign: 'center'}}>{settings.institution}</div>
-                                        <div className="p-title mb-4 text-center">{settings.title}</div>
+                                    <div className="paper-header mb-6">
+                                        <div className="flex justify-between items-start gap-4 mb-2">
+                                            {/* LEFT Slot */}
+                                            <div className="w-[80px] shrink-0 flex justify-start">
+                                                {settings.logo && settings.logoPosition === 'left' && (
+                                                    <img src={settings.logo} alt="Logo" className="w-[80px] h-[80px] object-contain" />
+                                                )}
+                                            </div>
+
+                                            {/* CENTER Slot */}
+                                            <div className="flex-1 flex flex-col items-center text-center pt-2">
+                                                {settings.logo && settings.logoPosition === 'center' && (
+                                                    <img src={settings.logo} alt="Logo" className="w-[80px] h-[80px] object-contain mb-2" />
+                                                )}
+                                                {settings.institution && (
+                                                    <div className="p-institution font-bold uppercase tracking-wide text-slate-800 mb-1 leading-snug">
+                                                        {settings.institution}
+                                                    </div>
+                                                )}
+                                                <div className="p-title font-black text-xl uppercase tracking-tight text-slate-900 leading-tight">
+                                                    {settings.title}
+                                                </div>
+                                            </div>
+
+                                            {/* RIGHT Slot */}
+                                            <div className="w-[80px] shrink-0 flex justify-end">
+                                                {settings.logo && settings.logoPosition === 'right' && (
+                                                    <img src={settings.logo} alt="Logo" className="w-[80px] h-[80px] object-contain" />
+                                                )}
+                                            </div>
+                                        </div>
                                         
                                         <div 
-                                            className="p-meta grid grid-cols-2 gap-x-8 gap-y-2 pb-4 border-b border-slate-900/10"
+                                            className="p-meta flex justify-between items-center pb-3 border-b-2 border-slate-900"
                                             style={{ marginBottom: `${settings.studentDetailsGap || 12}px` }}
                                         >
-                                            <div className="flex justify-between"><span>Duration:</span> <span>{settings.duration}</span></div>
-                                            <div className="flex justify-between"><span>Max Marks:</span> <span>{settings.totalMarks}</span></div>
+                                            <div className="flex flex-col items-start">
+                                                <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Duration</span>
+                                                <span className="font-bold text-slate-900">{settings.duration || '3 Hours'}</span>
+                                            </div>
+                                            <div className="flex flex-col items-end">
+                                                <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Max Marks</span>
+                                                <span className="font-bold text-slate-900">{settings.totalMarks || '100'}</span>
+                                            </div>
                                         </div>
+
 
                                         {/* Student Details Section */}
                                         {(settings.studentName || settings.rollNumber || settings.classSection || settings.dateField || settings.invigilatorSign) && (
