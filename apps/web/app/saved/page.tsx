@@ -2,16 +2,22 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
 import Link from 'next/link';
 
 export default function SavedPapersPage() {
+    const { user, loading } = useSupabaseAuth();
     const [savedPapers, setSavedPapers] = useState<any[]>([]);
     const router = useRouter();
 
     useEffect(() => {
+        if (loading) return;
+        
         const loadPapers = () => {
-            const papers = localStorage.getItem('saved_papers');
+            // Fallback to generic key if no user, but prefer user-specific
+            const key = user?.id ? `saved_papers_${user.id}` : 'saved_papers';
+            const papers = localStorage.getItem(key);
             if (papers) {
                 try {
                     setSavedPapers(JSON.parse(papers));
@@ -21,14 +27,15 @@ export default function SavedPapersPage() {
             }
         };
         loadPapers();
-    }, []);
+    }, [user, loading]);
 
     const handleDelete = (id: string, e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
         if (confirm('Are you sure you want to delete this paper?')) {
             const newPapers = savedPapers.filter(p => p.id !== id);
-            localStorage.setItem('saved_papers', JSON.stringify(newPapers));
+            const key = user?.id ? `saved_papers_${user.id}` : 'saved_papers';
+            localStorage.setItem(key, JSON.stringify(newPapers));
             setSavedPapers(newPapers);
         }
     };
