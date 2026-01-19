@@ -121,15 +121,6 @@ function generatePaperHTML(data: PaperData): string {
     ` : '';
 
     const contentWrapperClass = data.layout === 'double' ? 'layout-double' : (data.roughWorkArea === 'right' ? 'layout-with-rough-col' : '');
-    const logoStyle = (() => {
-        if (!data.logo) return '';
-        const base = 'position: absolute; width: 60px; height: 60px; object-fit: contain; display: block;';
-        if (data.logoPosition === 'center') return `${base} position: relative; margin: 0 auto; top: -10px;`;
-        if (data.logoPosition === 'left') return `${base} top: 0; left: 0;`;
-        return `${base} top: 0; right: 0;`;
-    })();
-    
-    const logoHTML = data.logo ? `<img src="${data.logo}" style="${logoStyle}">` : '';
     
     const watermarkHTML = data.watermark ? `
         <div class="watermark-overlay">
@@ -164,13 +155,24 @@ function generatePaperHTML(data: PaperData): string {
         }
 
         /* Header */
-        /* Removed border-bottom from paper-header to avoid double lines with meta/student details */
+        /* Flexbox Header matching React implementation */
         .paper-header { margin-bottom: 20px; position: relative; } 
-        .p-institution { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #666; letter-spacing: 1px; margin-bottom: 4px; display: ${data.institution ? 'block' : 'none'}; margin-top: 0; }
-        .p-title { font-size: 18px; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; margin-top: 0; }
+        .header-flex-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 16px; }
+        .header-slot-left, .header-slot-right { width: 80px; flex-shrink: 0; display: flex; }
+        .header-slot-right { justify-content: flex-end; }
+        .header-slot-center { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: 8px; }
+        
+        .logo-img { width: 80px; height: 80px; object-fit: contain; display: block; }
+
+        .p-institution { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #1e293b; letter-spacing: 1px; margin-bottom: 4px; display: ${data.institution ? 'block' : 'none'}; line-height: 1.3; }
+        .p-title { font-size: 18px; font-weight: 900; text-transform: uppercase; margin-bottom: 4px; color: #0f172a; line-height: 1.2; }
         
         /* Meta: Added strong border to separate header from content */
-        .p-meta { display: flex; justify-content: space-between; font-weight: 600; font-size: 12px; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: ${data.studentDetailsGap || 12}px; }
+        .p-meta { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: ${data.studentDetailsGap || 12}px; }
+        .meta-col-left { display: flex; flex-direction: column; align-items: flex-start; }
+        .meta-col-right { display: flex; flex-direction: column; align-items: flex-end; }
+        .meta-label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; margin-bottom: 2px; }
+        .meta-value { font-weight: 700; color: #0f172a; font-size: 12px; }
         
         /* Template Styles */
         .t-modern .paper-header { ${templateStyles.headerBorder} ${templateStyles.headerAlign} }
@@ -252,13 +254,36 @@ function generatePaperHTML(data: PaperData): string {
     ${watermarkHTML}
     <div class="paper-sheet ${data.pageBorder || ''}">
         <div class="paper-header">
-            ${logoHTML}
-            <div class="p-institution" style="text-align: center;">${data.institution}</div>
-            <div class="p-title" style="text-align: center;">${data.title}</div>
-            <div class="p-meta">
-                <span>Duration: ${data.duration}</span>
-                <span>Max Marks: ${data.totalMarks}</span>
+            <div class="header-flex-row">
+                <!-- Left Slot -->
+                <div class="header-slot-left">
+                    ${(data.logo && data.logoPosition === 'left') ? `<img src="${data.logo}" class="logo-img">` : ''}
+                </div>
+
+                <!-- Center Slot -->
+                <div class="header-slot-center">
+                    ${(data.logo && data.logoPosition === 'center') ? `<img src="${data.logo}" class="logo-img" style="margin-bottom: 8px;">` : ''}
+                    <div class="p-institution">${data.institution || ''}</div>
+                    <div class="p-title">${data.title}</div>
+                </div>
+
+                <!-- Right Slot -->
+                <div class="header-slot-right">
+                    ${(data.logo && data.logoPosition === 'right') ? `<img src="${data.logo}" class="logo-img">` : ''}
+                </div>
             </div>
+
+            <div class="p-meta">
+                <div class="meta-col-left">
+                    <span class="meta-label">Duration</span>
+                    <span class="meta-value">${data.duration}</span>
+                </div>
+                <div class="meta-col-right">
+                    <span class="meta-label">Max Marks</span>
+                    <span class="meta-value">${data.totalMarks}</span>
+                </div>
+            </div>
+
             ${studentDetailsHTML}
             ${instructionsHTML}
         </div>
