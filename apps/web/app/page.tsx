@@ -154,7 +154,7 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="pt-32 pb-16 text-center relative overflow-hidden bg-white">
         {/* Dot Background - Maximized Visibility */}
-        <div className="absolute inset-0 h-full w-full bg-[radial-gradient(#94a3b8_1.5px,transparent_1.5px)] [background-size:24px_24px] [mask-image:linear-gradient(to_bottom,black_60%,transparent_100%)] opacity-40 -z-10" />
+        <div className="absolute inset-0 h-full w-full bg-[radial-gradient(#475569_1px,transparent_1px)] [background-size:16px_16px] [mask-image:linear-gradient(to_bottom,white_40%,transparent_100%)] pointer-events-none" />
         {/* Bottom Glow */}
         <div className="absolute top-0 z-[-2] h-screen w-screen bg-[radial-gradient(100%_50%_at_50%_0%,rgba(0,163,255,0.13)_0,rgba(0,163,255,0)_50%,rgba(0,163,255,0)_100%)]" />
 
@@ -202,14 +202,11 @@ export default function LandingPage() {
                     {/* Placeholder Image */}
                     {/* Video Placeholder */}
                     {/* Video Placeholder */}
-                    <div className="bg-slate-900 relative flex items-center justify-center overflow-hidden">
-                        <video 
-                            src="/demo-video.mp4" 
-                            className="w-full h-auto" 
-                            autoPlay 
-                            loop 
-                            muted 
-                            playsInline 
+                    <div className="bg-slate-50 relative flex items-center justify-center overflow-hidden">
+                        <img 
+                            src="/placeholder.png" 
+                            alt="App Dashboard" 
+                            className="w-full h-auto"
                         />
                         {/* Glint Effect */}
                         <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.1)_50%,transparent_75%)] opacity-0 group-hover:opacity-100 transition-opacity duration-700 bg-[length:250%_250%,100%_100%] bg-[position:0_0,0_0] group-hover:bg-[position:100%_100%,0_0] pointer-events-none" />
@@ -315,7 +312,11 @@ export default function LandingPage() {
                         <p className="text-slate-500 leading-relaxed">Forget MS Word alignment issues. We handle equation rendering (LaTeX), image placement, and watermarks automatically.</p>
                     </div>
                     {/* Visual Placeholder */}
-                    <div className="absolute right-0 bottom-0 md:top-10 md:right-10 w-64 h-48 bg-slate-100 rounded-tl-2xl border-l border-t border-slate-200 shadow-sm translate-y-4 translate-x-4"></div>
+                    <img 
+                        src="/image1.png" 
+                        alt="PDF Formatting Preview" 
+                        className="absolute right-0 bottom-0 md:top-10 md:right-10 w-64 h-auto bg-white rounded-tl-2xl border-l border-t border-slate-200 shadow-sm translate-y-4 translate-x-4" 
+                    />
                 </motion.div>
 
                 {/* Card 3: Bloom's Taxonomy */}
