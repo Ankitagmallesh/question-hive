@@ -228,6 +228,35 @@ export default function LoginPage() {
                             <p className="text-slate-500">Please enter your details to access your dashboard.</p>
                         </div>
 
+                <div className="relative z-10">
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Secure Institutional Access</p>
+                    <div className="flex items-center gap-2 text-slate-400 text-xs">
+                        <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                        <span>SSO Enabled</span>
+                        <span className="mx-2">•</span>
+                        <Lock className="w-4 h-4 text-emerald-500" />
+                        <span>End-to-End Encrypted</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Right Side - Login Form */}
+            <div className="w-full lg:w-7/12 h-full overflow-y-auto bg-white" data-lenis-prevent>
+                <div className="w-full min-h-full flex flex-col justify-center items-center py-12 lg:py-20 px-6">
+                    <div className="max-w-md w-full">
+                    
+                        <div className="lg:hidden flex items-center gap-2 font-bold text-xl text-indigo-600 mb-8">
+                            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-lg">
+                               <Hexagon className="w-5 h-5 fill-indigo-600 text-white" />
+                            </div>
+                            Question Hive
+                        </div>
+
+                        <div className="mb-8">
+                            <h1 className="text-3xl font-bold text-slate-900 mb-2">Welcome back</h1>
+                            <p className="text-slate-500">Please enter your details to access your dashboard.</p>
+                        </div>
+
                         {errors.general && (
                             <div className="mb-6 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm">
                             <div className="mb-6 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm">
