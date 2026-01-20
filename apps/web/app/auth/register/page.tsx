@@ -224,7 +224,37 @@ export default function RegisterPage() {
                         <div>
                             <p className="font-bold text-white">Dr. Rajesh Kumar</p>
                             <p className="text-sm text-slate-400">Senior Physics Faculty, Allen Institute</p>
+        <div className="h-screen flex overflow-hidden bg-white text-slate-900">
+            {/* Left Side - Testimonials */}
+            <div className="hidden lg:flex w-5/12 bg-slate-900 text-white flex-col justify-between p-12 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600 rounded-full blur-3xl opacity-20 -mr-20 -mt-20"></div>
+                <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-500 rounded-full blur-3xl opacity-20 -ml-20 -mb-20"></div>
+
+                <div className="relative z-10 flex items-center gap-2 font-bold text-2xl">
+                    <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center text-white shadow-lg">
+                        <Hexagon className="w-5 h-5 fill-indigo-500 text-white" />
+                    </div>
+                    Question Hive
+                </div>
+
+                <div className="relative z-10 space-y-6">
+                    <div className="space-y-2">
+                        <div className="flex gap-1 text-amber-400">
+                             {[...Array(5)].map((_, i) => (
+                                <svg key={i} className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                             ))}
                         </div>
+                        <h2 className="text-3xl font-serif leading-tight">
+                            "It used to take me weekends to draft JEE papers. With Question Hive, I curate high-quality assessments in minutes."
+                        </h2>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        {/* Avatar removed as requested */}
+                        <div>
+                            <p className="font-bold text-white">Dr. Rajesh Kumar</p>
+                            <p className="text-sm text-slate-400">Senior Physics Faculty, Allen Institute</p>
+                        </div>
+                    </div>
                     </div>
                     </div>
                 </div>
@@ -382,6 +412,7 @@ export default function RegisterPage() {
                                     <option>Other</option>
                                 </select>
                             </div>
+                        </div>
 
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="password">Password</label>
