@@ -70,6 +70,7 @@ export default function DashboardPage() {
     recentPapers: []
   });
   const [userName, setUserName] = useState('');
+  const [userName, setUserName] = useState('');
   const [loading, setLoading] = useState(true);
 
   const fetchStats = async () => {
@@ -108,6 +109,7 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
+  useEffect(() => {
     fetchStats();
   }, []);
 
@@ -141,6 +143,7 @@ export default function DashboardPage() {
           const data = await res.json();
           
           if (data.success) {
+              await fetchStats(); 
               await fetchStats(); 
           } else {
               alert('Failed to delete: ' + data.error);
