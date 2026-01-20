@@ -105,12 +105,22 @@ const getDashboardStats = async (userId: number) => {
     };
 };
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    // Better: Fetch the first user.
-    const userRes = await db.select({ id: users.id }).from(users).limit(1);
-    const userId = Number(userRes[0]?.id || 1); 
+    const { searchParams } = new URL(req.url);
+    const email = searchParams.get('email');
+    
+    // Default to strict isolation
+    let userId = 0;
 
+    if (email) {
+        const userRes = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
+        if (userRes.length > 0) {
+            userId = userRes[0].id;
+        }
+    }
+
+    // If no user found (fresh sign up not yet synced), userId 0 will return empty stats (correct behavior)
     const stats = await getDashboardStats(userId);
 
     return NextResponse.json({
