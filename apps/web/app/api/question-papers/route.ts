@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '../../lib/db';
-import { questionPapers, questionPaperItems, questionPaperStatuses, subjects, users, eq } from '@repo/db';
+import { questionPapers, questionPaperItems, questionPaperStatuses, subjects, users, questions, eq } from '@repo/db';
 
 export async function POST(req: Request) {
     try {
@@ -9,13 +9,30 @@ export async function POST(req: Request) {
             id, // Optional: if updating existing
             settings, 
             paperQuestions,
-            status = 'Saved' // Default to Saved
+            status = 'Saved', // Default to Saved
+            email // User email passed from frontend
         } = body;
 
-        // 1. Get User (Hardcoded to 1 for now, similar to dashboard stats)
-        // In real auth, we'd extract from session
-        const userRes = await db.select({ id: users.id }).from(users).limit(1);
-        const userId = Number(userRes[0]?.id || 1);
+        let userId = 1; // Default fallback
+
+        if (email) {
+            const userRes = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
+            if (userRes.length > 0) {
+                userId = userRes[0].id;
+            } else {
+                // User from Supabase Auth doesn't exist in local DB yet. Create them.
+                const newUserId = Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 1000);
+                await db.insert(users).values({
+                    id: newUserId,
+                    email: email,
+                    name: email.split('@')[0], // Fallback name
+                    userRoleId: 1, 
+                    isActive: true
+                });
+                userId = newUserId;
+                console.log(`[PaperAPI] Auto-created user ${email} with ID ${userId}`);
+            }
+        }
 
         // 2. Resolve Status ID (Auto-seed if missing)
         let statusRes = await db.select().from(questionPaperStatuses).where(eq(questionPaperStatuses.name, status));
@@ -112,15 +129,43 @@ export async function POST(req: Request) {
 
             // B. Insert Items
             if (paperQuestions.length > 0) {
-                const itemsToInsert = paperQuestions.map((q: any, index: number) => ({
-                    id: Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 1000000) + index, // Unique ID for item
-                    questionPaperId: paperId,
-                    questionId: Number(q.id), // Ensure question ID is number
-                    orderIndex: index + 1,
-                    marks: q.marks || 1 // Default marks if missing
-                }));
+                const itemsToInsert = [];
+                
+                for (let i = 0; i < paperQuestions.length; i++) {
+                    const q = paperQuestions[i];
+                    let finalQId = Number(q.id);
 
-                await tx.insert(questionPaperItems).values(itemsToInsert);
+                    // If ID is not a number (e.g. AI generated UUID), create the question first
+                    if (isNaN(finalQId)) {
+                        const newQId = Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 1000000) + i;
+                        // Insert new question
+                        // Ideally we should import `questions` schema but for now using raw insert or assuming table structure
+                        // Using explicit any to bypass checking for now as we need to fix the runtime error
+                         await tx.insert(questions).values({
+                            id: newQId,
+                            text: q.text,
+                            typeId: 1, // Defaulting to MCQ (1) - needing lookup normally
+                            difficultyId: q.difficulty === 'easy' ? 1 : q.difficulty === 'medium' ? 2 : 3, // Maps to 1,2,3
+                            subjectId: subjectId,
+                            topicId: 1, // Fallback
+                            createdBy: userId,
+                            options: q.options ? JSON.stringify(q.options) : '[]'
+                        });
+                        finalQId = newQId;
+                    }
+
+                    itemsToInsert.push({
+                        id: Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 1000000) + i + 100,
+                        questionPaperId: paperId,
+                        questionId: finalQId,
+                        orderIndex: i + 1,
+                        marks: q.marks || 1
+                    });
+                }
+
+                if (itemsToInsert.length > 0) {
+                    await tx.insert(questionPaperItems).values(itemsToInsert);
+                }
             }
             
             return paperId;
