@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion, animate, useInView } from "framer-motion";
 import { GraduationCap, Landmark, Trash2 } from "lucide-react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
+import { getSupabase } from "../lib/supabase-client";
 
 // CountUp Component
 // CountUp Component
@@ -53,26 +54,43 @@ export default function DashboardPage() {
     difficultyBreakdown: [] as any[],
     recentPapers: [] as any[]
   });
+  const [userName, setUserName] = useState('');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-        try {
-            const res = await fetch('/api/dashboard/stats');
-            const data = await res.json();
-            if (data.success) {
-                setStats(data.stats);
+  const fetchStats = async () => {
+    try {
+        const supabase = getSupabase();
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+            const meta = session.user.user_metadata;
+            if (meta?.full_name) {
+                let displayName = meta.full_name;
+                 // Remove title if present to get just the name
+                if (meta.title && displayName.startsWith(meta.title)) {
+                    displayName = displayName.substring(meta.title.length).trim();
+                }
+                // Get first word as first name
+                setUserName(displayName.split(' ')[0]);
             }
-        } catch (error) {
-            console.error("Failed to fetch dashboard stats", error);
-        } finally {
-            setLoading(false);
         }
-    };
 
+        if (!session?.user?.email) return;
+
+        const res = await fetch(`/api/dashboard/stats?email=${session.user.email}`);
+        const data = await res.json();
+        if (data.success) {
+            setStats(data.stats);
+        }
+    } catch (error) {
+        console.error("Failed to fetch dashboard stats", error);
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchStats();
-
-
   }, []);
 
   const getCountByType = (typeName: string) => {
@@ -103,11 +121,7 @@ export default function DashboardPage() {
           const data = await res.json();
           
           if (data.success) {
-              setStats(prev => ({
-                  ...prev,
-                  recentPapers: prev.recentPapers.filter(p => p.id !== id),
-                  totalPapers: Math.max(0, prev.totalPapers - 1)
-              }));
+              await fetchStats(); 
           } else {
               alert('Failed to delete: ' + data.error);
           }
@@ -122,7 +136,7 @@ export default function DashboardPage() {
     <DashboardLayout>
         <header className="flex justify-between items-center mb-10">
             <div>
-                <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Welcome back, <span className="text-indigo-600">Sanjay!</span></h1>
+                <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Welcome back, <span className="text-indigo-600">{userName || 'User'}!</span></h1>
                 <p className="text-slate-500 font-medium italic">{currentDate}</p>
             </div>
         </header>
@@ -134,7 +148,7 @@ export default function DashboardPage() {
                     <h2 className="text-4xl font-black mt-1 text-slate-900">
                        <CountUp to={stats.totalQuestions} />
                     </h2>
-                    <div className="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-xs font-bold">↑ 12%</div>
+                    {stats.totalQuestions > 0 && <div className="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-xs font-bold">Active</div>}
                 </div>
             </div>
             <div className="card-shadow p-6 rounded-3xl hover-lift">
@@ -143,7 +157,7 @@ export default function DashboardPage() {
                     <h2 className="text-4xl font-black mt-1 text-slate-900">
                        <CountUp to={stats.totalPapers} />
                     </h2>
-                    <div className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-lg text-xs font-bold">+2 Today</div>
+                    {stats.totalPapers > 0 && <div className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-lg text-xs font-bold">Saved</div>}
                 </div>
             </div>
             <Link href="/question-papers" className="ai-gradient hover:opacity-90 transition-all rounded-3xl p-6 flex items-center justify-between shadow-lg shadow-indigo-200 group hover-lift w-full text-left cursor-pointer">
