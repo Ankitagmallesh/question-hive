@@ -25,6 +25,7 @@
     "@repo/types": "*",
     "@repo/ui": "*",
     "@repo/utils": "*",
+    "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.45.3",
     "ai": "^6.0.41",
     "class-variance-authority": "^0.7.1",

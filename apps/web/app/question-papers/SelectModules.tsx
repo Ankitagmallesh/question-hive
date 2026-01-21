@@ -203,7 +203,7 @@ export default function SelectModules() {
         return (
             <DashboardLayout>
                  <div className="min-h-screen bg-white flex items-center justify-center">
-                    <LoadingOverlay onComplete={() => router.push('/question-papers/create?mode=auto')} />
+                    <AppLoader />
                 </div>
             </DashboardLayout>
         )

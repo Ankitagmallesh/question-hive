@@ -21,9 +21,20 @@ function getSupabase(): SupabaseClient {
 
 export async function signInWithGoogle(redirectTo: string = '/home') {
     const supabase = getSupabase();
+    // Redirect to our callback route to exchange code for cookie
+    // The 'next' param tells the callback where to send the user eventually
+    const redirectUrl = new URL('/auth/callback', window.location.origin);
+    redirectUrl.searchParams.set('next', redirectTo);
+
     const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: typeof window !== 'undefined' ? window.location.origin + redirectTo : redirectTo }
+        options: { 
+            redirectTo: redirectUrl.toString(),
+            queryParams: {
+                access_type: 'offline',
+                prompt: 'consent',
+            },
+        }
     });
     if (error) throw error;
     return data;
