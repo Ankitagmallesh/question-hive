@@ -23,6 +23,8 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { toast } from 'sonner';
+import { experimental_useObject } from '@ai-sdk/react';
+import { z } from 'zod';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { getSupabase } from '../../lib/supabase-client';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
@@ -277,14 +279,114 @@ export default function PaperDesigner() {
     const [sourceQuestions, setSourceQuestions] = useState<Question[]>([]);
     const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
     const searchParams = useSearchParams();
+    // --- AI Chat Logic with Streaming ---
+    const { object, submit, isLoading: isStreaming } = experimental_useObject({
+        api: '/api/ai/generate',
+        schema: z.object({
+            questions: z.array(z.object({
+                id: z.string(),
+                text: z.string(),
+                type: z.string(),
+                difficulty: z.enum(['easy', 'medium', 'hard']),
+                marks: z.number().optional(),
+                options: z.array(z.object({
+                    id: z.string(),
+                    text: z.string()
+                })).optional()
+            }))
+        }),
+        onFinish: ({ object }) => {
+            if (object?.questions) {
+                // Finalize the message in chat history
+                setChatMessages(prev => {
+                    const newHistory = [...prev];
+                    const lastMsg = newHistory[newHistory.length - 1];
+                    if (lastMsg.role === 'assistant') {
+                        lastMsg.content = `I've generated ${object.questions?.length} questions for you. Click on any question to add it to your paper.`;
+                        lastMsg.questions = object.questions as Question[];
+                    }
+                    return newHistory;
+                });
+            }
+        },
+        onError: (error) => {
+           console.error("Streaming error:", error);
+           setChatMessages(prev => [...prev, { role: 'assistant', content: "Something went wrong while generating." }]);
+        }
+    });
 
-    // Sync instructions to editor (only when not focused to prevent cursor jumps)
+    // --- AI Chat State ---
+    const [chatMessages, setChatMessages] = useState<Array<{role: 'user' | 'assistant', content: string, questions?: Question[]}>>([
+        { role: 'assistant', content: 'Hello! I can help you create questions. Try asking: "Create 5 hard physics questions about thermodynamics".' }
+    ]);
+    const [chatInput, setChatInput] = useState('');
+
+    const chatEndRef = useRef<HTMLDivElement>(null);
+
+    // Scroll to bottom of chat
+    useEffect(() => {
+        if (activeTab === 'auto') {
+            chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [chatMessages, activeTab]);
+
+
+
+    const handleSendMessage = (text?: string) => {
+        const prompt = text || chatInput.trim();
+        if (!prompt || isStreaming) return;
+        
+        setChatInput('');
+        
+        // Add User Message
+        setChatMessages(prev => [...prev, { role: 'user', content: prompt }]);
+        
+        // Add Placeholder Assistant Message (will be updated by stream)
+        setChatMessages(prev => [...prev, { role: 'assistant', content: 'QuestionHive is thinking...', questions: undefined }]);
+        
+        submit({ prompt });
+    };
+
+    const suggestedPrompts = [
+        "Create 3 hard multiple choice questions on Calculus",
+        "Generate 5 easy Physics questions about motion",
+        "Create questions about Indian History",
+        "Generate Chemistry questions for Grade 10"
+    ];
+
+    // Sync streaming object to the UI in real-time
+    useEffect(() => {
+        if (isStreaming && object?.questions) {
+            setChatMessages(prev => {
+                const newHistory = [...prev];
+                const lastMsg = newHistory[newHistory.length - 1];
+                if (lastMsg && lastMsg.role === 'assistant') {
+                    lastMsg.content = `Generating specific questions... (${object.questions?.length || 0})`;
+                    // Cast partial object to Question type (it might have missing fields while streaming)
+                    lastMsg.questions = object.questions as unknown as Question[];
+                }
+                return newHistory;
+            });
+            
+            // Auto-scroll
+            chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [object, isStreaming]); 
+
+
 
 
     // --- Effects ---
     useEffect(() => {
         if (!authLoading && !user) router.push('/auth/login');
     }, [authLoading, user, router]);
+
+    // Auto-Select Tab from URL
+    useEffect(() => {
+        if (searchParams.get('mode') === 'auto') {
+            setActiveTab('auto');
+        }
+    }, [searchParams]);
 
     // Fetch Chapters
     useEffect(() => {
@@ -379,11 +481,19 @@ export default function PaperDesigner() {
             const savedId = searchParams.get('savedId');
             
             // Construct Payload
+            // Ensure numeric fields are valid numbers (handle empty strings as 0)
+            const safeSettings = {
+                ...settings,
+                duration: parseInt(settings.duration || '0') || 0,
+                totalMarks: parseInt(settings.totalMarks || '0') || 0,
+            };
+
             const payload = {
                 id: savedId, // If present, API treats as update if numeric, or new if UUID/missing
-                settings,
+                settings: safeSettings,
                 paperQuestions,
-                status: 'Saved'
+                status: 'Saved',
+                email: user?.email // Pass email for explicit auth context
             };
 
             const response = await fetch('/api/question-papers', {
@@ -1433,152 +1543,281 @@ export default function PaperDesigner() {
                         <div className={`tab ${activeTab === 'auto' ? 'active' : ''}`} onClick={() => setActiveTab('auto')}>Auto-Generate</div>
                     </div>
 
-                    <div className="search-bar">
-                        <i className="ri-search-line"></i>
-                        <input 
-                            type="text" 
-                            className="search-input" 
-                            placeholder="Search topics (e.g. Thermodynamics)" 
-                            value={searchQuery}
-                            onChange={e => setSearchQuery(e.target.value)}
-                        />
-                    </div>
-                    {settings.chapters.length > 0 && (
-                        <div className="mt-2 flex gap-2 flex-wrap">
-                             {settings.chapters.map(chap => {
-                                 const isPrioritized = priorityChapter === chap;
-                                 return (
-                                    <div 
-                                        key={chap} 
-                                        className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium border cursor-pointer transition-colors ${
-                                            isPrioritized 
-                                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' 
-                                                : 'bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100'
-                                        }`}
-                                        onClick={() => {
-                                            setPriorityChapter(prev => prev === chap ? null : chap);
-                                            setCurrentPage(1);
-                                        }}
-                                    >
-                                        <i className="ri-book-open-line"></i> {chap}
-                                        <button 
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setSettings(s => ({...s, chapters: s.chapters.filter(c => c !== chap)}));
-                                                if (priorityChapter === chap) setPriorityChapter(null);
-                                                setCurrentPage(1);
-                                            }}
-                                            className={`ml-1 focus:outline-none ${isPrioritized ? 'hover:text-indigo-200' : 'hover:text-indigo-900'}`}
-                                        >
-                                            <i className="ri-close-line"></i>
-                                        </button>
-                                    </div>
-                                 );
-                             })}
-                        </div>
-                    )}
-
-                    <div id="source-list">
-                        {isLoadingQuestions && (
-                            <div style={{textAlign: 'center', padding: '20px', color: '#999'}}>
-                                <i className="ri-loader-4-line animate-spin mb-2" style={{fontSize: '24px'}}></i>
-                                <div className="text-xs font-semibold">Loading Question Bank...</div>
+                    {activeTab === 'select' ? (
+                        <>
+                            <div className="search-bar">
+                                <i className="ri-search-line"></i>
+                                <input 
+                                    type="text" 
+                                    className="search-input" 
+                                    placeholder="Search topics (e.g. Thermodynamics)" 
+                                    value={searchQuery}
+                                    onChange={e => setSearchQuery(e.target.value)}
+                                />
                             </div>
-                        )}
-
-                        {!isLoadingQuestions && filteredQuestions.length === 0 && (
-                            <div className="flex flex-col items-center justify-center py-10 text-slate-400 text-center">
-                                <i className="ri-inbox-2-line text-4xl mb-2 opacity-50"></i>
-                                {settings.difficulty === 'easy' ? (
-                                    <div className="max-w-[200px]">
-                                        <div className="font-medium text-slate-600 mb-1">No easy questions found</div>
-                                        <div className="text-xs">Please try selecting <strong>Medium</strong> or <strong>Hard</strong> from the Difficulty Mix.</div>
+                            {settings.chapters.length > 0 && (
+                                <div className="mt-2 flex gap-2 flex-wrap">
+                                     {settings.chapters.map(chap => {
+                                         const isPrioritized = priorityChapter === chap;
+                                         return (
+                                            <div 
+                                                key={chap} 
+                                                className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium border cursor-pointer transition-colors ${
+                                                    isPrioritized 
+                                                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' 
+                                                        : 'bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100'
+                                                }`}
+                                                onClick={() => {
+                                                    setPriorityChapter(prev => prev === chap ? null : chap);
+                                                    setCurrentPage(1);
+                                                }}
+                                            >
+                                                <i className="ri-book-open-line"></i> {chap}
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSettings(s => ({...s, chapters: s.chapters.filter(c => c !== chap)}));
+                                                        if (priorityChapter === chap) setPriorityChapter(null);
+                                                        setCurrentPage(1);
+                                                    }}
+                                                    className={`ml-1 focus:outline-none ${isPrioritized ? 'hover:text-indigo-200' : 'hover:text-indigo-900'}`}
+                                                >
+                                                    <i className="ri-close-line"></i>
+                                                </button>
+                                            </div>
+                                         );
+                                     })}
+                                </div>
+                            )}
+        
+                            <div id="source-list">
+                                {isLoadingQuestions && (
+                                    <div style={{textAlign: 'center', padding: '20px', color: '#999'}}>
+                                        <i className="ri-loader-4-line animate-spin mb-2" style={{fontSize: '24px'}}></i>
+                                        <div className="text-xs font-semibold">Loading Question Bank...</div>
                                     </div>
-                                ) : (
-                                    <div>No questions found matching your criteria.</div>
+                                )}
+        
+                                {!isLoadingQuestions && filteredQuestions.length === 0 && (
+                                    <div className="flex flex-col items-center justify-center py-10 text-slate-400 text-center">
+                                        <i className="ri-inbox-2-line text-4xl mb-2 opacity-50"></i>
+                                        {settings.difficulty === 'easy' ? (
+                                            <div className="max-w-[200px]">
+                                                <div className="font-medium text-slate-600 mb-1">No easy questions found</div>
+                                                <div className="text-xs">Please try selecting <strong>Medium</strong> or <strong>Hard</strong> from the Difficulty Mix.</div>
+                                            </div>
+                                        ) : (
+                                            <div>No questions found matching your criteria.</div>
+                                        )}
+                                    </div>
+                                )}
+        
+                                {!isLoadingQuestions && filteredQuestions.length > 0 && (
+                                    <>
+                                        {filteredQuestions.map(q => {
+                                            const isAdded = paperQuestions.some(pq => pq.id === q.id);
+                                            // Badge Colors
+                                            const getTypeStyle = (t: string) => {
+                                                if (t === 'mcq') return { bg: '#EFF6FF', col: '#2563EB' }; // Blue
+                                                return { bg: '#F3F4F6', col: '#4B5563' }; // Gray
+                                            };
+                                            const getDiffStyle = (d: string) => {
+                                                if (d === 'easy') return { bg: '#DCFCE7', col: '#16A34A' }; // Green
+                                                if (d === 'medium') return { bg: '#FEF9C3', col: '#CA8A04' }; // Yellow
+                                                if (d === 'hard') return { bg: '#FEE2E2', col: '#DC2626' }; // Red
+                                                return { bg: '#F3F4F6', col: '#4B5563' };
+                                            };
+        
+                                            const tStyle = getTypeStyle(q.type?.toLowerCase() || '');
+                                            const dStyle = getDiffStyle(q.difficulty?.toLowerCase() || '');
+        
+                                            return (
+                                                <div 
+                                                    key={q.id} 
+                                                    className={`q-card ${isAdded ? 'added' : ''}`} 
+                                                    onClick={() => !isAdded && addToPaper(q)}
+                                                >
+                                                    <div className="badges">
+                                                        <div 
+                                                            className="badge" 
+                                                            style={{background: tStyle.bg, color: tStyle.col}}
+                                                        >
+                                                            {q.type?.toUpperCase() || 'Q'}
+                                                        </div>
+                                                        <div 
+                                                            className="badge" 
+                                                            style={{background: dStyle.bg, color: dStyle.col}}
+                                                        >
+                                                            {q.difficulty?.toUpperCase()}
+                                                        </div>
+                                                        {q.chapter && <div className="badge" style={{background: '#EEF2FF', color: '#6366F1'}}>{q.chapter}</div>}
+                                                    </div>
+                                                    {isAdded && (
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-10 font-bold text-slate-900/60 text-sm uppercase tracking-wider backdrop-blur-[1px]">
+                                                            Selected
+                                                        </div>
+                                                    )}
+                                                    <div className="q-text mb-2">{q.text}</div>
+                                                    {q.options && q.options.length > 0 && (
+                                                        <div className="text-xs text-slate-500 flex flex-col gap-1 pl-1 border-l-2 border-slate-200">
+                                                            {q.options.map((opt, idx) => (
+                                                                <div key={opt.id}>
+                                                                    <span className="font-semibold text-slate-400 mr-1">{String.fromCharCode(65 + idx)})</span>
+                                                                    {opt.text}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                        <div className="flex justify-between items-center mt-4 pt-4 border-t border-slate-200 text-xs font-medium text-slate-500">
+                                            <button 
+                                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                                                disabled={currentPage === 1}
+                                                className="px-3 py-1.5 rounded hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            >
+                                                <i className="ri-arrow-left-line mr-1"></i> Previous
+                                            </button>
+                                            <span>Page {currentPage} of {Math.ceil(totalCount / PAGE_SIZE) || 1}</span>
+                                            <button 
+                                                onClick={() => setCurrentPage(p => p + 1)} 
+                                                disabled={!hasMore && (currentPage * PAGE_SIZE >= totalCount)}
+                                                className="px-3 py-1.5 rounded hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            >
+                                                Next <i className="ri-arrow-right-line ml-1"></i>
+                                            </button>
+                                        </div>
+                                    </>
                                 )}
                             </div>
-                        )}
-
-                        {!isLoadingQuestions && filteredQuestions.length > 0 && (
-                            <>
-                                {filteredQuestions.map(q => {
-                                    const isAdded = paperQuestions.some(pq => pq.id === q.id);
-                                    // Badge Colors
-                                    const getTypeStyle = (t: string) => {
-                                        if (t === 'mcq') return { bg: '#EFF6FF', col: '#2563EB' }; // Blue
-                                        return { bg: '#F3F4F6', col: '#4B5563' }; // Gray
-                                    };
-                                    const getDiffStyle = (d: string) => {
-                                        if (d === 'easy') return { bg: '#DCFCE7', col: '#16A34A' }; // Green
-                                        if (d === 'medium') return { bg: '#FEF9C3', col: '#CA8A04' }; // Yellow
-                                        if (d === 'hard') return { bg: '#FEE2E2', col: '#DC2626' }; // Red
-                                        return { bg: '#F3F4F6', col: '#4B5563' };
-                                    };
-
-                                    const tStyle = getTypeStyle(q.type?.toLowerCase() || '');
-                                    const dStyle = getDiffStyle(q.difficulty?.toLowerCase() || '');
-
+                        </>
+                    ) : (
+                        // AI Chat Interface
+                        <div className="flex flex-col h-full bg-slate-50">
+                            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                                {chatMessages.map((msg, i) => {
+                                    // Skip rendering the placeholder "Thinking..." message as we have a dedicated loader below
+                                    if (msg.role === 'assistant' && msg.content === 'QuestionHive is thinking...') return null;
+                                    
                                     return (
-                                        <div 
-                                            key={q.id} 
-                                            className={`q-card ${isAdded ? 'added' : ''}`} 
-                                            onClick={() => !isAdded && addToPaper(q)}
-                                        >
-                                            <div className="badges">
-                                                <div 
-                                                    className="badge" 
-                                                    style={{background: tStyle.bg, color: tStyle.col}}
-                                                >
-                                                    {q.type?.toUpperCase() || 'Q'}
-                                                </div>
-                                                <div 
-                                                    className="badge" 
-                                                    style={{background: dStyle.bg, color: dStyle.col}}
-                                                >
-                                                    {q.difficulty?.toUpperCase()}
-                                                </div>
-                                                {q.chapter && <div className="badge" style={{background: '#EEF2FF', color: '#6366F1'}}>{q.chapter}</div>}
+                                    <div key={i} className="flex flex-col space-y-2">
+                                        <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                            <div className={`max-w-[85%] rounded-2xl p-4 ${msg.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-white border border-slate-200 text-slate-700 shadow-sm'}`}>
+                                                <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.content}</p>
                                             </div>
-                                            {isAdded && (
-                                                <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-10 font-bold text-slate-900/60 text-sm uppercase tracking-wider backdrop-blur-[1px]">
-                                                    Selected
-                                                </div>
-                                            )}
-                                            <div className="q-text mb-2">{q.text}</div>
-                                            {q.options && q.options.length > 0 && (
-                                                <div className="text-xs text-slate-500 flex flex-col gap-1 pl-1 border-l-2 border-slate-200">
-                                                    {q.options.map((opt, idx) => (
-                                                        <div key={opt.id}>
-                                                            <span className="font-semibold text-slate-400 mr-1">{String.fromCharCode(65 + idx)})</span>
-                                                            {opt.text}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
                                         </div>
+                                            
+                                        {/* Render Generated Questions Outside Bubble */}
+                                        {msg.questions && (
+                                            <div className="w-full space-y-3 px-1">
+                                                {msg.questions.map((q, qIdx) => {
+                                                    const isAdded = paperQuestions.some(pq => pq.id === q.id);
+                                                    return (
+                                                        <div 
+                                                            key={q.id || `q-${i}-${qIdx}`}
+                                                            className={`p-4 rounded-xl border text-left transition-all cursor-pointer relative overflow-hidden ${
+                                                                isAdded 
+                                                                    ? 'bg-indigo-50 border-indigo-200' 
+                                                                    : 'bg-white border-slate-200 hover:border-indigo-400 hover:shadow-md'
+                                                            }`}
+                                                            onClick={() => !isAdded && addToPaper(q)}
+                                                        >
+                                                            {isAdded && (
+                                                                <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-20 font-bold text-slate-900/60 text-sm uppercase tracking-wider backdrop-blur-[1px]">
+                                                                    Selected
+                                                                </div>
+                                                            )}
+                                                            <div className="flex justify-between items-start mb-2">
+                                                                <div className="flex gap-2">
+                                                                    <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">{q.type}</span>
+                                                                    <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">{q.difficulty}</span>
+                                                                </div>
+                                                                {isAdded && <i className="ri-check-line text-indigo-600 font-bold"></i>}
+                                                            </div>
+                                                            <div className="text-sm font-medium text-slate-900 mb-3 whitespace-pre-wrap leading-relaxed">{q.text}</div>
+                                                            
+                                                            {/* Render Options */}
+                                                            {q.options && q.options.length > 0 && (
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                                    {q.options.map((opt, idx) => (
+                                                                        <div key={opt.id || idx} className="text-xs text-slate-600 bg-slate-50 rounded px-2 py-1.5 border border-slate-100">
+                                                                            <span className="font-bold text-slate-500 mr-1.5">{String.fromCharCode(65 + idx)}.</span>
+                                                                            {opt.text}
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
                                     );
                                 })}
-                                <div className="flex justify-between items-center mt-4 pt-4 border-t border-slate-200 text-xs font-medium text-slate-500">
+                                {isStreaming && (
+                                    <div className="flex justify-start">
+                                        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex items-center gap-3">
+                                            <div className="relative flex items-center justify-center">
+                                                <div className="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-75"></div>
+                                                <Loader2 size={18} className="animate-spin text-indigo-600 relative z-10" />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-sm text-slate-700 font-medium">
+                                                    {object?.questions && object.questions.length > 0 
+                                                        ? `Generating Question ${object.questions.length + 1}...` 
+                                                        : "QuestionHive is thinking..."}
+                                                </span>
+                                                {object?.questions && object.questions.length > 0 && (
+                                                    <span className="text-xs text-slate-400">Streamed {object.questions.length} items so far</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                                <div ref={chatEndRef} />
+                            </div>
+                            
+                            {/* Chat Input */}
+                            <div className="p-4 bg-white border-t border-slate-200">
+                                {/* Suggested Prompts */}
+                                {!isStreaming && chatMessages.length < 3 && (
+                                    <div className="flex gap-2 mb-3 overflow-x-auto pb-2 scrollbar-none">
+                                        {suggestedPrompts.map((prompt, idx) => (
+                                            <button
+                                                key={idx}
+                                                onClick={() => handleSendMessage(prompt)}
+                                                className="whitespace-nowrap px-3 py-1.5 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full border border-indigo-100 hover:bg-indigo-100 transition-colors"
+                                            >
+                                                {prompt}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                                <form 
+                                    onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
+                                    className="flex gap-2"
+                                >
+                                    <input
+                                        type="text"
+                                        value={chatInput}
+                                        onChange={(e) => setChatInput(e.target.value)}
+                                        placeholder="Type a command e.g., 'Create 5 hard physics questions'"
+                                        className="flex-1 input-box m-0"
+                                        disabled={isStreaming}
+                                    />
                                     <button 
-                                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
-                                        disabled={currentPage === 1}
-                                        className="px-3 py-1.5 rounded hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        type="submit" 
+                                        disabled={isStreaming || !chatInput.trim()}
+                                        className="bg-indigo-600 text-white rounded-lg px-4 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     >
-                                        <i className="ri-arrow-left-line mr-1"></i> Previous
+                                        <i className="ri-send-plane-fill"></i>
                                     </button>
-                                    <span>Page {currentPage} of {Math.ceil(totalCount / PAGE_SIZE) || 1}</span>
-                                    <button 
-                                        onClick={() => setCurrentPage(p => p + 1)} 
-                                        disabled={!hasMore && (currentPage * PAGE_SIZE >= totalCount)}
-                                        className="px-3 py-1.5 rounded hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                        Next <i className="ri-arrow-right-line ml-1"></i>
-                                    </button>
-                                </div>
-                            </>
-                        )}
-                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
 
                 </div>
 

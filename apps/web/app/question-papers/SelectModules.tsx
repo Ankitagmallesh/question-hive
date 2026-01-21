@@ -21,6 +21,7 @@ import {
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
 import AppLoader from '../../components/ui/AppLoader';
+import LoadingOverlay from '../../components/LoadingOverlay';
 
 // Animation variants
 const containerVariants = {
@@ -202,7 +203,7 @@ export default function SelectModules() {
         return (
             <DashboardLayout>
                  <div className="min-h-screen bg-white flex items-center justify-center">
-                    <AppLoader text="Create your paper loading" />
+                    <LoadingOverlay onComplete={() => router.push('/question-papers/create?mode=auto')} />
                 </div>
             </DashboardLayout>
         )
