@@ -17,5 +17,6 @@
       "cache": false,
       "persistent": true
     }
-  }
+  },
+  "globalPassThroughEnv": ["SUPABASE_DB_CONNECT_URL", "GEMINI_API_KEY"]
 }
