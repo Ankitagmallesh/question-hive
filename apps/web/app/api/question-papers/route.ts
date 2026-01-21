@@ -1,6 +1,76 @@
 import { NextResponse } from 'next/server';
 import { db } from '../../lib/db';
-import { questionPapers, questionPaperItems, questionPaperStatuses, subjects, users, questions, eq } from '@repo/db';
+import { questionPapers, questionPaperItems, questionPaperStatuses, subjects, users, questions, eq, desc, sql } from '@repo/db';
+
+export const dynamic = 'force-dynamic';
+
+export async function GET(req: Request) {
+    try {
+        const { searchParams } = new URL(req.url);
+        const email = searchParams.get('email');
+
+        if (!email) {
+            return NextResponse.json({ success: false, error: 'Email is required' }, { status: 400 });
+        }
+
+        // 1. Get User ID
+        const userRes = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
+        
+        if (userRes.length === 0) {
+            return NextResponse.json({ success: true, daa: [] }); // No user = No papers
+        }
+
+        const userId = userRes[0].id;
+
+        // 2. Fetch Papers with details
+        // We need counts of questions, so we'll do a subquery or join-aggregates if possible, 
+        // but for simplicity/speed in Drizzle without complex maps, we can fetch papers first then their counts or just basic metadata.
+        // The Saved Papers UI shows: Title, Chapters Count, Questions Count, Difficulty, Saved Date.
+        // We'll fetch the basic paper info and join status.
+        
+        const papers = await db.select({
+            id: questionPapers.id,
+            title: questionPapers.title,
+            updatedAt: questionPapers.updatedAt,
+            status: questionPaperStatuses.name,
+            instructions: questionPapers.instructions, // Contains settings diff/chapters info
+            questionsCount: sql<number>`(SELECT count(*) FROM ${questionPaperItems} WHERE ${questionPaperItems.questionPaperId} = ${questionPapers.id})`
+        })
+        .from(questionPapers)
+        .leftJoin(questionPaperStatuses, eq(questionPapers.statusId, questionPaperStatuses.id))
+        .where(eq(questionPapers.createdBy, userId))
+        .orderBy(desc(questionPapers.updatedAt));
+
+        // Transform results to match the 'SavedPaper' shape expected by frontend (approx)
+        const transformed = papers.map(p => {
+            let settings: any = {};
+            try {
+                settings = typeof p.instructions === 'string' ? JSON.parse(p.instructions) : p.instructions;
+            } catch (e) {}
+
+            return {
+                id: String(p.id),
+                savedAt: p.updatedAt,
+                settings: {
+                    title: p.title,
+                    difficulty: settings.difficulty || 'mixed', // generic fallback
+                    chapters: settings.template ? [] : [], // We don't store chapters specifically in a searchable way easily yet without parsing. 
+                    // Actually, the frontend expects `settings.chapters` array. 
+                    // In the POST, we saved: instructions: JSON.stringify({ ...settings })
+                    // So we can extract it back.
+                    ...settings
+                },
+                paperQuestions: Array(Number(p.questionsCount)).fill({}) // specific content not needed for list, just length
+            };
+        });
+
+        return NextResponse.json({ success: true, data: transformed });
+
+    } catch (error: any) {
+        console.error('Fetch Papers Error:', error);
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+}
 
 export async function POST(req: Request) {
     try {

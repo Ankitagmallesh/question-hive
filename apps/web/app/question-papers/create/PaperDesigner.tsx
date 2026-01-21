@@ -435,35 +435,58 @@ export default function PaperDesigner() {
         }
     }, [settings, paperQuestions, user]);
 
-    // 2. Load from LocalStorage if resume=true OR savedId is present
+    // 2. Load from API or LocalStorage
     useEffect(() => {
-        if (!user?.id) return;
+        const loadPaper = async () => {
+            if (!user?.id) return;
 
-        const resume = searchParams.get('resume') === 'true';
-        const savedId = searchParams.get('savedId');
+            const resume = searchParams.get('resume') === 'true';
+            const savedId = searchParams.get('savedId');
 
-        if (resume) {
-            const saved = localStorage.getItem(`current_paper_draft_${user.id}`);
-            if (saved) {
+            if (resume) {
+                // Resume relies on auto-save draft (Local Only for now as 'Draft' status isn't fully DB-mapped yet in this flow)
+                const saved = localStorage.getItem(`current_paper_draft_${user.id}`);
+                if (saved) {
+                    try {
+                        const parsed = JSON.parse(saved);
+                        if (parsed.settings) setSettings(s => ({ ...s, ...parsed.settings }));
+                        if (parsed.paperQuestions) setPaperQuestions(parsed.paperQuestions);
+                    } catch (e) { console.error(e); }
+                }
+            } else if (savedId) {
+                // Try fetching from API first (Cloud Source)
                 try {
-                    const parsed = JSON.parse(saved);
-                    if (parsed.settings) setSettings(s => ({...s, ...parsed.settings}));
-                    if (parsed.paperQuestions) setPaperQuestions(parsed.paperQuestions);
-                } catch (e) { console.error(e); }
-            }
-        } else if (savedId) {
-            const allSaved = localStorage.getItem(`saved_papers_${user.id}`);
-            if (allSaved) {
-                try {
-                    const papers = JSON.parse(allSaved);
-                    const found = papers.find((p: any) => p.id === savedId);
-                    if (found) {
-                        setSettings(s => ({...s, ...found.settings}));
-                        setPaperQuestions(found.paperQuestions);
+                    const res = await fetch(`/api/question-papers/${savedId}`);
+                    // If 404 or invalid ID, json() might fail or return error, handle that.
+                    if (res.ok) {
+                        const json = await res.json();
+                        if (json.success && json.paper) {
+                            setSettings(s => ({ ...s, ...json.paper.settings }));
+                            setPaperQuestions(json.paper.paperQuestions);
+                            return; // Success, skip local check
+                        }
                     }
-                } catch (e) { console.error(e); }
+                } catch (e) {
+                    console.warn("Failed to load from API, trying local storage", e);
+                }
+
+                // Fallback: Check LocalStorage (Legacy or Offline)
+                const allSaved = localStorage.getItem(`saved_papers_${user.id}`);
+                if (allSaved) {
+                    try {
+                        const papers = JSON.parse(allSaved);
+                        const found = papers.find((p: any) => p.id === savedId);
+                        if (found) {
+                            setSettings(s => ({ ...s, ...found.settings }));
+                            setPaperQuestions(found.paperQuestions);
+                            toast.info("Loaded from local backup");
+                        }
+                    } catch (e) { console.error(e); }
+                }
             }
-        }
+        };
+
+        loadPaper();
     }, [searchParams, user]);
 
     const [isSaving, setIsSaving] = useState(false);

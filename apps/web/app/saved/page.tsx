@@ -11,32 +11,61 @@ export default function SavedPapersPage() {
     const [savedPapers, setSavedPapers] = useState<any[]>([]);
     const router = useRouter();
 
-    useEffect(() => {
-        if (loading) return;
+    const [loadingPapers, setLoadingPapers] = useState(true);
+
+    const fetchPapers = async () => {
+        if (!user?.email) return;
         
-        const loadPapers = () => {
-            // Fallback to generic key if no user, but prefer user-specific
-            const key = user?.id ? `saved_papers_${user.id}` : 'saved_papers';
-            const papers = localStorage.getItem(key);
-            if (papers) {
-                try {
-                    setSavedPapers(JSON.parse(papers));
-                } catch (e) {
-                    console.error("Failed to parse saved papers", e);
-                }
+        try {
+            setLoadingPapers(true);
+            const res = await fetch(`/api/question-papers?email=${user.email}`);
+            const data = await res.json();
+            
+            if (data.success) {
+                setSavedPapers(data.data);
             }
-        };
-        loadPapers();
+        } catch (error) {
+            console.error("Failed to fetch saved papers", error);
+        } finally {
+            setLoadingPapers(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!loading && user) {
+            fetchPapers();
+        } else if (!loading && !user) {
+            // Not logged in
+            setLoadingPapers(false);
+        }
     }, [user, loading]);
 
-    const handleDelete = (id: string, e: React.MouseEvent) => {
+    const handleDelete = async (id: string, e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        if (confirm('Are you sure you want to delete this paper?')) {
-            const newPapers = savedPapers.filter(p => p.id !== id);
-            const key = user?.id ? `saved_papers_${user.id}` : 'saved_papers';
-            localStorage.setItem(key, JSON.stringify(newPapers));
-            setSavedPapers(newPapers);
+        
+        if (!confirm('Are you sure you want to delete this paper?')) {
+            return;
+        }
+
+        // Optimistic update
+        const prevPapers = [...savedPapers];
+        setSavedPapers(prev => prev.filter(p => p.id !== id));
+
+        try {
+            const res = await fetch(`/api/question-papers/${id}`, {
+                method: 'DELETE'
+            });
+            const data = await res.json();
+            
+            if (!data.success) {
+                // Revert on failure
+                setSavedPapers(prevPapers);
+                alert('Failed to delete paper: ' + data.error);
+            }
+        } catch (error) {
+             setSavedPapers(prevPapers);
+             alert('Error deleting paper');
         }
     };
 
