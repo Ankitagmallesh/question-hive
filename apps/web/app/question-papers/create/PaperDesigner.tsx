@@ -224,6 +224,7 @@ export default function PaperDesigner() {
     
     // --- State ---
     const [leftPanelWidth, setLeftPanelWidth] = useState(50); // percentage
+    const [mobileTab, setMobileTab] = useState<'editor' | 'preview'>('editor');
     const containerRef = useRef<HTMLDivElement>(null);
     const [chaptersList, setChaptersList] = useState<{id: string, name: string}[]>([]);
 
@@ -1236,7 +1237,7 @@ export default function PaperDesigner() {
         <DashboardLayout fullScreen={true}>
             <div className="main-container" ref={containerRef}>
                 
-                <div className="editor-panel" style={{ width: `${leftPanelWidth}%` }} data-lenis-prevent>
+                <div className={`editor-panel ${mobileTab === 'editor' ? 'block' : 'hidden'} lg:block`} style={{ width: `${leftPanelWidth}%` }} data-lenis-prevent>
                     <div className="editor-header">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
@@ -1844,9 +1845,16 @@ export default function PaperDesigner() {
 
                 </div>
 
-                <div className="resizer" onMouseDown={handleResizeMouseDown}></div>
+                <div className="resizer hidden lg:block" onMouseDown={handleResizeMouseDown}></div>
 
-                <div className="preview-panel" data-lenis-prevent style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <div 
+                    className={`preview-panel ${mobileTab === 'preview' ? 'flex' : 'hidden'} lg:flex`} 
+                    data-lenis-prevent 
+                    style={{ 
+                        overflow: 'hidden', 
+                        flexDirection: 'column' 
+                    }}
+                >
 
                     <div className={`flex-1 bg-slate-50/50 p-8 flex ${zoomLevel <= 100 ? 'overflow-auto justify-start' : 'overflow-auto justify-center'}`}>
                         <div 
@@ -1873,6 +1881,24 @@ export default function PaperDesigner() {
                     </div>
                 </div>
 
+            </div>
+
+             {/* Mobile View Toggle (Fixed Bottom) */}
+            <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white backdrop-blur-md px-1 p-1 rounded-full shadow-2xl z-50 flex items-center gap-1 border border-slate-700/50">
+                <button 
+                    onClick={() => setMobileTab('editor')}
+                    className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${mobileTab === 'editor' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                >
+                    <LayoutTemplate size={16} />
+                    Editor
+                </button>
+                <button 
+                    onClick={() => setMobileTab('preview')}
+                    className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${mobileTab === 'preview' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                >
+                    <Eye size={16} />
+                    Preview
+                </button>
             </div>
         </DashboardLayout>
     );

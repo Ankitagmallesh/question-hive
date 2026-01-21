@@ -125,7 +125,7 @@ export default function LandingPage() {
       
       {/* Navbar */}
       <nav className={`fixed top-0 left-0 right-0 h-[70px] z-50 flex items-center transition-all duration-300 ${isScrolled ? 'bg-white/85 backdrop-blur-md border-b border-slate-200' : 'bg-white/0'}`}>
-        <div className="w-full max-w-[1200px] mx-auto px-6 flex justify-between items-center">
+        <div className="w-full max-w-[1200px] mx-auto px-6 flex justify-between items-center relative z-50">
             <Link href="/" className="flex items-center gap-2.5 font-extrabold text-xl tracking-tight text-slate-900">
                 <div className="w-8 h-8 bg-blue-600 text-white rounded-lg grid place-items-center shadow-lg shadow-blue-200">
                     <Layers size={18} strokeWidth={2.5} />
@@ -145,10 +145,33 @@ export default function LandingPage() {
                 <Link href="/auth/register" className="text-sm font-bold bg-blue-600 text-white px-5 py-2.5 rounded-full shadow-[0_4px_6px_rgba(37,99,235,0.2)] hover:bg-blue-700 hover:-translate-y-0.5 hover:shadow-[0_8px_15px_rgba(37,99,235,0.25)] transition-all">Start Free</Link>
             </div>
 
-            <button className="md:hidden text-slate-700" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <button className="md:hidden text-slate-700 p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
                 {mobileMenuOpen ? <X /> : <Menu />}
             </button>
         </div>
+
+        {/* Mobile Menu Overlay */}
+        <AnimatePresence>
+            {mobileMenuOpen && (
+                <motion.div 
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="fixed inset-0 bg-white z-40 pt-24 px-6 md:hidden flex flex-col gap-6"
+                >
+                    <div className="flex flex-col gap-6 text-2xl font-bold text-slate-900">
+                        <a href="#features" onClick={() => setMobileMenuOpen(false)}>Features</a>
+                        <a href="#schools" onClick={() => setMobileMenuOpen(false)}>For Schools</a>
+                        <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
+                    </div>
+                    
+                    <div className="mt-8 border-t border-slate-100 pt-8 flex flex-col gap-4">
+                        <Link href="/auth/login" className="w-full py-4 rounded-xl border-2 border-slate-200 text-center font-bold text-slate-700">Log In</Link>
+                        <Link href="/auth/register" className="w-full py-4 rounded-xl bg-blue-600 text-white text-center font-bold shadow-xl shadow-blue-200">Start Free</Link>
+                    </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
       </nav>
 
       {/* Hero Section */}

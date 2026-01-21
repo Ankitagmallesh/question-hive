@@ -40,18 +40,26 @@ export async function updateSession(request: NextRequest) {
 
   const url = request.nextUrl.clone()
   
+  // Debug Log
+  console.log('Middleware checking path:', url.pathname, 'User ID:', user?.id);
+
+  const path = url.pathname.toLowerCase();
+  
   // Define Public Paths
   // /auth/* -> Login/Register/Callback
   // / -> Landing Page
   // /public/* -> Any public assets or pages
   // /api/public/* -> Public APIs
   const isPublicPath = 
-      url.pathname === '/' ||
-      url.pathname.startsWith('/auth') ||
-      url.pathname.startsWith('/public') ||
-      url.pathname.startsWith('/api/public') || 
-      url.pathname === '/about' || 
-      url.pathname === '/pricing';
+      path === '/' ||
+      path.startsWith('/auth') ||
+      path.startsWith('/public') ||
+      path.startsWith('/api/public') || 
+      path === '/about' || 
+      path === '/pricing' ||
+      // Explicitly allow auth routes
+      path === '/auth/login' ||
+      path === '/auth/register';
 
   // If NO user and trying to access protected route -> Redirect to Register
   if (

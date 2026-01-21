@@ -124,7 +124,8 @@ export default function RegisterPage() {
                 email: formData.email,
                 password: formData.password,
                 options: {
-                    data: metaData
+                    data: metaData,
+                    emailRedirectTo: `${window.location.origin}/auth/callback?next=/home`
                 }
             });
 

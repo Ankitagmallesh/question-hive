@@ -2,22 +2,8 @@
 // Uses supabase-js to initiate Google sign-in and relies on
 // Supabase session storage (can read from cookies/local storage).
 
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-
-let cached: SupabaseClient | null = null;
-function getSupabase(): SupabaseClient {
-    if (cached) return cached;
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!url || !anon) {
-        throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY');
-    }
-    if (!/^https?:\/\//i.test(url)) {
-        throw new Error('NEXT_PUBLIC_SUPABASE_URL must start with https://');
-    }
-    cached = createClient(url, anon);
-    return cached;
-}
+import { getSupabase } from './supabase-client';
+// Local getSupabase removed to reuse the shared one which handles cookies correctly
 
 export async function signInWithGoogle(redirectTo: string = '/home') {
     const supabase = getSupabase();

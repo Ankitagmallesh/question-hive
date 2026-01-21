@@ -386,15 +386,15 @@ export default function SelectModules() {
                         )}
                     </div>
 
-                    {/* Floating Action Bar - Fixed Position */}
-                    <div className="fixed bottom-8 right-8 flex items-center gap-4 z-50">
+                    {/* Floating Action Bar - Fixed Position Mobile / Floating Desktop */}
+                    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 lg:p-0 lg:border-none lg:bg-transparent lg:static lg:fixed lg:bottom-8 lg:right-8 flex items-center justify-between lg:justify-end gap-4 z-50">
                         <AnimatePresence>
                             {selectedChapters.length > 0 && (
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: 10 }}
-                                    className="bg-white px-4 py-2 rounded-full shadow-lg border border-slate-200 text-xs font-bold text-indigo-600 flex items-center gap-2"
+                                    className="bg-slate-100 lg:bg-white px-4 py-2 rounded-full lg:shadow-lg lg:border border-slate-200 text-xs font-bold text-indigo-600 flex items-center gap-2"
                                 >
                                     <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
                                     {selectedChapters.length} Selected
@@ -408,7 +408,7 @@ export default function SelectModules() {
                             onClick={handleGenerate}
                             disabled={selectedChapters.length === 0}
                             className={`
-                                flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white text-base shadow-xl transition-all duration-300
+                                flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white text-base shadow-xl transition-all duration-300 w-full lg:w-auto justify-center
                                 ${selectedChapters.length > 0 
                                     ? 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-600/30' 
                                     : 'bg-slate-300 cursor-not-allowed'
