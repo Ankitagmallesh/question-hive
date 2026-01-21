@@ -335,6 +335,8 @@ export default function PaperDesigner() {
     useEffect(() => {
         const loadPaper = async () => {
             if (!user?.id) return;
+        const loadPaper = async () => {
+            if (!user?.id) return;
 
             const savedId = searchParams.get('savedId');
             if (!savedId) return;
