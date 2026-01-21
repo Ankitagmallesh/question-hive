@@ -289,7 +289,6 @@ export default function RegisterPage() {
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
                                 <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="institution">Institution</label>
                                 <div className="relative">
@@ -313,6 +312,7 @@ export default function RegisterPage() {
                                     </datalist>
                                 </div>
                             </div>
+
                             <div>
                                 <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="department">Department</label>
                                 <select 
@@ -330,7 +330,6 @@ export default function RegisterPage() {
                                     <option>Other</option>
                                 </select>
                             </div>
-                        </div>
 
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="password">Password</label>
