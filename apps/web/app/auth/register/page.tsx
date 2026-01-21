@@ -412,7 +412,6 @@ export default function RegisterPage() {
                                     <option>Other</option>
                                 </select>
                             </div>
-                        </div>
 
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="password">Password</label>
