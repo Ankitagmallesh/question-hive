@@ -435,6 +435,7 @@ export default function SelectModules() {
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: 10 }}
                                     className="bg-slate-100 lg:bg-white px-4 py-2 rounded-full lg:shadow-lg lg:border border-slate-200 text-xs font-bold text-indigo-600 flex items-center gap-2"
+                                    className="bg-slate-100 lg:bg-white px-4 py-2 rounded-full lg:shadow-lg lg:border border-slate-200 text-xs font-bold text-indigo-600 flex items-center gap-2"
                                 >
                                     <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
                                     {selectedChapters.length} Selected
@@ -448,6 +449,7 @@ export default function SelectModules() {
                             onClick={handleGenerate}
                             disabled={selectedChapters.length === 0}
                             className={`
+                                flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white text-base shadow-xl transition-all duration-300 w-full lg:w-auto justify-center
                                 flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white text-base shadow-xl transition-all duration-300 w-full lg:w-auto justify-center
                                 ${selectedChapters.length > 0 
                                     ? 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-600/30' 

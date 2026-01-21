@@ -50,6 +50,11 @@ export async function updateSession(request: NextRequest) {
 
   const path = url.pathname.toLowerCase();
   
+  // Debug Log
+  console.log('Middleware checking path:', url.pathname, 'User ID:', user?.id);
+
+  const path = url.pathname.toLowerCase();
+  
   // Define Public Paths
   // /auth/* -> Login/Register/Callback
   // / -> Landing Page

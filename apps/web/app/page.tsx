@@ -150,6 +150,7 @@ export default function LandingPage() {
             </div>
 
             <button className="md:hidden text-slate-700 p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <button className="md:hidden text-slate-700 p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
                 {mobileMenuOpen ? <X /> : <Menu />}
             </button>
         </div>
