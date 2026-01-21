@@ -88,15 +88,9 @@ const AnimatedWidthBar = ({ width, colorClass, shadowClass, delay = 0 }: { width
     );
 };
 
-import LoadingOverlay from "../components/LoadingOverlay";
-
-import { useRouter } from "next/navigation";
-
 export default function LandingPage() {
-  const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [showLoading, setShowLoading] = useState(false);
 
   // AI Simulation State
   const [aiStage, setAiStage] = useState(0);
@@ -160,11 +154,11 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="pt-32 pb-16 text-center relative overflow-hidden bg-white">
         {/* Dot Background - Maximized Visibility */}
-        <div className="absolute inset-0 h-full w-full bg-[radial-gradient(#475569_1px,transparent_0.1px)] [background-size:16px_16px] [mask-image:linear-gradient(to_bottom,white_40%,transparent_100%)] pointer-events-none" />
+        <div className="absolute inset-0 h-full w-full bg-[radial-gradient(#94a3b8_1px,transparent_0.1px)] [background-size:16px_16px] [mask-image:linear-gradient(to_bottom,white_40%,transparent_100%)] pointer-events-none" />
         {/* Bottom Glow */}
         <div className="absolute top-0 z-[-2] h-screen w-screen bg-[radial-gradient(100%_50%_at_50%_0%,rgba(0,163,255,0.13)_0,rgba(0,163,255,0)_50%,rgba(0,163,255,0)_100%)]" />
 
-        <div className="container max-w-[1200px] mx-auto px-6">
+        <div className="container max-w-[1200px] mx-auto px-6 relative z-10">
             <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -180,32 +174,11 @@ export default function LandingPage() {
                 <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto mb-10 leading-relaxed font-medium">
                     Stop fighting with formatting. Question Hive helps teachers generate, format, and export professional question papers instantly using AI.
                 </p>
-                <div className="flex justify-center mb-8 relative z-20">
-                    <div className="bg-white p-2 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 flex items-center w-full max-w-2xl gap-3">
-                        <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center shrink-0">
-                            <FlaskConical className="text-white w-6 h-6" />
-                        </div>
-                        <input 
-                            type="text" 
-                            placeholder="Create a 30-mark NEET Physics paper on Laws of Motion..."
-                            className="flex-1 bg-transparent border-none outline-none text-slate-600 placeholder:text-slate-400 text-sm md:text-base w-full"
-                        />
-                        <button 
-                            type="button"
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowLoading(true); }}
-                            className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold text-sm md:text-base hover:bg-slate-800 transition-colors shrink-0"
-                        >
-                            Generate
-                        </button>
-                    </div>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
+                    <Link href="/auth/register" className="inline-flex justify-center items-center px-8 py-4 bg-blue-600 text-white rounded-xl font-bold text-lg shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:bg-blue-700 transition-all hover:-translate-y-1">
+                        Start Creating for Free
+                    </Link>
                 </div>
-
-                {/* Loading Overlay */}
-                <AnimatePresence>
-                    {showLoading && (
-                        <LoadingOverlay key="loading-overlay" onComplete={() => router.push('/question-papers/create?mode=auto')} />
-                    )}
-                </AnimatePresence>
                 <p className="text-sm text-slate-400 font-medium flex items-center justify-center gap-4">
                     <span className="flex items-center gap-1.5"><Check size={14} className="text-emerald-500" strokeWidth={3} /> No credit card required</span>
                     <span className="w-1 h-1 rounded-full bg-slate-300" />
@@ -298,8 +271,9 @@ export default function LandingPage() {
       </section>
 
       {/* Features (Bento Grid) */}
-      <section className="py-24 bg-slate-50" id="features">
-        <div className="container max-w-[1200px] mx-auto px-6">
+      <section className="py-24 bg-slate-50 relative overflow-hidden" id="features">
+        <div className="absolute inset-0 h-full w-full bg-[radial-gradient(#94a3b8_1px,transparent_0.1px)] [background-size:16px_16px] opacity-40 pointer-events-none" />
+        <div className="container max-w-[1200px] mx-auto px-6 relative z-10">
             <div className="text-center max-w-2xl mx-auto mb-16">
                 <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">Everything you need to<br />run exams smoothly.</h2>
                 <p className="text-lg text-slate-500">We combine a massive question bank with smart design tools to give you the ultimate assessment platform.</p>
@@ -494,8 +468,9 @@ export default function LandingPage() {
       </section>
 
       {/* About Section */}
-      <section className="py-24 bg-white" id="about">
-        <div className="container max-w-[1200px] mx-auto px-6">
+      <section className="py-24 bg-white relative overflow-hidden" id="about">
+        <div className="absolute inset-0 h-full w-full bg-[radial-gradient(#94a3b8_1px,transparent_0.1px)] [background-size:16px_16px] opacity-40 pointer-events-none" />
+        <div className="container max-w-[1200px] mx-auto px-6 relative z-10">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
                  <motion.div 
                     initial={{ opacity: 0, x: -30 }}
@@ -595,8 +570,9 @@ export default function LandingPage() {
       </section>
 
       {/* Pricing / For Schools Section */}
-      <section className="py-24 bg-slate-50">
-        <div className="container max-w-[1200px] mx-auto px-6">
+      <section className="py-24 bg-slate-50 relative overflow-hidden">
+        <div className="absolute inset-0 h-full w-full bg-[radial-gradient(#94a3b8_1px,transparent_0.1px)] [background-size:16px_16px] opacity-40 pointer-events-none" />
+        <div className="container max-w-[1200px] mx-auto px-6 relative z-10">
             <div className="text-center max-w-3xl mx-auto mb-16">
                 <span className="inline-block px-4 py-1.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wider mb-4" id="schools">For Schools & Institutes</span>
                 <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">Simple, Transparent Pricing</h2>
