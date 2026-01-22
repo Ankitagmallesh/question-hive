@@ -96,6 +96,7 @@ export async function POST(req: Request) {
                     id: newUserId,
                     email: email,
                     name: email.split('@')[0], // Fallback name
+                    passwordHash: 'supabase_auth',
                     userRoleId: 1, 
                     isActive: true
                 });

@@ -1249,7 +1249,7 @@ export default function PaperDesigner() {
                             <div className="breadcrumbs">Home / {settings.chapters.join(', ')} / {settings.title}</div>
                         </div>
                         <div className="header-actions">
-                            <button className="btn-action" onClick={() => setShowPreviewModal(true)}><i className="ri-eye-line"></i> Preview</button>
+                            <button className="btn-action hidden lg:flex" onClick={() => setShowPreviewModal(true)}><i className="ri-eye-line"></i> Preview</button>
                             <div className="flex items-center gap-1 bg-slate-100 rounded-lg px-2 py-1">
                                 <button className="p-1 hover:bg-slate-200 rounded text-slate-600 transition-colors" onClick={handleZoomOut} title="Zoom Out">
                                     <i className="ri-subtract-line"></i>
