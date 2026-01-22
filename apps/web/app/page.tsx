@@ -198,7 +198,7 @@ export default function LandingPage() {
                     Stop fighting with formatting. Question Hive helps teachers generate, format, and export professional question papers instantly using AI.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
-                    <Link href="/auth/register" className="inline-flex justify-center items-center px-8 py-4 bg-blue-600 text-white rounded-xl font-bold text-lg shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:bg-blue-700 transition-all hover:-translate-y-1">
+                    <Link href="/auth/register" className="w-full sm:w-auto inline-flex justify-center items-center px-8 py-4 bg-blue-600 text-white rounded-xl font-bold text-lg shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:bg-blue-700 transition-all hover:-translate-y-1">
                         Start Creating for Free
                     </Link>
                 </div>
@@ -214,7 +214,7 @@ export default function LandingPage() {
                 initial={{ opacity: 0, y: 40, rotateX: 10 }}
                 animate={{ opacity: 1, y: 0, rotateX: 0 }}
                 transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-                className="mt-16 max-w-[1000px] mx-auto bg-white rounded-2xl border border-slate-200 shadow-[0_25px_50px_-12px_rgba(37,99,235,0.25)] overflow-hidden relative group perspective-[1000px]"
+                className="mt-16 max-w-[1000px] mx-auto bg-white rounded-xl border border-slate-200 shadow-[0_25px_50px_-12px_rgba(37,99,235,0.25)] overflow-hidden relative group perspective-[1000px]"
             >
                 <div className="h-10 bg-slate-50 border-b border-slate-200 flex items-center px-4 gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-full bg-rose-400" />
@@ -339,7 +339,7 @@ export default function LandingPage() {
                     <img 
                         src="/image1.png" 
                         alt="PDF Formatting Preview" 
-                        className="absolute right-0 bottom-0 md:top-10 md:right-10 w-64 h-auto bg-white rounded-tl-2xl border-l border-t border-slate-200 shadow-sm translate-y-4 translate-x-4" 
+                        className="absolute -bottom-4 -right-4 w-48 rounded-tl-xl border-l border-t border-slate-200 shadow-sm md:absolute md:top-10 md:right-10 md:w-64 md:rounded-tl-2xl md:translate-y-4 md:translate-x-4" 
                     />
                 </motion.div>
 
