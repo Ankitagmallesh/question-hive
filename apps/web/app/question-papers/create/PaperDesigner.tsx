@@ -1856,7 +1856,7 @@ export default function PaperDesigner() {
                     }}
                 >
 
-                    <div className={`flex-1 bg-slate-50/50 p-8 flex ${zoomLevel <= 100 ? 'overflow-auto justify-start' : 'overflow-auto justify-center'}`}>
+                    <div className={`flex-1 bg-slate-50/50 p-4 lg:p-8 flex ${zoomLevel <= 100 ? 'overflow-auto justify-start' : 'overflow-auto justify-center'}`}>
                         <div 
                             style={{ 
                                 transform: `scale(${zoomLevel / 100})`, 

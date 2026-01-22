@@ -58,7 +58,7 @@ export default function AnalyticsPage() {
     <DashboardLayout>
         <div className="relative min-h-screen">
             {/* Overlay */}
-            <div className="absolute inset-0 z-50 flex items-start justify-center pt-32 bg-white/40 backdrop-blur-[3px] rounded-[3rem]">
+            <div className="absolute inset-0 z-10 flex items-start justify-center pt-32 bg-white/40 backdrop-blur-[3px] rounded-[3rem]">
                 <div className="bg-white p-8 rounded-3xl shadow-2xl border border-indigo-100 text-center animate-in fade-in zoom-in duration-500">
                     <h2 className="text-3xl font-black text-slate-900 mb-2">Coming Soon</h2>
                     <p className="text-slate-500 font-medium">Advanced analytics are under construction.</p>

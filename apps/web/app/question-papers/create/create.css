@@ -627,4 +627,57 @@ label {
     cursor: pointer; background: white; transition: all 0.2s;
 }
 .file-upload-box:hover { border-color: #6366f1; background: #f8fafc; }
-.file-upload-box .file-icon { color: #64748b; font-size: 18px; }
+
+/* --- Mobile Responsive Styles --- */
+@media (max-width: 1024px) {
+    .row {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .col {
+        width: 100%;
+    }
+
+    .editor-panel {
+        width: 100%;
+        min-width: 0;
+        padding-bottom: 120px; /* Space for bottom nav */
+    }
+
+    .ep-header-section {
+        padding: 20px 20px 10px 20px;
+    }
+
+    .ep-settings-section {
+        padding: 0 20px;
+    }
+
+    .preview-panel {
+        width: 100%;
+        padding: 20px 20px 120px 20px; /* Space for bottom nav & FAB */
+    }
+
+    .fab-export {
+        bottom: 90px; /* Above the bottom navigation pills */
+        right: 20px;
+        padding: 12px 20px;
+        font-size: 13px;
+        z-index: 40; /* Ensure it's above content but below modals/nav if needed */
+    }
+
+    /* Adjust checkbox grid for smaller screens */
+    .checkbox-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Template grid adjustments */
+    .template-grid {
+        gap: 8px;
+    }
+    
+    /* Ensure modal doesn't get cut off */
+    .modal-content {
+        padding-bottom: 100px;
+    }
+}
