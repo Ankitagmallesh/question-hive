@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { useSupabaseAuth } from "../hooks/useSupabaseAuth";
-import { Loader2, Save, User as UserIcon, Mail, Phone, MapPin, FileText, Pencil } from "lucide-react";
+import { signOut } from "../../lib/google-auth";
+import { Loader2, Save, User as UserIcon, Mail, Phone, MapPin, FileText, Pencil, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ProfilePage() {
@@ -18,6 +20,18 @@ export default function ProfilePage() {
     const [stats, setStats] = useState({ papers: 0, questions: 0 });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const router = useRouter();
+
+    const handleLogout = async () => {
+        try {
+            await signOut();
+            toast.success('Logged out successfully');
+            router.push('/auth/login');
+        } catch (error) {
+            console.error("Logout error:", error);
+            toast.error('Failed to log out');
+        }
+    };
 
     useEffect(() => {
         if (!authLoading && authUser?.email) {
@@ -157,7 +171,13 @@ export default function ProfilePage() {
                                 </div>
                             </div>
 
-
+                            <button 
+                                onClick={handleLogout}
+                                className="mt-6 w-full flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200 text-red-600 rounded-xl font-semibold hover:bg-red-50 hover:border-red-200 transition-all shadow-sm"
+                            >
+                                <LogOut size={16} />
+                                Log Out
+                            </button>
                         </div>
                     </div>
 
