@@ -281,6 +281,7 @@ export default function RegisterPage() {
                         </div>
 
 
+
                         <div className="mb-8">
                             <h1 className="text-3xl font-bold text-slate-900 mb-2">Create your faculty account</h1>
                             <p className="text-slate-500">Join the network of academic professionals.</p>
