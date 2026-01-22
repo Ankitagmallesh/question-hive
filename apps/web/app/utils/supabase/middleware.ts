@@ -57,6 +57,9 @@ export async function updateSession(request: NextRequest) {
       path.startsWith('/api/public') || 
       path === '/about' || 
       path === '/pricing' ||
+      path === '/privacy' ||
+      path === '/terms' ||
+      path === '/legal' ||
       // Explicitly allow auth routes
       path === '/auth/login' ||
       path === '/auth/register';
