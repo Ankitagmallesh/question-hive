@@ -111,12 +111,12 @@ export default function QuestionsPage() {
                 <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
                     {/* Page Header */}
                     <div className="mb-8">
-                        <div className="flex justify-between items-center">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <div>
                                 <h2 className="text-3xl font-bold text-gray-900">Questions</h2>
                                 <p className="mt-2 text-gray-600">Manage your question bank and create new questions</p>
                             </div>
-                            <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setShowCreateModal(true)}>
+                            <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700" onClick={() => setShowCreateModal(true)}>
                                 <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                                 </svg>
@@ -145,22 +145,22 @@ export default function QuestionsPage() {
                         questions.map((question) => (
                             <Card key={question.id} className="hover:shadow-md transition-shadow">
                                 <CardContent className="p-6">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="flex-1">
-                                            <p className="text-lg font-medium text-gray-900 mb-2">
+                                    <div className="flex flex-col-reverse sm:flex-row justify-between items-start mb-4 gap-4">
+                                        <div className="flex-1 w-full">
+                                            <p className="text-lg font-medium text-gray-900 mb-2 break-words">
                                                 {question.text}
                                             </p>
-                                            <div className="flex items-center space-x-4 text-sm text-gray-600">
+                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-600">
                                                 <span><strong>Subject:</strong> {question.subject}</span>
                                                 <span><strong>Chapter:</strong> {question.chapter}</span>
                                                 <span><strong>Marks:</strong> {question.marks}</span>
                                             </div>
                                         </div>
-                                        <div className="flex flex-col space-y-2 ml-4">
-                                            <Badge className={getTypeColor(question.type)}>
+                                        <div className="flex flex-row sm:flex-col gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 sm:ml-4">
+                                            <Badge className={`whitespace-nowrap ${getTypeColor(question.type)}`}>
                                                 {question.type.toUpperCase()}
                                             </Badge>
-                                            <Badge className={getDifficultyColor(question.difficulty)}>
+                                            <Badge className={`whitespace-nowrap ${getDifficultyColor(question.difficulty)}`}>
                                                 {question.difficulty}
                                             </Badge>
                                         </div>
