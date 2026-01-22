@@ -23,15 +23,18 @@ export async function GET(
         const paper = paperRes[0];
         let settings: any = {};
         try {
-            settings = typeof paper.instructions === 'string' ? JSON.parse(paper.instructions) : paper.instructions;
-        } catch (e) {}
+            const parsed = typeof paper.instructions === 'string' ? JSON.parse(paper.instructions) : paper.instructions;
+            settings = parsed && typeof parsed === 'object' ? parsed : {};
+        } catch (e) {
+            settings = {};
+        }
 
         // Merge DB columns back into settings shape
         const fullSettings = {
             ...settings,
-            title: paper.title,
-            duration: String(paper.durationMinutes),
-            totalMarks: String(paper.totalMarks)
+            title: paper.title || '',
+            duration: String(paper.durationMinutes || 0),
+            totalMarks: String(paper.totalMarks || 0)
         };
 
         // 2. Fetch Items (Questions) linked to this paper
@@ -61,8 +64,11 @@ export async function GET(
         const papersQuestions = items.map((item: any) => {
             let options = [];
             try {
-                options = typeof item.qOptions === 'string' ? JSON.parse(item.qOptions) : item.qOptions;
-            } catch (e) {}
+                const parsedOpts = typeof item.qOptions === 'string' ? JSON.parse(item.qOptions) : item.qOptions;
+                options = Array.isArray(parsedOpts) ? parsedOpts : [];
+            } catch (e) {
+                options = [];
+            }
 
             return {
                 id: String(item.qId),

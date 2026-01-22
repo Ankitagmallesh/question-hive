@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server';
+// @ts-ignore
+import puppeteerCore from 'puppeteer-core';
+// @ts-ignore
+import chromium from '@sparticuz/chromium';
 import puppeteer from 'puppeteer';
+
+const isProduction = process.env.NODE_ENV === 'production';
 
 interface Option {
     text: string;
@@ -334,7 +340,21 @@ export async function POST(req: Request) {
         const data: PaperData = await req.json();
 
         const html = generatePaperHTML(data);
-        const browser = await puppeteer.launch({ headless: true });
+        let browser;
+
+        if (isProduction) {
+            // Production: Use puppeteer-core + @sparticuz/chromium
+            browser = await puppeteerCore.launch({
+                args: chromium.args,
+                defaultViewport: chromium.defaultViewport,
+                executablePath: await chromium.executablePath(),
+                headless: chromium.headless,
+            });
+        } else {
+            // Local Development: Use standard puppeteer
+            browser = await puppeteer.launch({ headless: true });
+        }
+
         const page = await browser.newPage();
         await page.setContent(html, { waitUntil: 'networkidle0' });
 
