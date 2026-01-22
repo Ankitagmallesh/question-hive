@@ -138,6 +138,8 @@ export default function ForgotPasswordPage() {
                            We have sent a password reset link to <strong>{email}</strong>.
                            <br/><br/>
                            Please check your inbox and click the link to reset your password.
+                           <br/><br/>
+                           <strong>Please check your Spam folder as well.</strong>
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="sm:justify-center">
