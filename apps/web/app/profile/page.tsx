@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { useSupabaseAuth } from "../hooks/useSupabaseAuth";
-import { signOut } from "../../lib/google-auth";
+import { signOut } from "../lib/google-auth";
 import { Loader2, Save, User as UserIcon, Mail, Phone, MapPin, FileText, Pencil, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
