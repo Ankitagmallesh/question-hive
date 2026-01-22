@@ -28,8 +28,64 @@ button { cursor: pointer; }
 
 /* --- Left: Editor Panel --- */
 .editor-panel {
-    min-width: 420px; width: 50%; padding: 32px; overflow-y: auto; background: var(--surface);
+    min-width: 420px; width: 50%; height: 100%; overflow: hidden; background: var(--surface);
     border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; padding: 0;
+}
+
+.ep-header-section {
+    padding: 32px 32px 20px 32px;
+    flex: 0 0 auto;
+}
+
+.ep-settings-section {
+    padding: 0 32px;
+    flex: 0 0 auto;
+    max-height: 45%; 
+    overflow-y: auto;
+    margin-bottom: 0; /* Handled by padding/gap */
+}
+
+/* Ensure Settings Card looks good inside the scroll area */
+.settings-card {
+    margin-bottom: 24px;
+}
+
+.ep-questions-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border-top: 1px solid var(--border);
+    background: #ffffff;
+}
+
+.ep-content-area {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Adjust Tab Group for the new section */
+.tab-group {
+    margin: 0;
+    padding: 16px 32px 0;
+    background: var(--surface);
+    flex: 0 0 auto;
+}
+
+/* Select Mode Specifics */
+.select-mode-header {
+    padding: 16px 32px 0;
+    flex: 0 0 auto;
+    background: white;
+}
+.select-mode-list {
+    padding: 16px 32px 32px;
+    flex: 1;
+    overflow-y: auto;
 }
 
 .editor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }

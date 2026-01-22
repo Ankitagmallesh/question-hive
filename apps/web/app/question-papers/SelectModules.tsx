@@ -387,7 +387,7 @@ export default function SelectModules() {
                     </div>
 
                     {/* Floating Action Bar - Fixed Position Mobile / Floating Desktop */}
-                    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 lg:p-0 lg:border-none lg:bg-transparent lg:static lg:fixed lg:bottom-8 lg:right-8 flex items-center justify-between lg:justify-end gap-4 z-50">
+                    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 lg:p-0 lg:border-none lg:bg-transparent lg:fixed lg:bottom-8 lg:right-8 lg:left-auto flex items-center justify-between lg:justify-end gap-4 z-50">
                         <AnimatePresence>
                             {selectedChapters.length > 0 && (
                                 <motion.div

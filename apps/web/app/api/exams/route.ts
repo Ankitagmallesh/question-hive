@@ -7,6 +7,7 @@ export async function GET() {
   const data = await db.select().from(exams).orderBy(exams.name);
     return NextResponse.json({ success: true, data });
   } catch (e: any) {
+    console.error('Error fetching exams:', e);
     return NextResponse.json({ success: false, error: e.message }, { status: 500 });
   }
 }
