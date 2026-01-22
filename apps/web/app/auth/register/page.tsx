@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { apiClient } from "../../lib/api";
 import { getSupabase } from "../../lib/supabase-client";
-import { signInWithGoogle, getSession } from "../../lib/google-auth";
 // Lucide icons
 import { Hexagon, CheckCircle2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "../../../components/ui/dialog";
@@ -31,7 +30,6 @@ export default function RegisterPage() {
 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isLoading, setIsLoading] = useState(false);
-    const [isOAuthLoading, setIsOAuthLoading] = useState(false);
     
     // Existing Supabase check
     const hasSupabaseEnv = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) && Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
@@ -39,23 +37,12 @@ export default function RegisterPage() {
     useEffect(() => {
         (async () => {
             try {
-                const session = await getSession();
-                if (session) router.replace('/home');
+                const supabase = getSupabase();
+                const { data } = await supabase.auth.getSession();
+                if (data.session) router.replace('/home');
             } catch {}
         })();
     }, [router]);
-
-    const handleGoogleSignUp = async () => {
-        try {
-            setIsOAuthLoading(true);
-            await signInWithGoogle('/home');
-        } catch (e) {
-            console.error('Supabase Google sign-in failed', e);
-            setErrors({ general: 'Google sign-in failed' });
-        } finally {
-            setIsOAuthLoading(false);
-        }
-    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -203,6 +190,7 @@ export default function RegisterPage() {
                             Question Hive
                         </div>
 
+
                         <div className="mb-8">
                             <h1 className="text-3xl font-bold text-slate-900 mb-2">Create your faculty account</h1>
                             <p className="text-slate-500">Join the network of academic professionals.</p>
@@ -213,38 +201,6 @@ export default function RegisterPage() {
                                 {errors.general}
                             </div>
                         )}
-
-                        {!hasSupabaseEnv && (
-                             <div className="mb-6 p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-sm">
-                                Supabase keys missing in .env.local
-                            </div>
-                        )}
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
-                            <button 
-                                type="button"
-                                onClick={handleGoogleSignUp}
-                                disabled={isOAuthLoading || !hasSupabaseEnv}
-                                className="flex items-center justify-center gap-2 border border-slate-200 rounded-xl p-2.5 hover:bg-slate-50 transition-colors font-medium text-sm text-slate-700 disabled:opacity-50"
-                            >
-                                <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
-                                {isOAuthLoading ? '...' : 'Google'}
-                            </button>
-                            <button type="button" className="flex items-center justify-center gap-2 border border-slate-200 rounded-xl p-2.5 hover:bg-slate-50 transition-colors font-medium text-sm text-slate-700 opacity-60 cursor-not-allowed">
-                                <img src="https://www.svgrepo.com/show/452062/microsoft.svg" className="w-5 h-5" alt="Microsoft" />
-                                Microsoft
-                            </button>
-                            <button type="button" className="flex items-center justify-center gap-2 border border-slate-200 rounded-xl p-2.5 hover:bg-emerald-50 hover:border-emerald-200 transition-colors font-medium text-sm text-slate-700 group opacity-60 cursor-not-allowed">
-                                <span className="w-5 h-5 rounded-full bg-[#A6CE39] text-white flex items-center justify-center text-[10px] font-bold">iD</span>
-                                ORCID
-                            </button>
-                        </div>
-
-                        <div className="relative flex py-2 items-center mb-8">
-                            <div className="flex-grow border-t border-slate-200"></div>
-                            <span className="flex-shrink-0 mx-4 text-slate-400 text-xs uppercase font-bold tracking-wider">Or register with email</span>
-                            <div className="flex-grow border-t border-slate-200"></div>
-                        </div>
 
                         <form onSubmit={handleSubmit} className="space-y-5">
                         

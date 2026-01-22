@@ -5,8 +5,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { apiClient } from "../../lib/api";
 import { getSupabase } from "../../lib/supabase-client";
-import { signInWithGoogle, getSession } from "../../lib/google-auth";
-
 // Lucide icons
 import { Check, ShieldCheck, Lock, Hexagon } from "lucide-react";
 
@@ -19,29 +17,27 @@ export default function LoginPage() {
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isLoading, setIsLoading] = useState(false);
-    const [isOAuthLoading, setIsOAuthLoading] = useState(false);
     const hasSupabaseEnv = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) && Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
     useEffect(() => {
         (async () => {
             try {
-                const session = await getSession();
-                if (session) router.replace('/home');
+                // Reusing getSession from google-auth for now as it probably wraps supabase.auth.getSession
+                // Actually, I should check if I deleted the import... I am deleting it below.
+                // The original code used getSession from ../../lib/google-auth. 
+                // I need to import getSession or implement it. 
+                // Let's verify what getSession does. 
+                // Since I am removing the import `import { signInWithGoogle, getSession } from "../../lib/google-auth";`
+                // I need to make sure I don't break the useEffect check.
+                // I will replace `getSession()` with a direct supabase check or keep the import for getSession only if needed.
+                // But wait, the previous `getSession` was likely just checking supabase session.
+                // I'll use `getSupabase().auth.getSession()` directly to be safe and clean.
+                const supabase = getSupabase();
+                const { data } = await supabase.auth.getSession();
+                if (data.session) router.replace('/home');
             } catch {}
         })();
     }, [router]);
-
-    const handleGoogleSignIn = async () => {
-        try {
-            setIsOAuthLoading(true);
-            await signInWithGoogle('/home');
-        } catch (e) {
-            console.error('Supabase Google sign-in failed', e);
-            setErrors({ general: 'Google sign-in failed' });
-        } finally {
-            setIsOAuthLoading(false);
-        }
-    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target;
@@ -231,28 +227,6 @@ export default function LoginPage() {
                         </button>
                     </form>
 
-                    <div className="relative flex py-8 items-center">
-                        <div className="flex-grow border-t border-slate-200"></div>
-                        <span className="flex-shrink-0 mx-4 text-slate-400 text-xs uppercase font-bold tracking-wider">Or continue with</span>
-                        <div className="flex-grow border-t border-slate-200"></div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-3">
-                        <button 
-                            type="button"
-                            onClick={handleGoogleSignIn}
-                            disabled={isOAuthLoading || !hasSupabaseEnv}
-                            className="flex items-center justify-center border border-slate-200 rounded-xl p-2.5 hover:bg-slate-50 transition-colors disabled:opacity-50"
-                        >
-                            <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
-                        </button>
-                        <button type="button" className="flex items-center justify-center border border-slate-200 rounded-xl p-2.5 hover:bg-slate-50 transition-colors opacity-60 cursor-not-allowed">
-                            <img src="https://www.svgrepo.com/show/452062/microsoft.svg" className="w-5 h-5" alt="Microsoft" />
-                        </button>
-                        <button type="button" className="flex items-center justify-center gap-1 border border-slate-200 rounded-xl p-2.5 hover:bg-emerald-50 hover:border-emerald-200 transition-colors group opacity-60 cursor-not-allowed">
-                            <span className="w-5 h-5 rounded-full bg-[#A6CE39] text-white flex items-center justify-center text-[10px] font-bold">iD</span>
-                        </button>
-                    </div>
 
                     <div className="mt-8 text-center text-sm text-slate-600">
                         Don't have an account? <Link href="/auth/register" className="font-bold text-indigo-600 hover:underline">Apply for access</Link>
