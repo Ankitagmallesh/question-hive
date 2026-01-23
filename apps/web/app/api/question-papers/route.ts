@@ -156,6 +156,12 @@ export async function POST(req: Request) {
 
             if (existing.length > 0) {
                 paperId = existing[0].id;
+                
+                // SECURITY CHECK: Verify Ownership
+                if (existing[0].createdBy !== userId) {
+                    throw new Error("Unauthorized: You do not have permission to modify this paper created by another user.");
+                }
+
                 await tx.update(questionPapers).set({
                     title: settings.title,
                     description: `Paper for ${settings.institution || 'School'}`,
