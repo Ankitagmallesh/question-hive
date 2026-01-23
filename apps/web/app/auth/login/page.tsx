@@ -22,6 +22,7 @@ export default function LoginPage() {
     });
     const [showPassword, setShowPassword] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isLoading, setIsLoading] = useState(false);
     const [isCheckingSession, setIsCheckingSession] = useState(true);
