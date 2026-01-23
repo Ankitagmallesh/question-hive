@@ -45,6 +45,7 @@ import {
 } from 'lucide-react';
 import './create.css';
 import { RichTextEditor } from './RichTextEditor';
+import { useDebounce } from '../../hooks/useDebounce';
 
 // --- Types ---
 interface Question {
@@ -421,77 +422,95 @@ export default function PaperDesigner() {
         }
     }, [searchParams]);
 
-    // --- Draft Persistence ---
-    // 1. Auto-save to LocalStorage
+    // --- Draft Persistence (DB-Only) ---
+    // 1. Debounce Changes
+    const debouncedSettings = useDebounce(settings, 1500); 
+    const debouncedQuestions = useDebounce(paperQuestions, 1500);
+    
+    // 2. Auto-Save Effect
     useEffect(() => {
-        if (!user?.id) return;
+        const autoSave = async () => {
+             // Only auto-save if we have content and user is logged in
+            if (!user?.id) return;
+            if (settings.chapters.length === 0 && paperQuestions.length === 0 && !settings.title) return;
 
-        if (settings.chapters.length > 0 || paperQuestions.length > 0) {
-            const draft = {
-                settings,
-                paperQuestions,
-                lastUpdated: new Date().toISOString()
-            };
-            localStorage.setItem(`current_paper_draft_${user.id}`, JSON.stringify(draft));
-        }
-    }, [settings, paperQuestions, user]);
+             // Don't auto-save if we are already explicitly saving
+            if (isSaving) return;
 
-    // 2. Load from API or LocalStorage
+            try {
+                const savedId = searchParams.get('savedId');
+                
+                // Construct Payload for Draft
+                const safeSettings = {
+                    ...debouncedSettings,
+                    duration: parseInt(debouncedSettings.duration || '0') || 0,
+                    totalMarks: parseInt(debouncedSettings.totalMarks || '0') || 0,
+                };
+
+                const payload = {
+                    id: savedId, 
+                    settings: safeSettings,
+                    paperQuestions: debouncedQuestions,
+                    status: 'Draft', // Explicitly Draft
+                    email: user.email
+                };
+
+                // Silent Save (no loading UI blocking)
+                const response = await fetch('/api/question-papers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.paperId) {
+                     // Check if ID changed (new draft created)
+                    if (!savedId || savedId !== String(result.paperId)) {
+                        const newParams = new URLSearchParams(searchParams.toString());
+                        newParams.set('savedId', String(result.paperId));
+                        router.replace(`?${newParams.toString()}`, { scroll: false });
+                    }
+                }
+
+            } catch (err) {
+                console.error("Auto-save failed", err);
+                // Silent fail for drafts, maybe small indicator later
+            }
+        };
+
+        autoSave();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [debouncedSettings, debouncedQuestions]); // Trigger when these stabilize
+
+    
+    // 3. Load logic - API ONLY
     useEffect(() => {
         const loadPaper = async () => {
             if (!user?.id) return;
 
-            const resume = searchParams.get('resume') === 'true';
             const savedId = searchParams.get('savedId');
+            if (!savedId) return;
 
-            if (resume) {
-                // Resume relies on auto-save draft (Local Only for now as 'Draft' status isn't fully DB-mapped yet in this flow)
-                const saved = localStorage.getItem(`current_paper_draft_${user.id}`);
-                if (saved) {
-                    try {
-                        const parsed = JSON.parse(saved);
-                        if (parsed.settings) setSettings(s => ({ ...s, ...parsed.settings }));
-                        if (parsed.paperQuestions) setPaperQuestions(parsed.paperQuestions);
-                    } catch (e) { console.error(e); }
-                }
-            } else if (savedId) {
-                // Try fetching from API first (Cloud Source)
-                try {
-                    const res = await fetch(`/api/question-papers/${savedId}`);
-                    // If 404 or invalid ID, json() might fail or return error, handle that.
-                    if (res.ok) {
-                        const json = await res.json();
-                        if (json.success && json.paper) {
-                            setSettings(s => ({ ...s, ...json.paper.settings }));
-                            setPaperQuestions(json.paper.paperQuestions);
-                            return; // Success, skip local check
-                        }
+            try {
+                const res = await fetch(`/api/question-papers/${savedId}`);
+                if (res.ok) {
+                    const json = await res.json();
+                    if (json.success && json.paper) {
+                        setSettings(s => ({ ...s, ...json.paper.settings }));
+                        setPaperQuestions(json.paper.paperQuestions);
                     }
-                } catch (e) {
-                    console.warn("Failed to load from API, trying local storage", e);
                 }
-
-                // Fallback: Check LocalStorage (Legacy or Offline)
-                const allSaved = localStorage.getItem(`saved_papers_${user.id}`);
-                if (allSaved) {
-                    try {
-                        const papers = JSON.parse(allSaved);
-                        const found = papers.find((p: any) => p.id === savedId);
-                        if (found) {
-                            setSettings(s => ({ ...s, ...found.settings }));
-                            setPaperQuestions(found.paperQuestions);
-                            toast.info("Loaded from local backup");
-                        }
-                    } catch (e) { console.error(e); }
-                }
+            } catch (e) {
+                console.error("Failed to load paper from API", e);
+                toast.error("Could not load the saved paper.");
             }
         };
 
         loadPaper();
-    }, [searchParams, user]);
+    }, [searchParams.get('savedId'), user]); // Only reload if ID changes or user changes
 
     const [isSaving, setIsSaving] = useState(false);
-    // Removed useToast hook
 
     const handleSavePaper = async () => {
         if (!settings.title) {
@@ -504,8 +523,6 @@ export default function PaperDesigner() {
         try {
             const savedId = searchParams.get('savedId');
             
-            // Construct Payload
-            // Ensure numeric fields are valid numbers (handle empty strings as 0)
             const safeSettings = {
                 ...settings,
                 duration: parseInt(settings.duration || '0') || 0,
@@ -513,11 +530,11 @@ export default function PaperDesigner() {
             };
 
             const payload = {
-                id: savedId, // If present, API treats as update if numeric, or new if UUID/missing
+                id: savedId, 
                 settings: safeSettings,
                 paperQuestions,
-                status: 'Saved',
-                email: user?.email // Pass email for explicit auth context
+                status: 'Saved', // Finalized Status
+                email: user?.email 
             };
 
             const response = await fetch('/api/question-papers', {
@@ -532,39 +549,19 @@ export default function PaperDesigner() {
                 throw new Error(result.error || 'Failed to save paper');
             }
 
-            // Sync with LocalStorage for offline backup
-            if (user?.id) {
-                const storageKey = `saved_papers_${user.id}`;
-                const existingPapers = JSON.parse(localStorage.getItem(storageKey) || '[]');
-                const newPaper = {
-                    id: result.paperId ? String(result.paperId) : (savedId || crypto.randomUUID()),
-                    settings,
-                    paperQuestions,
-                    savedAt: new Date().toISOString()
-                };
+            // No local storage sync needed anymore
 
-                if (savedId) {
-                    const index = existingPapers.findIndex((p: any) => p.id === savedId);
-                    if (index !== -1) existingPapers[index] = newPaper;
-                    else existingPapers.push(newPaper);
-                } else {
-                    existingPapers.push(newPaper);
-                }
-                localStorage.setItem(storageKey, JSON.stringify(existingPapers));
-            }
-            
-            // Update URL with new ID if created
             if (result.paperId && (!savedId || savedId !== String(result.paperId))) {
                 const newParams = new URLSearchParams(searchParams.toString());
                 newParams.set('savedId', String(result.paperId));
                 router.replace(`?${newParams.toString()}`);
             }
 
-            toast.success("Paper saved to database successfully!");
+            toast.success("Paper saved successfully!");
 
         } catch (error: any) {
             console.error('Save failed:', error);
-            toast.error(error.message || "Failed to save paper to database.");
+            toast.error(error.message || "Failed to save paper.");
         } finally {
             setIsSaving(false);
         }
