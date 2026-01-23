@@ -24,14 +24,29 @@ export function useSupabaseAuth(): AuthState {
           if (mounted) setUser(null);
         } else {
           const u = await getUser();
-          if (mounted) {
-            // Map Supabase user to our shared User type as best-effort
+          if (mounted && u?.email) {
+             // Fetch local profile to get the numeric ID
+             let localId = 0;
+             let role = 'user';
+             
+             try {
+                const res = await fetch(`/api/profile?email=${u.email}`);
+                const data = await res.json();
+                if (data.success && data.user?.id) {
+                    localId = data.user.id;
+                    // Could also map role here if returned
+                }
+             } catch (err) {
+                 console.error('Failed to fetch local profile:', err);
+             }
+
+            // Map Supabase user to our shared User type
             const mapped: User = {
-              id: u?.id || '',
+              id: localId, // Using local numeric ID
               name: u?.user_metadata?.full_name || u?.email || 'User',
               email: u?.email || '',
               avatarUrl: u?.user_metadata?.avatar_url || undefined,
-              role: 'user',
+              role: role as any,
             } as any;
             setUser(mapped);
           }
