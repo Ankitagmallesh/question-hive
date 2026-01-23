@@ -26,24 +26,179 @@ import {
     Loader2,
 } from 'lucide-react';
 import './create.css';
-import { useDebounce } from '../../hooks/useDebounce';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "../../../components/ui/alert-dialog";
+import { RichTextEditor } from './RichTextEditor';
 
-import { SettingsForm } from './components/SettingsForm';
-import { QuestionList } from './components/QuestionList';
-import { AIChatInterface } from './components/AIChatInterface';
-import { PaperContent } from './components/PaperContent';
-import { PreviewPanel } from './components/PreviewPanel';
-import { Question, PaperSettings, ChatMessage } from './types';
+// --- Types ---
+interface Question {
+    id: string;
+    text: string;
+    type: string; 
+    difficulty: 'easy' | 'medium' | 'hard';
+    chapter?: string;
+    options?: {
+        id: string;
+        text: string;
+        order: number;
+    }[];
+    marks?: number;
+}
+
+interface PaperSettings {
+    title: string;
+    chapters: string[];
+    duration: string;
+    totalMarks: string;
+    difficulty: 'easy' | 'mixed' | 'hard';
+    
+    // Branding & Layout
+    institution: string;
+    logo: string | null;
+    logoPosition: 'left' | 'center' | 'right';
+    font: 'jakarta' | 'merriweather' | 'inter' | 'mono';
+    template: 'classic' | 'modern' | 'minimal';
+    layout: 'single' | 'double';
+    margin: 'S' | 'M' | 'L';
+    fontSize: number;
+    lineHeight: number;
+    metaFontSize: number;
+    
+    // Formatting
+    pageBorder: 'none' | 'border-simple' | 'border-double';
+    answerSpace: 'none' | 'lines' | 'box';
+    separator: 'none' | 'solid' | 'double' | 'dashed';
+    
+    // Instructions & Content
+    date: string;
+    instructions: string;
+    watermark: string;
+    
+    // Student Details
+    studentName: boolean;
+    rollNumber: boolean;
+    classSection: boolean;
+    dateField: boolean;
+    invigilatorSign: boolean;
+    studentDetailsGap?: number;
+
+    // Content Alignment
+    contentAlignment?: 'left' | 'center' | 'justify';
+    
+    // Footer
+    footerText: string;
+    roughWorkArea: 'none' | 'right' | 'bottom';
+    pageNumbering: 'page-x-of-y' | 'x-slash-y' | 'hidden';
+}
+
+// --- Components ---
+
+const SortableQuestionItem = ({ question, index, onRemove }: { question: Question, index: number, onRemove: (id: string) => void }) => {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({ id: question.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+        <div 
+            ref={setNodeRef} 
+            style={style} 
+            className="paper-item"
+            {...attributes} 
+            {...listeners}
+        >
+            <i className="ri-delete-bin-line remove-item" onClick={(e) => { e.stopPropagation(); onRemove(question.id); }}></i>
+            <div className="flex gap-3">
+                <span className="font-bold text-slate-900 shrink-0">{index + 1}.</span>
+                <div className="flex-1 pr-16">
+                    <div 
+                        className="font-medium text-slate-900 mb-1 leading-relaxed"
+                        style={{ minHeight: '1.2em' }}
+                    >
+                        {question.text || 'Question Text Missing'}
+                        {question.marks ? <span className="float-right font-normal text-slate-500" style={{ fontSize: '0.85em' }}>[{question.marks} marks]</span> : null}
+                    </div>
+                    {question.options && question.options.length > 0 && (
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2" style={{ fontSize: '0.9em' }}>
+                             {question.options.map((opt: { id: string; text: string; order: number }, idx) => (
+                                <div key={opt.id} className="text-slate-600">
+                                    <span className="font-semibold mr-1 text-indigo-600">({String.fromCharCode(65 + idx)})</span> 
+                                    {opt.text}
+                                </div>
+                             ))}
+                        </div>
+                    )}
+                </div>
+        </div>
+        </div>
+    );
+};
+
+const ChapterSelect = ({ options, selectedChapters, onChange }: { options: { id: string; name: string }[], selectedChapters: string[], onChange: (val: string) => void }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // If chapters are selected, show "Add another chapter", otherwise "Select Chapter"
+    // Or just always "Select Chapter" since tags show the current state? 
+    // Let's go with "Select Chapter" to be a clear call to action for adding more.
+    const placeholderText = "Select Chapter";
+
+    return (
+        <div className="relative w-full" ref={dropdownRef}>
+            <div 
+                className={`input-box cursor-pointer flex justify-between items-center ${isOpen ? 'ring-2 ring-indigo-100 border-indigo-500' : ''}`}
+                onClick={() => setIsOpen(!isOpen)}
+            >
+                <span className="text-slate-600">{placeholderText}</span>
+                <i className={`ri-arrow-down-s-line transition-transform text-slate-500 ${isOpen ? 'rotate-180' : ''}`}></i>
+            </div>
+            
+            {isOpen && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-100">
+                    <div className="p-1">
+                        {options.map((opt) => {
+                            const isSelected = selectedChapters.includes(opt.name);
+                            return (
+                                <div 
+                                    key={opt.id}
+                                    className={`px-3 py-2 text-sm rounded-md cursor-pointer transition-colors flex justify-between items-center ${isSelected ? 'bg-indigo-50 text-indigo-700 font-medium' : 'hover:bg-slate-50 text-slate-700'}`}
+                                    onClick={() => {
+                                        onChange(opt.name);
+                                        setIsOpen(false);
+                                    }}
+                                >
+                                    <span>{opt.name}</span>
+                                    {isSelected && <i className="ri-check-line"></i>}
+                                </div>
+                            );
+                        })}
+                        {options.length === 0 && (
+                            <div className="px-3 py-2 text-sm text-slate-400 text-center">No chapters found</div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
 
 export default function PaperDesigner() {
     const router = useRouter();
