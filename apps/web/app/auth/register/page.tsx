@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { apiClient } from "../../lib/api";
 import { getSupabase } from "../../lib/supabase-client";
 // Lucide icons
-import { Hexagon, CheckCircle2 } from "lucide-react";
+import { Hexagon, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "../../../components/ui/dialog";
 import { Button } from "../../../components/ui/button";
 
@@ -25,6 +25,7 @@ export default function RegisterPage() {
     
     // UI state
     const [showInviteCode, setShowInviteCode] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const [showSuccessDialog, setShowSuccessDialog] = useState(false);
     const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false);
 
@@ -290,14 +291,27 @@ export default function RegisterPage() {
 
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="password">Password</label>
-                            <input 
-                                type="password" 
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                placeholder="Create a strong password" 
-                                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 transition-all"
-                            />
+                            <div className="relative">
+                                <input 
+                                    type={showPassword ? "text" : "password"}
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    placeholder="Create a strong password" 
+                                    className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 transition-all pr-10"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                                >
+                                    {showPassword ? (
+                                        <EyeOff className="w-5 h-5" />
+                                    ) : (
+                                        <Eye className="w-5 h-5" />
+                                    )}
+                                </button>
+                            </div>
                             {errors.password && <p className="text-sm text-red-600 mt-1">{errors.password}</p>}
                         </div>
 
