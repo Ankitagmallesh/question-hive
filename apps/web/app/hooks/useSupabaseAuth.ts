@@ -45,6 +45,7 @@ export function useSupabaseAuth(): AuthState {
             // Map Supabase user to our shared User type
             const mapped: User = {
               id: localId, // Using local numeric ID
+              id: localId, // Using local numeric ID
               name: u?.user_metadata?.full_name || u?.email || 'User',
               email: u?.email || '',
               credits: credits,
