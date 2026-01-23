@@ -32,6 +32,7 @@ export async function GET(req: Request) {
         return NextResponse.json({ 
             success: true, 
             user: {
+                id: userId, // Include local DB ID
                 name: user[0].name,
                 email: user[0].email,
             },
