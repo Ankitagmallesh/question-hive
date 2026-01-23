@@ -229,7 +229,7 @@ export default function QuestionsPage() {
                 isOpen={showCreateModal}
                 onClose={() => setShowCreateModal(false)}
                 onSuccess={loadQuestions}
-                userId={typeof user?.id === 'number' ? user.id : 1}
+                userId={user?.id || 0}
             />
         </DashboardLayout>
     );
