@@ -58,9 +58,9 @@ export async function POST(req: Request) {
         // 4. Transaction to Save Paper + Items
         // Validate ID: if it's not a number, treat as new (0)
         const numericId = !isNaN(Number(id)) ? Number(id) : 0;
-        
+
         // Wrap transaction result to return paperId
-        const resultId = await db.transaction(async (tx: any) => {
+        const resultId = await db.transaction(async (tx) => {
             // Check if exists
             const existing = await tx.select().from(questionPapers).where(eq(questionPapers.id, numericId));
             
@@ -112,7 +112,7 @@ export async function POST(req: Request) {
 
             // B. Insert Items
             if (paperQuestions.length > 0) {
-                const itemsToInsert = paperQuestions.map((q: any, index: number) => ({
+                const itemsToInsert = paperQuestions.map((q: { id: string | number; marks?: number }, index: number) => ({
                     id: Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 1000000) + index, // Unique ID for item
                     questionPaperId: paperId,
                     questionId: Number(q.id), // Ensure question ID is number
@@ -128,8 +128,9 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ success: true, message: 'Paper saved successfully', paperId: resultId });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Save Paper Error:', error);
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
     }
 }

@@ -50,7 +50,7 @@ export default function QuestionsPage() {
             const json = await res.json();
             
             if (json.success) {
-                const mapped: Question[] = json.data.map((q: any) => ({
+                const mapped: Question[] = json.data.map((q: { id: string; content: string; questionType?: string; difficulty?: string; marks?: number | string; createdAt: string }) => ({
                     id: q.id,
                     text: q.content,
                     subject: '—', 
