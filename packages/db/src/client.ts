@@ -39,14 +39,14 @@ function ensureDb() {
 // Proxy enables keeping `db.<method>` usage while lazy-initializing
 export const db = new Proxy({}, {
   get(_t, prop) {
-    const inst = ensureDb() as any;
-    return inst[prop];
+    const inst = ensureDb() as unknown;
+    return (inst as Record<PropertyKey, unknown>)[prop];
   },
-  apply(_t, _this, args) {
-    const inst = ensureDb() as any;
-    return typeof inst === 'function' ? inst(...args) : inst;
+  apply(_t: unknown, _this: unknown, args: unknown[]): unknown {
+    const inst = ensureDb() as unknown;
+    return typeof inst === 'function' ? (inst as (...args: unknown[]) => unknown)(...args) : inst;
   }
-}) as any;
+}) as unknown;
 export * from './schema';
 // Re-export Drizzle helpers from this package to ensure a single instance is used by dependents
 export { eq, and, or, asc, desc, sql, inArray, isNotNull, gt } from 'drizzle-orm';

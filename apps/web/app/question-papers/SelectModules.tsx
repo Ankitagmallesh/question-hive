@@ -119,7 +119,7 @@ export default function SelectModules() {
                 if (json.success) {
                     // Start with empty chapters then populate
                     // Map generic qCount if not present (assuming API might not return it yet)
-                    const data = json.data.map((c: any) => ({
+                    const data = json.data.map((c: { qCount?: number; [key: string]: unknown }) => ({
                         ...c,
                         qCount: c.qCount || Math.floor(Math.random() * 50) + 10 // Mock count if missing
                     }));

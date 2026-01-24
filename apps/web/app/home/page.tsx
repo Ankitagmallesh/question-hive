@@ -46,12 +46,18 @@ const AnimatedProgressBar = ({ width, colorClass }: { width: string, colorClass:
 export default function DashboardPage() {
   const currentDate = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<{
+    totalQuestions: number;
+    totalPapers: number;
+    typeBreakdown: { type: string; count: number }[];
+    difficultyBreakdown: { difficulty: string; count: number }[];
+    recentPapers: unknown[];
+  }>({
     totalQuestions: 0,
     totalPapers: 0,
-    typeBreakdown: [] as any[],
-    difficultyBreakdown: [] as any[],
-    recentPapers: [] as any[]
+    typeBreakdown: [],
+    difficultyBreakdown: [],
+    recentPapers: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -372,7 +378,7 @@ export default function DashboardPage() {
                     {loading ? (
                         <div className="p-8 text-center text-slate-400">Loading recent papers...</div>
                     ) : stats.recentPapers.length > 0 ? (
-                        stats.recentPapers.map((paper: any) => (
+                        stats.recentPapers.map((paper: { id: string; title: string; updatedAt: string; status?: string }) => (
                             <Link href={`/question-papers/create?savedId=${paper.id}`} key={paper.id}>
                                 <div className="p-4 border border-slate-100 bg-slate-50/50 rounded-2xl flex items-center justify-between group cursor-pointer hover:bg-white transition-all shadow-sm mb-3">
                                     <div className="flex items-center gap-4">

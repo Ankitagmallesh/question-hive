@@ -8,7 +8,7 @@ import Link from 'next/link';
 
 export default function SavedPapersPage() {
     const { user, loading } = useSupabaseAuth();
-    const [savedPapers, setSavedPapers] = useState<any[]>([]);
+    const [savedPapers, setSavedPapers] = useState<{ id: string }[]>([]);
     const router = useRouter();
 
     useEffect(() => {
