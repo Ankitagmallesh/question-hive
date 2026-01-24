@@ -437,7 +437,7 @@ export default function PaperDesigner() {
                 // 1. Fetch lightweight metadata for ALL matching questions to sort fully
                 let idQuery = supabase
                     .from('questions')
-                    .select(`id, difficulty_levels(name), chapters!inner(name)`, { count: 'exact' });
+                    .select('id, difficulty_levels(name), chapters!inner(name)', { count: 'exact' });
 
                 if (selectedChapters.length > 0) {
                     idQuery = idQuery.in('chapters.name', selectedChapters);
