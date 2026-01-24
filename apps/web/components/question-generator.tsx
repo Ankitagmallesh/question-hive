@@ -289,7 +289,6 @@ export function QuestionGenerator({ onQuestionsGenerated, difficultyLevel, subje
       }
 
       const data = await response.json()
-
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
@@ -314,7 +313,7 @@ export function QuestionGenerator({ onQuestionsGenerated, difficultyLevel, subje
       const errorAssistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: `❌ **Connection Error**: Unable to reach the QuestionHive AI service.\n\n💡 **Please try again in a moment.** If the problem persists, check your internet connection.`,
+        content: '❌ **Connection Error**: Unable to reach the QuestionHive AI service.\n\n💡 **Please try again in a moment.** If the problem persists, check your internet connection.',
         timestamp: new Date(),
       }
 
