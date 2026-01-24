@@ -58,7 +58,7 @@ export function validatePassword(password: string): {
 /**
  * Validate a form field based on its configuration
  */
-export function validateField(value: any, field: FormField): string | null {
+export function validateField(value: string, field: FormField): string | null {
     // Required validation
     if (field.required && (!value || (typeof value === 'string' && value.trim() === ''))) {
         return `${field.label} is required`;
@@ -114,7 +114,7 @@ export function validateField(value: any, field: FormField): string | null {
 /**
  * Validate an entire form
  */
-export function validateForm<T extends Record<string, any>>(
+export function validateForm<T extends Record<string, unknown>>(
     data: T,
     fields: FormField[]
 ): { isValid: boolean; errors: Record<string, string> } {
@@ -149,7 +149,7 @@ export function sanitizeInput(input: string): string {
 /**
  * Extract and validate JSON from string
  */
-export function parseJSON<T = any>(jsonString: string): T | null {
+export function parseJSON<T = unknown>(jsonString: string): T | null {
     try {
         return JSON.parse(jsonString);
     } catch {

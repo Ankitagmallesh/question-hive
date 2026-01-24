@@ -32,11 +32,11 @@ export function useSupabaseAuth(): AuthState {
               email: u?.email || '',
               avatarUrl: u?.user_metadata?.avatar_url || undefined,
               role: 'user',
-            } as any;
+            };
             setUser(mapped);
           }
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Suppress "Failed to fetch" network errors to avoid full-screen overlay in dev
         if (error instanceof TypeError && error.message === 'Failed to fetch') {
              console.warn('Supabase Connection Error: Failed to fetch. Check your internet connection or SUPABASE_URL.');
@@ -46,9 +46,10 @@ export function useSupabaseAuth(): AuthState {
 
         console.error('Auth Check Error:', error);
         // Handle "User from sub claim in JWT does not exist" or other auth errors
-        if (error?.message?.includes('User from sub claim in JWT does not exist') ||
-            error?.code === 'user_not_found' ||
-            error?.status === 403) {
+        const err = error as { message?: string; code?: string; status?: number };
+        if (err.message?.includes('User from sub claim in JWT does not exist') ||
+            err.code === 'user_not_found' ||
+            err.status === 403) {
            // Clear local state
            if (typeof window !== 'undefined') {
                localStorage.removeItem('auth_token');

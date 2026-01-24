@@ -10,7 +10,8 @@ export async function GET() {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`)
     const data = await res.json()
     return NextResponse.json(data)
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message })
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "An unexpected error occurred"
+    return NextResponse.json({ error: message })
   }
 }

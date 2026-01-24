@@ -28,7 +28,7 @@ export async function GET(request: Request) {
       .leftJoin(questionTypes, eq(questions.questionTypeId, questionTypes.id))
       
     // Apply filters - logic removed
-    let queryWithFilters: any = baseQuery;
+    let queryWithFilters = baseQuery;
 
     // Get Total Count (separate query or window function)
     // Drizzle doesn't support easy window functions yet for count(*), so easier to run a count query.
@@ -60,8 +60,8 @@ export async function GET(request: Request) {
         }
     });
 
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('API Error:', e);
-    return NextResponse.json({ success: false, error: e.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: e instanceof Error ? e.message : String(e) }, { status: 500 });
   }
 }

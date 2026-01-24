@@ -6,9 +6,13 @@ import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
 import Link from 'next/link';
 
+type SavedPaper = {
+    id: string;
+};
+
 export default function SavedPapersPage() {
     const { user, loading } = useSupabaseAuth();
-    const [savedPapers, setSavedPapers] = useState<any[]>([]);
+    const [savedPapers, setSavedPapers] = useState<SavedPaper[]>([]);
     const router = useRouter();
 
     useEffect(() => {
@@ -20,7 +24,7 @@ export default function SavedPapersPage() {
             const papers = localStorage.getItem(key);
             if (papers) {
                 try {
-                    setSavedPapers(JSON.parse(papers));
+                    setSavedPapers(JSON.parse<SavedPaper[]>(papers));
                 } catch (e) {
                     console.error("Failed to parse saved papers", e);
                 }

@@ -158,7 +158,7 @@ const SortableQuestionItem = ({ question, index, onRemove }: { question: Questio
     );
 };
 
-const ChapterSelect = ({ options, selectedChapters, onChange }: { options: any[], selectedChapters: string[], onChange: (val: string) => void }) => {
+const ChapterSelect = ({ options, selectedChapters, onChange }: { options: unknown[]; selectedChapters: string[]; onChange: (val: string) => void }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -354,7 +354,7 @@ export default function PaperDesigner() {
             if (allSaved) {
                 try {
                     const papers = JSON.parse(allSaved);
-                    const found = papers.find((p: any) => p.id === savedId);
+                    const found = papers.find(p => p.id === savedId);
                     if (found) {
                         setSettings(s => ({...s, ...found.settings}));
                         setPaperQuestions(found.paperQuestions);
@@ -410,7 +410,7 @@ export default function PaperDesigner() {
                 };
 
                 if (savedId) {
-                    const index = existingPapers.findIndex((p: any) => p.id === savedId);
+                    const index = existingPapers.findIndex(p => p.id === savedId);
                     if (index !== -1) existingPapers[index] = newPaper;
                     else existingPapers.push(newPaper);
                 } else {
@@ -428,9 +428,9 @@ export default function PaperDesigner() {
 
             toast.success("Paper saved to database successfully!");
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Save failed:', error);
-            toast.error(error.message || "Failed to save paper to database.");
+            toast.error((error as Error).message || "Failed to save paper to database.");
         } finally {
             setIsSaving(false);
         }
@@ -477,7 +477,7 @@ export default function PaperDesigner() {
                 setTotalCount(total || 0);
 
                 // 2. Sort in memory (Priority -> Difficulty)
-                const sortedIds = allIds.sort((a: any, b: any) => {
+                const sortedIds = allIds.sort((a, b) => {
                     // Priority Chapter
                     const aIsPriority = a.chapters?.name === priorityChapter;
                     const bIsPriority = b.chapters?.name === priorityChapter;
@@ -492,7 +492,7 @@ export default function PaperDesigner() {
                 });
 
                 // 3. Slice for current page
-                const slicedIds = sortedIds.slice(from, to).map((x: any) => x.id);
+                const slicedIds = sortedIds.slice(from, to).map(x => x.id);
 
                 if (slicedIds.length === 0) {
                     setSourceQuestions([]);
@@ -520,17 +520,26 @@ export default function PaperDesigner() {
                     const orderedData = slicedIds.map(id => fullData.find(d => d.id === id)).filter(Boolean);
                     
                      // Transform
-                     const transformed = orderedData.map((q: any) => ({
+                     const transformed = orderedData.map((q: {
+                         id: string;
+                         content: string;
+                         question_types?: { name: string };
+                         difficulty_levels?: { name: string };
+                         chapters?: { name: string };
+                         question_options?: { id: string; option_text: string; option_order: number }[];
+                     }) => ({
                         id: q.id,
                         text: q.content,
                         type: q.question_types?.name,
                         difficulty: q.difficulty_levels?.name,
                         chapter: q.chapters?.name,
-                        options: q.question_options?.map((o: any) => ({
-                            id: o.id,
-                            text: o.option_text,
-                            order: o.option_order
-                        })).sort((a: any, b: any) => a.order - b.order)
+                        options: q.question_options
+                            ?.map((o: { id: string; option_text: string; option_order: number }) => ({
+                                id: o.id,
+                                text: o.option_text,
+                                order: o.option_order
+                            }))
+                            .sort((a: { id: string; text: string; order: number }, b: { id: string; text: string; order: number }) => a.order - b.order)
                     }));
                     setSourceQuestions(transformed);
                     setHasMore(transformed.length === PAGE_SIZE);
@@ -563,17 +572,17 @@ export default function PaperDesigner() {
 
                 if (data) {
                     // Transform Data
-                    const transformed = data.map((q: any) => ({
+                    const transformed = data.map((q) => ({
                         id: q.id,
                         text: q.content,
                         type: q.question_types?.name,
                         difficulty: q.difficulty_levels?.name,
                         chapter: q.chapters?.name,
-                        options: q.question_options?.map((o: any) => ({
+                        options: q.question_options?.map((o) => ({
                             id: o.id,
                             text: o.option_text,
                             order: o.option_order
-                        })).sort((a: any, b: any) => a.order - b.order)
+                        })).sort((a, b) => a.order - b.order)
                     }));
                     setSourceQuestions(transformed);
                     setHasMore(transformed.length === PAGE_SIZE);
@@ -614,7 +623,7 @@ export default function PaperDesigner() {
     };
     
     // Using any to avoid complicated mouse event types across browser/React
-    const handleResizeMouseMove = (e: any) => {
+    const handleResizeMouseMove = (e: MouseEvent) => {
         if (containerRef.current) {
             const containerWidth = containerRef.current.offsetWidth;
             const newLeftWidth = ((e.clientX - containerRef.current.getBoundingClientRect().left) / containerWidth) * 100;
@@ -1172,7 +1181,7 @@ export default function PaperDesigner() {
                                             key={d}
                                             className={`toggle-btn ${settings.difficulty === d ? 'active' : ''}`}
                                             onClick={() => {
-                                                setSettings({...settings, difficulty: d as any});
+                                                setSettings({...settings, difficulty: d});
                                                 setCurrentPage(1);
                                             }}
                                         >
@@ -1216,7 +1225,7 @@ export default function PaperDesigner() {
                                             <div 
                                                 key={pos}
                                                 className={`visual-option ${settings.logoPosition === pos ? 'active' : ''}`}
-                                                onClick={() => setSettings({...settings, logoPosition: pos as any})}
+                                                onClick={() => setSettings({...settings, logoPosition: pos})}
                                             >
                                                 <i className={`ri-align-${pos === 'center' ? 'center' : pos}`}></i>
                                                 <span className="capitalize">{pos}</span>
@@ -1255,7 +1264,7 @@ export default function PaperDesigner() {
                             <div className="row">
                                 <div className="col">
                                     <label>Answer Space</label>
-                                    <select className="input-box" value={settings.answerSpace} onChange={e => setSettings({...settings, answerSpace: e.target.value as any})}>
+                                    <select className="input-box" value={settings.answerSpace} onChange={e => setSettings({ ...settings, answerSpace: e.target.value })}>
                                         <option value="none">None</option>
                                         <option value="lines">Dotted Lines (2)</option>
                                         <option value="box">Empty Box</option>
@@ -1263,7 +1272,7 @@ export default function PaperDesigner() {
                                 </div>
                                 <div className="col">
                                     <label>Separator Line</label>
-                                    <select className="input-box" value={settings.separator} onChange={e => setSettings({...settings, separator: e.target.value as any})}>
+                                    <select className="input-box" value={settings.separator} onChange={e => setSettings({...settings, separator: e.target.value})}>
                                         <option value="none">Hidden</option>
                                         <option value="solid">Solid Black</option>
                                         <option value="double">Double Line</option>
@@ -1275,7 +1284,7 @@ export default function PaperDesigner() {
                             <div className="row">
                                 <div className="col">
                                     <label>Page Border</label>
-                                    <select className="input-box" value={settings.pageBorder} onChange={e => setSettings({...settings, pageBorder: e.target.value as any})}>
+                                    <select className="input-box" value={settings.pageBorder} onChange={e => setSettings({...settings, pageBorder: e.target.value})}>
                                         <option value="none">None</option>
                                         <option value="border-simple">Simple Line</option>
                                         <option value="border-double">Double Line</option>
@@ -1283,7 +1292,7 @@ export default function PaperDesigner() {
                                 </div>
                                 <div className="col">
                                     <label>Font Family</label>
-                                    <select className="input-box" value={settings.font} onChange={e => setSettings({...settings, font: e.target.value as any})}>
+                                    <select className="input-box" value={settings.font} onChange={e => setSettings({...settings, font: e.target.value})}>
                                         <option value="jakarta">Jakarta Sans</option>
                                         <option value="merriweather">Merriweather (Serif)</option>
                                         <option value="inter">Inter</option>
@@ -1294,7 +1303,7 @@ export default function PaperDesigner() {
                              <div className="row">
                                 <div className="col">
                                     <label>Template</label>
-                                    <select className="input-box" value={settings.template} onChange={e => setSettings({...settings, template: e.target.value as any})}>
+                                    <select className="input-box" value={settings.template} onChange={e => setSettings({...settings, template: e.target.value as string})}>
                                         <option value="classic">Classic</option>
                                         <option value="modern">Modern</option>
                                         <option value="minimal">Minimal</option>
@@ -1307,7 +1316,7 @@ export default function PaperDesigner() {
                                             <button 
                                                 key={m}
                                                 className={`toggle-btn ${settings.margin === m ? 'active' : ''}`}
-                                                onClick={() => setSettings({...settings, margin: m as any})}
+                                                onClick={() => setSettings({...settings, margin: m as number})}
                                             >
                                                 {m}
                                             </button>
@@ -1349,7 +1358,7 @@ export default function PaperDesigner() {
                                             <div 
                                                 key={align}
                                                 className={`visual-option ${settings.contentAlignment === align ? 'active' : ''}`}
-                                                onClick={() => setSettings({...settings, contentAlignment: align as any})}
+                                                onClick={() => setSettings({...settings, contentAlignment: align})}
                                             >
                                                 <i className={`ri-align-${align}`}></i>
                                                 <span className="capitalize">{align}</span>
@@ -1418,7 +1427,7 @@ export default function PaperDesigner() {
                                 </div>
                                 <div className="col">
                                     <label>Page Numbering</label>
-                                    <select className="input-box" value={settings.pageNumbering} onChange={e => setSettings({...settings, pageNumbering: e.target.value as any})}>
+                                    <select className="input-box" value={settings.pageNumbering} onChange={e => setSettings({...settings, pageNumbering: e.target.value as string})}>
                                         <option value="page-x-of-y">Page 1 of 5</option>
                                         <option value="x-slash-y">1 / 5</option>
                                         <option value="hidden">Hidden</option>
