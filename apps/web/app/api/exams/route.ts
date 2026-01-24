@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
-import { db } from '../../lib/db';
-import { exams } from '@repo/db';
+import { getExams } from '../../server/db/queries/exams';
 
 export async function GET() {
   try {
-  const data = await db.select().from(exams).orderBy(exams.name);
+    const data = await getExams();
     return NextResponse.json({ success: true, data });
   } catch (e: any) {
     console.error('Error fetching exams:', e);
