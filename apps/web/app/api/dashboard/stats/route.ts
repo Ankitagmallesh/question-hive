@@ -20,8 +20,8 @@ const getDashboardStats = async (userId: number) => {
     
     let totalPapers = 0;
     let totalQuestionsInPapers = 0;
-    let typeBreakdown: any[] = [];
-    let difficultyBreakdown: any[] = [];
+    let typeBreakdown: unknown[] = [];
+    let difficultyBreakdown: unknown[] = [];
 
     if (targetStatuses.length > 0) {
         const statusIds = targetStatuses.map((s: { id: number }) => s.id);
@@ -118,8 +118,8 @@ export async function GET() {
       stats
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Dashboard Stats API Error:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });
   }
 }

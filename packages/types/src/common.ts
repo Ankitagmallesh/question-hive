@@ -1,12 +1,12 @@
 // API Response Types
-export interface APIResponse<T = any> {
+export interface APIResponse<T = unknown> {
     success: boolean;
     message: string;
     data?: T;
     error?: string;
 }
 
-export interface PaginatedResponse<T = any> {
+export interface PaginatedResponse<T = unknown> {
     success: boolean;
     message: string;
     data: T[];
@@ -69,7 +69,7 @@ export interface FormField {
     };
 }
 
-export interface FormState<T = any> {
+export interface FormState<T = unknown> {
     data: T;
     errors: Record<string, string>;
     isSubmitting: boolean;
@@ -83,15 +83,15 @@ export interface SelectOption {
     disabled?: boolean;
 }
 
-export interface TableColumn<T = any> {
+export interface TableColumn<T = unknown> {
     key: keyof T;
     title: string;
     sortable?: boolean;
-    render?: (value: any, record: T) => React.ReactNode;
+    render?: (value: T[keyof T], record: T) => React.ReactNode;
     width?: string | number;
 }
 
-export interface TableProps<T = any> {
+export interface TableProps<T = unknown> {
     data: T[];
     columns: TableColumn<T>[];
     loading?: boolean;
@@ -122,7 +122,7 @@ export interface ActivityLog {
     action: string;
     resourceType: 'question' | 'paper' | 'user';
     resourceId: number;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
     timestamp: string;
 }
 

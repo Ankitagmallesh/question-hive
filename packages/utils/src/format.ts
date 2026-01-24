@@ -108,7 +108,7 @@ export function generateId(): string {
 /**
  * Debounce function
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
     func: T,
     delay: number
 ): (...args: Parameters<T>) => void {
@@ -130,7 +130,7 @@ export function deepClone<T>(obj: T): T {
     if (typeof obj === 'object') {
         const cloned = {} as T;
         Object.keys(obj).forEach(key => {
-            (cloned as any)[key] = deepClone((obj as any)[key]);
+            (cloned as Record<string, unknown>)[key] = deepClone((obj as Record<string, unknown>)[key]);
         });
         return cloned;
     }
@@ -140,7 +140,7 @@ export function deepClone<T>(obj: T): T {
 /**
  * Check if value is empty (null, undefined, empty string, empty array, empty object)
  */
-export function isEmpty(value: any): boolean {
+export function isEmpty(value: unknown): boolean {
     if (value === null || value === undefined) return true;
     if (typeof value === 'string') return value.trim() === '';
     if (Array.isArray(value)) return value.length === 0;

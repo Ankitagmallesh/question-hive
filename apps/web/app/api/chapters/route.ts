@@ -7,14 +7,13 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const subjectId = searchParams.get('subjectId');
 
-    let data;
-    if (subjectId) {
-      data = await db.select().from(chapters).where(eq(chapters.subjectId, Number(subjectId))).orderBy(chapters.name);
-    } else {
-      data = await db.select().from(chapters).orderBy(chapters.name);
-    }
+    const data = subjectId
+      ? await db.select().from(chapters).where(eq(chapters.subjectId, Number(subjectId))).orderBy(chapters.name)
+      : await db.select().from(chapters).orderBy(chapters.name);
+
     return NextResponse.json({ success: true, data });
-  } catch (e: any) {
-    return NextResponse.json({ success: false, error: e.message }, { status: 500 });
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }
