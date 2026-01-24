@@ -50,5 +50,7 @@ export async function POST(req: Request) {
         console.error('Save Paper Error:', error);
         const errorMessage = error instanceof Error ? error.message : String(error);
         return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
     }
 }

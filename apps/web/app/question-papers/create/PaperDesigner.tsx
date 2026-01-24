@@ -3,27 +3,43 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
+    DndContext, 
+    closestCenter,
     KeyboardSensor,
     PointerSensor,
     useSensor,
     useSensors,
+    DragOverlay,
+    defaultDropAnimationSideEffects,
+    DragStartEvent,
     DragEndEvent
 } from '@dnd-kit/core';
 import {
     arrayMove,
+    SortableContext,
     sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+    useSortable,
 } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { toast } from 'sonner';
-import { experimental_useObject } from '@ai-sdk/react';
-import { z } from 'zod';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { getSupabase } from '../../lib/supabase-client';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
-import AppLoader from '../../../components/ui/AppLoader';
 import { 
     Eye, 
+    Save, 
+    ArrowDown, 
     LayoutTemplate, 
+    Search, 
+    Trash2, 
+    GripVertical, 
+    FileText, 
+    ChevronDown, 
+    ChevronRight,
     Loader2,
+    MoveLeft,
+    Download
 } from 'lucide-react';
 import './create.css';
 import { RichTextEditor } from './RichTextEditor';
@@ -206,10 +222,6 @@ export default function PaperDesigner() {
     
     // --- State ---
     const [leftPanelWidth, setLeftPanelWidth] = useState(50); // percentage
-    const [mobileTab, setMobileTab] = useState<'editor' | 'preview'>('editor');
-    
-    // Touch swipe detection for mobile - REMOVED
-    
     const containerRef = useRef<HTMLDivElement>(null);
     const [chaptersList, setChaptersList] = useState<{id: string, name: string}[]>([]);
 
@@ -227,7 +239,7 @@ export default function PaperDesigner() {
         layout: 'single',
         margin: 'M',
         fontSize: 14,
-        lineHeight: 1,
+        lineHeight: 1.5,
         metaFontSize: 12,
         
         pageBorder: 'none',
@@ -236,7 +248,7 @@ export default function PaperDesigner() {
         
         date: (new Date().toISOString().split('T')[0]) as string,
         instructions: '<ul><li>All questions are compulsory.</li><li>Calculators are not allowed.</li></ul>',
-        watermark: 'Question Hive',
+        watermark: '',
         
         studentName: true,
         rollNumber: true,
@@ -390,13 +402,6 @@ export default function PaperDesigner() {
         if (!authLoading && !user) router.push('/auth/login');
     }, [authLoading, user, router]);
 
-    // Auto-Select Tab from URL
-    useEffect(() => {
-        if (searchParams.get('mode') === 'auto') {
-            setActiveTab('auto');
-        }
-    }, [searchParams]);
-
     // Fetch Chapters
     useEffect(() => {
         const fetchChapters = async () => {
@@ -429,12 +434,8 @@ export default function PaperDesigner() {
         }
     }, [searchParams]);
 
-    // --- Draft Persistence (DB-Only) ---
-    // 1. Debounce Changes
-    const debouncedSettings = useDebounce(settings, 1500); 
-    const debouncedQuestions = useDebounce(paperQuestions, 1500);
-    
-    // 2. Auto-Save Effect
+    // --- Draft Persistence ---
+    // 1. Auto-save to LocalStorage
     useEffect(() => {
         const autoSave = async () => {
              // Only auto-save if we have content and user is logged in
@@ -534,6 +535,7 @@ export default function PaperDesigner() {
     }, [searchParams, user]);
 
     const [isSaving, setIsSaving] = useState(false);
+    // Removed useToast hook
 
     const handleSavePaper = async () => {
         if (!settings.title) {
@@ -551,12 +553,7 @@ export default function PaperDesigner() {
         try {
             const savedId = searchParams.get('savedId');
             
-            const safeSettings = {
-                ...settings,
-                duration: parseInt(settings.duration || '0') || 0,
-                totalMarks: parseInt(settings.totalMarks || '0') || 0,
-            };
-
+            // Construct Payload
             const payload = {
                 id: savedId ? parseInt(savedId, 10) : undefined, 
                 settings: safeSettings,
@@ -586,7 +583,7 @@ export default function PaperDesigner() {
                 router.replace(`?${newParams.toString()}`);
             }
 
-            toast.success("Paper saved successfully!");
+            toast.success("Paper saved to database successfully!");
 
         } catch (error: unknown) {
         } catch (error: unknown) {
@@ -691,6 +688,7 @@ export default function PaperDesigner() {
                             text: o.option_text,
                             order: o.option_order
                         })).sort((a, b) => a.order - b.order)
+                        })).sort((a, b) => a.order - b.order)
                     }));
                     setSourceQuestions(transformed);
                     setHasMore(transformed.length === PAGE_SIZE);
@@ -724,6 +722,7 @@ export default function PaperDesigner() {
                 if (data) {
                     // Transform Data
                     const transformed = data.map((q) => ({
+                    const transformed = data.map((q) => ({
                         id: q.id,
                         text: q.content,
                         type: q.question_types?.[0]?.name,
@@ -733,6 +732,7 @@ export default function PaperDesigner() {
                             id: o.id,
                             text: o.option_text,
                             order: o.option_order
+                        })).sort((a, b) => a.order - b.order)
                         })).sort((a, b) => a.order - b.order)
                     }));
                     setSourceQuestions(transformed);
@@ -758,8 +758,8 @@ export default function PaperDesigner() {
         const { active, over } = event;
         if (active.id !== over?.id) {
             setPaperQuestions((items) => {
-                const oldIndex = items.findIndex(i => (i.instanceId || i.id) === active.id);
-                const newIndex = items.findIndex(i => (i.instanceId || i.id) === over?.id);
+                const oldIndex = items.findIndex(i => i.id === active.id);
+                const newIndex = items.findIndex(i => i.id === over?.id);
                 return arrayMove(items, oldIndex, newIndex);
             });
         }
@@ -774,6 +774,7 @@ export default function PaperDesigner() {
     };
     
     // Using any to avoid complicated mouse event types across browser/React
+    const handleResizeMouseMove = (e: MouseEvent) => {
     const handleResizeMouseMove = (e: MouseEvent) => {
         if (containerRef.current) {
             const containerWidth = containerRef.current.offsetWidth;
@@ -791,12 +792,7 @@ export default function PaperDesigner() {
     // --- Actions ---
     const addToPaper = (q: Question) => {
         if (!paperQuestions.find(item => item.id === q.id)) {
-            const questionWithInstance = {
-                ...q,
-                marks: 4,
-                instanceId: `new-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-            };
-            setPaperQuestions([...paperQuestions, questionWithInstance]);
+            setPaperQuestions([...paperQuestions, q]);
             
             // Auto-calculate metrics: 1 Q = 4 Marks, 1 Min
             const currentMarks = parseInt(settings.totalMarks) || 0;
@@ -861,8 +857,8 @@ export default function PaperDesigner() {
         });
     }, [sourceQuestions, searchQuery, settings.difficulty, settings.chapters, priorityChapter]);
 
-    const removeFromPaper = (idOrInstanceId: string) => {
-        setPaperQuestions(paperQuestions.filter(q => (q.instanceId || q.id) !== idOrInstanceId));
+    const removeFromPaper = (id: string) => {
+        setPaperQuestions(paperQuestions.filter(q => q.id !== id));
         
         // Auto-calculate metrics
         const currentMarks = parseInt(settings.totalMarks) || 0;
@@ -890,12 +886,9 @@ export default function PaperDesigner() {
         }
     };
 
-    // --- Touch Swipe Handlers for Mobile Navigation - REMOVED ---
-
-
     // --- PDF Export Function using Puppeteer API ---
     // --- PDF Export Function using Puppeteer API ---
-    const handleExportClick = () => {
+    const handleExportPDF = async () => {
         if (paperQuestions.length === 0) {
             toast.error('No questions to export', {
                 description: 'Please add some questions to your paper first.'
@@ -1030,7 +1023,6 @@ export default function PaperDesigner() {
                 footerText: settings.footerText,
                 roughWorkArea: settings.roughWorkArea,
                 pageNumbering: settings.pageNumbering,
-                withAnswerKey: settings.withAnswerKey,
                 questions: paperQuestions.map(q => ({
                     id: q.id,
                     text: q.text,
@@ -1110,33 +1102,22 @@ export default function PaperDesigner() {
 
                 throw new Error(errData.error || response.statusText || 'Failed to generate PDF');
             }
-            
-            // Check for credit update header
-            const remainingCredits = response.headers.get('X-Credits-Remaining');
-            if (remainingCredits) {
-                // Manually update the user credits in the UI if possible
-                window.location.reload(); 
-            }
 
-            // Get Content Type to determine extension (PDF vs ZIP)
-            const contentType = response.headers.get('content-type');
-            const fileExtension = contentType && contentType.includes('zip') ? 'zip' : 'pdf';
-
-            // Get the blob
-            const fileBlob = await response.blob();
+            // Get the PDF blob
+            const pdfBlob = await response.blob();
             
             // Create download link
-            const url = window.URL.createObjectURL(fileBlob);
+            const url = window.URL.createObjectURL(pdfBlob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `${settings.title.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.${fileExtension}`;
+            link.download = `${settings.title.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
 
-            toast.success(fileExtension === 'zip' ? 'Paper & Key Downloaded!' : 'PDF Downloaded!', {
-                description: 'Your files have been saved successfully.'
+            toast.success('PDF Downloaded!', {
+                description: 'Your paper has been saved successfully.'
             });
         } catch (error) {
             console.error('PDF export error:', error);
@@ -1150,23 +1131,97 @@ export default function PaperDesigner() {
     const handleZoomOut = () => setZoomLevel(prev => Math.max(prev - 10, 50));
     const handleZoomReset = () => setZoomLevel(100);
 
+    const paginateQuestions = (questions: Question[]) => {
+        if (questions.length === 0) return [];
 
+        const pages: Question[][] = [];
+        let currentPage: Question[] = [];
+        
+        // A4 in mm: 210 × 297mm
+        // Converting to approximate px at 96dpi: 1mm ≈ 3.78px
+        const MM_TO_PX = 3.78;
+        const PAGE_HEIGHT_MM = 297;
+        const PAGE_HEIGHT = PAGE_HEIGHT_MM * MM_TO_PX; // ~1122px
+        const MARGIN_MM = 10; // 10mm padding we set in CSS
+        const MARGIN = MARGIN_MM * MM_TO_PX;
+        
+        const HEADER_HEIGHT = 100; // Title, meta, institution (smaller estimate)
+        const FOOTER_HEIGHT = 40; // Page number footer
+        
+        let availableHeight = PAGE_HEIGHT - (2 * MARGIN) - HEADER_HEIGHT - FOOTER_HEIGHT;
+        let currentHeight = 0;
 
+        questions.forEach((q) => {
+            // More accurate height estimation
+            const fontSize = settings.fontSize;
+            const lineHeight = fontSize * 1.4;
+            
+            // Estimate question text lines (more generous chars per line)
+            const charsPerLine = 70; // Approximate for A4 width
+            const textLines = Math.ceil(q.text.length / charsPerLine);
+            const textHeight = Math.max(textLines, 1) * lineHeight;
+            
+            // Options height (2 columns, so divide by 2)
+            let optionsHeight = 0;
+            if (q.options && q.options.length > 0) {
+                const optsRows = Math.ceil(q.options.length / 2);
+                optionsHeight = optsRows * 20; // ~20px per row
+            }
 
+            // Item height = text + options + padding (reduced from 30 to 20)
+            const itemHeight = textHeight + optionsHeight + 20;
 
+            if (currentHeight + itemHeight > availableHeight) {
+                // Push current page and start new
+                pages.push(currentPage);
+                currentPage = [];
+                currentHeight = 0;
+                // Subsequent pages have more space (no header)
+                availableHeight = PAGE_HEIGHT - (2 * MARGIN) - 30 - FOOTER_HEIGHT;
+            }
 
+            currentPage.push(q);
+            currentHeight += itemHeight;
+        });
 
+        if (currentPage.length > 0) pages.push(currentPage);
+        
+        return pages;
+    };
 
+    const PaperContent = () => {
+        const marginPx = getMargins();
+        const fontFamily = getFontFamily();
+        const pages = paginateQuestions(paperQuestions);
 
-    if (authLoading) {
-        return (
-            <DashboardLayout fullScreen={true}>
-                <div className="h-screen w-full flex items-center justify-center bg-gray-50">
-                    <AppLoader text="Verifying session..." />
+        if (paperQuestions.length === 0) {
+            return (
+                <div 
+                    className={`paper-sheet ${settings.template === 'modern' ? 't-modern' : settings.template === 'minimal' ? 't-minimal' : 't-classic'}`}
+                    style={{ 
+                        fontFamily,
+                        padding: `${marginPx}px`,
+                        fontSize: `${settings.fontSize}px`,
+                        marginBottom: '40px'
+                    }}
+                >
+                     <div className="paper-header">
+                        <div className="p-institution" style={{display: settings.institution ? 'block' : 'none'}}>{settings.institution}</div>
+                        <div className="p-title">{settings.title}</div>
+                        <div className="p-meta">
+                            <span>Duration: {settings.duration}</span>
+                            <span>Max Marks: {settings.totalMarks}</span>
+                        </div>
+                    </div>
+                    <div style={{textAlign: 'center', color: '#cbd5e1', marginTop: '50px'}}>
+                        <i className="ri-drag-move-2-line" style={{fontSize: '32px', marginBottom: '10px', display: 'block'}}></i>
+                        Click or drag questions to add here
+                    </div>
                 </div>
-            </DashboardLayout>
-        );
-    }
+            )
+        }
+
+        let globalIndex = 0;
 
     return (
         <DashboardLayout fullScreen={true}>

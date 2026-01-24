@@ -19,7 +19,10 @@ export async function GET(req: Request) {
         });
 
     } catch (error: unknown) {
+    } catch (error: unknown) {
         console.error('Get Profile Error:', error);
+        const message = error instanceof Error ? error.message : String(error);
+        return NextResponse.json({ success: false, error: message }, { status: 500 });
         const message = error instanceof Error ? error.message : String(error);
         return NextResponse.json({ success: false, error: message }, { status: 500 });
     }
