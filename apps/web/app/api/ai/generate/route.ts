@@ -19,11 +19,12 @@ export async function POST(req: Request) {
       prompt,
       schema: z.object({
         questions: z.array(z.object({
-          id: z.string().describe('A unique random string ID'),
+          id: z.string().describe('A unique string ID starting with "ai_" (e.g. "ai_12345")'),
           text: z.string().describe('The question text'),
           type: z.enum(['mcq']).describe('Question type'),
           difficulty: z.enum(['easy', 'medium', 'hard']).describe('Difficulty level'),
           marks: z.number().default(4).describe('Marks for the question'),
+          isAiGenerated: z.boolean().default(true).describe('Always true for AI questions'),
           options: z.array(z.object({
             id: z.string(),
             text: z.string()
