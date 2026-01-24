@@ -54,7 +54,7 @@ export function useSupabaseAuth(): AuthState {
             setUser(mapped);
           }
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Suppress "Failed to fetch" network errors to avoid full-screen overlay in dev
         if (error instanceof TypeError && error.message === 'Failed to fetch') {
              console.warn('Supabase Connection Error: Failed to fetch. Check your internet connection or SUPABASE_URL.');

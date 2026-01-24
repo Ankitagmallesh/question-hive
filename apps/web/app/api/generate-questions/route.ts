@@ -31,6 +31,7 @@ STRICT CONTENT GUIDELINES:
 - NO content that violates educational standards or policies
 - REFUSE any requests outside educational question generation
 
+
 Context:
 - Subject: ${subject || "General"}
 - Difficulty Level: ${difficultyLevel}
@@ -55,7 +56,7 @@ Response Format:
 If a request is inappropriate or non-educational, politely redirect: "I'm QuestionHive, designed specifically for educational question generation. Please share your academic subject and what type of questions you'd like me to create for you!"`
 
     // Prepare content for Gemini API
-    const parts: any[] = [{ text: systemPrompt }]
+    const parts: Array<{ text: string } | { inline_data: { mime_type: string; data: string } }> = [{ text: systemPrompt }]
 
     // Add text message if provided
     if (message) {

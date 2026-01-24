@@ -406,14 +406,13 @@ export default function PaperDesigner() {
 
             toast.success("Paper saved successfully!");
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Save failed:', error);
             toast.error(error.message || "Failed to save paper.");
         } finally {
             setIsSaving(false);
         }
     };
-
 
 
     const PAGE_SIZE = 10;
@@ -455,7 +454,7 @@ export default function PaperDesigner() {
                 setTotalCount(total || 0);
 
                 // 2. Sort in memory (Priority -> Difficulty)
-                const sortedIds = allIds.sort((a: any, b: any) => {
+                const sortedIds = allIds.sort((a: { chapters?: { name: string }; difficulty_levels?: { name: string } }, b: { chapters?: { name: string }; difficulty_levels?: { name: string } }) => {
                     // Priority Chapter
                     const aIsPriority = a.chapters?.name === priorityChapter;
                     const bIsPriority = b.chapters?.name === priorityChapter;
@@ -470,7 +469,7 @@ export default function PaperDesigner() {
                 });
 
                 // 3. Slice for current page
-                const slicedIds = sortedIds.slice(from, to).map((x: any) => x.id);
+                const slicedIds = sortedIds.slice(from, to).map(x => x.id);
 
                 if (slicedIds.length === 0) {
                     setSourceQuestions([]);
@@ -498,17 +497,17 @@ export default function PaperDesigner() {
                     const orderedData = slicedIds.map(id => fullData.find(d => d.id === id)).filter(Boolean);
                     
                      // Transform
-                     const transformed = orderedData.map((q: any) => ({
+                     const transformed = orderedData.map(q => ({
                         id: q.id,
                         text: q.content,
                         type: q.question_types?.name,
                         difficulty: q.difficulty_levels?.name,
                         chapter: q.chapters?.name,
-                        options: q.question_options?.map((o: any) => ({
+                        options: q.question_options?.map(o => ({
                             id: o.id,
                             text: o.option_text,
                             order: o.option_order
-                        })).sort((a: any, b: any) => a.order - b.order)
+                        })).sort((a, b) => a.order - b.order)
                     }));
                     setSourceQuestions(transformed);
                     setHasMore(transformed.length === PAGE_SIZE);
@@ -541,17 +540,17 @@ export default function PaperDesigner() {
 
                 if (data) {
                     // Transform Data
-                    const transformed = data.map((q: any) => ({
+                    const transformed = data.map((q) => ({
                         id: q.id,
                         text: q.content,
                         type: q.question_types?.name,
                         difficulty: q.difficulty_levels?.name,
                         chapter: q.chapters?.name,
-                        options: q.question_options?.map((o: any) => ({
+                        options: q.question_options?.map((o) => ({
                             id: o.id,
                             text: o.option_text,
                             order: o.option_order
-                        })).sort((a: any, b: any) => a.order - b.order)
+                        })).sort((a, b) => a.order - b.order)
                     }));
                     setSourceQuestions(transformed);
                     setHasMore(transformed.length === PAGE_SIZE);
@@ -592,7 +591,7 @@ export default function PaperDesigner() {
     };
     
     // Using any to avoid complicated mouse event types across browser/React
-    const handleResizeMouseMove = (e: any) => {
+    const handleResizeMouseMove = (e: MouseEvent) => {
         if (containerRef.current) {
             const containerWidth = containerRef.current.offsetWidth;
             const newLeftWidth = ((e.clientX - containerRef.current.getBoundingClientRect().left) / containerWidth) * 100;
