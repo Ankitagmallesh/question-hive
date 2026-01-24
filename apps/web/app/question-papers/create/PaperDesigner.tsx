@@ -1211,11 +1211,20 @@ export default function PaperDesigner() {
                                 <div className="col">
                                     <label>Logo Position</label>
                                     <div className="visual-select">
+                                        const logoPositionHandlers = React.useMemo(
+                                            () => ({
+                                                left: () => setSettings(prev => ({ ...prev, logoPosition: 'left' as unknown })),
+                                                center: () => setSettings(prev => ({ ...prev, logoPosition: 'center' as unknown })),
+                                                right: () => setSettings(prev => ({ ...prev, logoPosition: 'right' as unknown })),
+                                            }),
+                                            [setSettings],
+                                        );
+
                                         {['left', 'center', 'right'].map((pos) => (
                                             <div 
                                                 key={pos}
                                                 className={`visual-option ${settings.logoPosition === pos ? 'active' : ''}`}
-                                                onClick={() => setSettings({...settings, logoPosition: pos as unknown})}
+                                                onClick={logoPositionHandlers[pos]}
                                             >
                                                 <i className={`ri-align-${pos === 'center' ? 'center' : pos}`}></i>
                                                 <span className="capitalize">{pos}</span>
@@ -1229,95 +1238,112 @@ export default function PaperDesigner() {
                                         <div className={`visual-option ${settings.layout === 'single' ? 'active' : ''}`} onClick={() => setSettings({...settings, layout: 'single'})}>
                                             <div className="icon-box icon-1-col"></div> <span>Single</span>
                                         </div>
-                                        <div className={`visual-option ${settings.layout === 'double' ? 'active' : ''}`} onClick={() => setSettings({...settings, layout: 'double'})}>
-                                            <div className="icon-box icon-2-col"></div> <span>2-Col</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        const handleLayoutDouble = useCallback(() => setSettings(prev => ({ ...prev, layout: 'double' })), []);
+                        const handleFontSizeChange = useCallback((e: React.FormEvent<HTMLInputElement>) => setSettings(prev => ({ ...prev, fontSize: Number(e.currentTarget.value) })), []);
+                        const handleLineHeightChange = useCallback((e: React.FormEvent<HTMLInputElement>) => setSettings(prev => ({ ...prev, lineHeight: Number(e.currentTarget.value) })), []);
+                        const handleAnswerSpaceChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => setSettings(prev => ({ ...prev, answerSpace: e.target.value as string })), []);
+                        const handleSeparatorChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => setSettings(prev => ({ ...prev, separator: e.target.value })), []);
+                        const handlePageBorderChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => setSettings(prev => ({ ...prev, pageBorder: e.target.value })), []);
+                        const handleFontFamilyChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => setSettings(prev => ({ ...prev, font: e.target.value as string })), []);
+                        const handleTemplateChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => setSettings(prev => ({ ...prev, template: e.target.value })), []);
+                        const handleMarginClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+                          const m = e.currentTarget.getAttribute('data-margin');
+                          if (m) {
+                            setSettings(prev => ({ ...prev, margin: m as unknown as number }));
+                          }
+                        }, []);
+                        const handleMetaFontSizeChange = useCallback((e: React.FormEvent<HTMLInputElement>) => setSettings(prev => ({ ...prev, metaFontSize: Number(e.currentTarget.value) })), []);
 
-                            <div className="row">
-                                <div className="col">
-                                    <label>Font Size <span className="range-value">{settings.fontSize}px</span></label>
-                                    <div className="range-slider-container">
-                                        <input type="range" className="range-slider" min="10" max="18" value={settings.fontSize} onInput={(e) => setSettings({...settings, fontSize: Number(e.currentTarget.value)})} />
-                                    </div>
-                                </div>
-                                <div className="col">
-                                    <label>Line Height <span className="range-value">{settings.lineHeight}</span></label>
-                                    <div className="range-slider-container">
-                                        <input type="range" className="range-slider" min="1.0" max="2.0" step="0.1" value={settings.lineHeight} onInput={(e) => setSettings({...settings, lineHeight: Number(e.currentTarget.value)})} />
-                                    </div>
-                                </div>
-                            </div>
+                        <div className={`visual-option ${settings.layout === 'double' ? 'active' : ''}`} onClick={handleLayoutDouble}>
+                            <div className="icon-box icon-2-col"></div> <span>2-Col</span>
+                        </div>
+                        </div>
+                        </div>
+                        </div>
 
-                            <div className="row">
-                                <div className="col">
-                                    <label>Answer Space</label>
-                                    <select className="input-box" value={settings.answerSpace} onChange={e => setSettings({...settings, answerSpace: e.target.value as string})}>
-                                        <option value="none">None</option>
-                                        <option value="lines">Dotted Lines (2)</option>
-                                        <option value="box">Empty Box</option>
-                                    </select>
-                                </div>
-                                <div className="col">
-                                    <label>Separator Line</label>
-                                    <select className="input-box" value={settings.separator} onChange={e => setSettings({...settings, separator: e.target.value})}>
-                                        <option value="none">Hidden</option>
-                                        <option value="solid">Solid Black</option>
-                                        <option value="double">Double Line</option>
-                                        <option value="dashed">Dashed</option>
-                                    </select>
+                        <div className="row">
+                            <div className="col">
+                                <label>Font Size <span className="range-value">{settings.fontSize}px</span></label>
+                                <div className="range-slider-container">
+                                    <input type="range" className="range-slider" min="10" max="18" value={settings.fontSize} onInput={handleFontSizeChange} />
                                 </div>
                             </div>
+                            <div className="col">
+                                <label>Line Height <span className="range-value">{settings.lineHeight}</span></label>
+                                <div className="range-slider-container">
+                                    <input type="range" className="range-slider" min="1.0" max="2.0" step="0.1" value={settings.lineHeight} onInput={handleLineHeightChange} />
+                                </div>
+                            </div>
+                        </div>
 
-                            <div className="row">
-                                <div className="col">
-                                    <label>Page Border</label>
-                                    <select className="input-box" value={settings.pageBorder} onChange={e => setSettings({...settings, pageBorder: e.target.value})}>
-                                        <option value="none">None</option>
-                                        <option value="border-simple">Simple Line</option>
-                                        <option value="border-double">Double Line</option>
-                                    </select>
+                        <div className="row">
+                            <div className="col">
+                                <label>Answer Space</label>
+                                <select className="input-box" value={settings.answerSpace} onChange={handleAnswerSpaceChange}>
+                                    <option value="none">None</option>
+                                    <option value="lines">Dotted Lines (2)</option>
+                                    <option value="box">Empty Box</option>
+                                </select>
+                            </div>
+                            <div className="col">
+                                <label>Separator Line</label>
+                                <select className="input-box" value={settings.separator} onChange={handleSeparatorChange}>
+                                    <option value="none">Hidden</option>
+                                    <option value="solid">Solid Black</option>
+                                    <option value="double">Double Line</option>
+                                    <option value="dashed">Dashed</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="row">
+                            <div className="col">
+                                <label>Page Border</label>
+                                <select className="input-box" value={settings.pageBorder} onChange={handlePageBorderChange}>
+                                    <option value="none">None</option>
+                                    <option value="border-simple">Simple Line</option>
+                                    <option value="border-double">Double Line</option>
+                                </select>
+                            </div>
+                            <div className="col">
+                                <label>Font Family</label>
+                                <select className="input-box" value={settings.font} onChange={handleFontFamilyChange}>
+                                    <option value="jakarta">Jakarta Sans</option>
+                                    <option value="merriweather">Merriweather (Serif)</option>
+                                    <option value="inter">Inter</option>
+                                    <option value="mono">Mono</option>
+                                </select>
+                            </div>
+                        </div>
+                         <div className="row">
+                            <div className="col">
+                                <label>Template</label>
+                                <select className="input-box" value={settings.template} onChange={handleTemplateChange}>
+                                    <option value="classic">Classic</option>
+                                    <option value="modern">Modern</option>
+                                    <option value="minimal">Minimal</option>
+                                </select>
+                            </div>
+                            <div className="col">
+                                <label>Margin</label>
+                                <div className="toggle-container">
+                                    {['S', 'M', 'L'].map(m => (
+                                        <button 
+                                            key={m}
+                                            data-margin={m}
+                                            className={`toggle-btn ${settings.margin === m ? 'active' : ''}`}
+                                            onClick={handleMarginClick}
+                                        >
+                                            {m}
+                                        </button>
+                                    ))}
                                 </div>
-                                <div className="col">
-                                    <label>Font Family</label>
-                                    <select className="input-box" value={settings.font} onChange={e => setSettings({...settings, font: e.target.value as string})}>
-                                        <option value="jakarta">Jakarta Sans</option>
-                                        <option value="merriweather">Merriweather (Serif)</option>
-                                        <option value="inter">Inter</option>
-                                        <option value="mono">Mono</option>
-                                    </select>
+                                <label style={{marginTop: '8px'}}>Content Font Size</label>
+                                <div className="range-slider-container">
+                                    <input type="range" className="range-slider" min="10" max="16" value={settings.metaFontSize} onInput={handleMetaFontSizeChange} />
                                 </div>
                             </div>
-                             <div className="row">
-                                <div className="col">
-                                    <label>Template</label>
-                                    <select className="input-box" value={settings.template} onChange={e => setSettings({...settings, template: e.target.value})}>
-                                        <option value="classic">Classic</option>
-                                        <option value="modern">Modern</option>
-                                        <option value="minimal">Minimal</option>
-                                    </select>
-                                </div>
-                                <div className="col">
-                                    <label>Margin</label>
-                                    <div className="toggle-container">
-                                        {['S', 'M', 'L'].map(m => (
-                                            <button 
-                                                key={m}
-                                                className={`toggle-btn ${settings.margin === m ? 'active' : ''}`}
-                                                onClick={() => setSettings({...settings, margin: m as number})}
-                                            >
-                                                {m}
-                                            </button>
-                                        ))}
-                                    </div>
-                                    <label style={{marginTop: '8px'}}>Content Font Size</label>
-                                    <div className="range-slider-container">
-                                        <input type="range" className="range-slider" min="10" max="16" value={settings.metaFontSize} onInput={(e) => setSettings({...settings, metaFontSize: Number(e.currentTarget.value)})} />
-                                    </div>
-                                </div>
-                            </div>
+                        </div>
                         </div>
 
                         <div className="section-divider"></div>
@@ -1344,16 +1370,22 @@ export default function PaperDesigner() {
                                 <div className="col">
                                     <label>Content Alignment</label>
                                     <div className="visual-select">
-                                        {['left', 'center', 'justify'].map((align) => (
-                                            <div 
-                                                key={align}
-                                                className={`visual-option ${settings.contentAlignment === align ? 'active' : ''}`}
-                                                onClick={() => setSettings({...settings, contentAlignment: align as string})}
-                                            >
-                                                <i className={`ri-align-${align}`}></i>
-                                                <span className="capitalize">{align}</span>
-                                            </div>
-                                        ))}
+                                        {['left', 'center', 'justify'].map((align) => {
+                                            const onClickHandler =
+                                                align === 'left' ? handleLeftAlign :
+                                                align === 'center' ? handleCenterAlign :
+                                                handleJustifyAlign;
+                                            return (
+                                                <div 
+                                                    key={align}
+                                                    className={`visual-option ${settings.contentAlignment === align ? 'active' : ''}`}
+                                                    onClick={onClickHandler}
+                                                >
+                                                    <i className={`ri-align-${align}`}></i>
+                                                    <span className="capitalize">{align}</span>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                                 <div className="col">
@@ -1396,7 +1428,7 @@ export default function PaperDesigner() {
                         </div>
 
                         <div className="section-divider"></div>
-                        <div className="section-header" onClick={() => setShowFooter(!showFooter)}>
+                        <div className="section-header" onClick={toggleFooter}>
                             <i className={`ri-arrow-down-s-line dropdown-icon ${showFooter ? 'rotated' : ''}`}></i>
                             <div className="section-title"><i className="ri-layout-bottom-2-line"></i> Footer & Layout</div>
                         </div>
@@ -1404,20 +1436,20 @@ export default function PaperDesigner() {
                             <div className="row">
                                 <div className="col">
                                     <label>Footer Text</label>
-                                    <input type="text" className="input-box" placeholder="e.g. Please Turn Over" value={settings.footerText} onChange={e => setSettings({...settings, footerText: e.target.value})} />
+                                    <input type="text" className="input-box" placeholder="e.g. Please Turn Over" value={settings.footerText} onChange={handleFooterTextChange} />
                                 </div>
                             </div>
                             <div className="row">
                                 <div className="col">
                                     <label>Rough Work Area</label>
                                     <div className="toggle-container">
-                                        <button className={`toggle-btn ${settings.roughWorkArea === 'none' ? 'active' : ''}`} onClick={() => setSettings({...settings, roughWorkArea: 'none'})}>None</button>
-                                        <button className={`toggle-btn ${settings.roughWorkArea === 'right' ? 'active' : ''}`} onClick={() => setSettings({...settings, roughWorkArea: 'right'})}>Right Col</button>
+                                        <button className={`toggle-btn ${settings.roughWorkArea === 'none' ? 'active' : ''}`} onClick={handleRoughWorkAreaNone}>None</button>
+                                        <button className={`toggle-btn ${settings.roughWorkArea === 'right' ? 'active' : ''}`} onClick={handleRoughWorkAreaRight}>Right Col</button>
                                     </div>
                                 </div>
                                 <div className="col">
                                     <label>Page Numbering</label>
-                                    <select className="input-box" value={settings.pageNumbering} onChange={e => setSettings({...settings, pageNumbering: e.target.value as string})}>
+                                    <select className="input-box" value={settings.pageNumbering} onChange={handlePageNumberingChange}>
                                         <option value="page-x-of-y">Page 1 of 5</option>
                                         <option value="x-slash-y">1 / 5</option>
                                         <option value="hidden">Hidden</option>
@@ -1428,8 +1460,8 @@ export default function PaperDesigner() {
                     </div>
 
                     <div className="tab-group">
-                        <div className={`tab ${activeTab === 'select' ? 'active' : ''}`} onClick={() => setActiveTab('select')}>Select Questions</div>
-                        <div className={`tab ${activeTab === 'auto' ? 'active' : ''}`} onClick={() => setActiveTab('auto')}>Auto-Generate</div>
+                        <div className={`tab ${activeTab === 'select' ? 'active' : ''}`} onClick={selectTab}>Select Questions</div>
+                        <div className={`tab ${activeTab === 'auto' ? 'active' : ''}`} onClick={autoTab}>Auto-Generate</div>
                     </div>
 
                     <div className="search-bar">
@@ -1439,7 +1471,7 @@ export default function PaperDesigner() {
                             className="search-input" 
                             placeholder="Search topics (e.g. Thermodynamics)" 
                             value={searchQuery}
-                            onChange={e => setSearchQuery(e.target.value)}
+                            onChange={handleSearchQueryChange}
                         />
                     </div>
                     {settings.chapters.length > 0 && (

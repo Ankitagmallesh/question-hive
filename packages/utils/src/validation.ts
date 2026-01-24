@@ -45,7 +45,7 @@ export function validatePassword(password: string): {
         errors.push('Password must contain at least one number');
     }
 
-    if (!/[!@#$%^&*(),.?\":{}|<>]/.test(password)) {
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
         errors.push('Password must contain at least one special character');
     }
 

@@ -28,7 +28,7 @@ export async function GET(request: Request) {
       .leftJoin(questionTypes, eq(questions.questionTypeId, questionTypes.id))
       
     // Apply filters - logic removed
-    let queryWithFilters = baseQuery;
+    const queryWithFilters = baseQuery;
 
     // Get Total Count (separate query or window function)
     // Drizzle doesn't support easy window functions yet for count(*), so easier to run a count query.

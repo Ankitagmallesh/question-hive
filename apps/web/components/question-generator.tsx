@@ -83,13 +83,20 @@ export function QuestionGenerator({ onQuestionsGenerated, difficultyLevel, subje
   useEffect(() => {
     const savedSessions = localStorage.getItem("questionhive-sessions")
     if (savedSessions) {
-      const parsedSessions = JSON.parse(savedSessions).map((session: unknown) => ({
+      const parsedSessions = (JSON.parse(savedSessions) as Array<{
+        createdAt: string;
+        lastUpdated: string;
+        messages: Array<{
+          timestamp: string;
+          [key: string]: unknown;
+        }>;
+      }>).map((session) => ({
         ...session,
-        createdAt: new Date((session as any).createdAt),
-        lastUpdated: new Date((session as any).lastUpdated),
-        messages: (session as any).messages.map((msg: unknown) => ({
+        createdAt: new Date(session.createdAt),
+        lastUpdated: new Date(session.lastUpdated),
+        messages: session.messages.map((msg) => ({
           ...msg,
-          timestamp: new Date((msg as any).timestamp),
+          timestamp: new Date(msg.timestamp),
         })),
       }))
       setSessions(parsedSessions)
