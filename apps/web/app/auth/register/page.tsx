@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { apiClient } from "../../lib/api";
 import { getSupabase } from "../../lib/supabase-client";
+import AppLoader from "../../../components/ui/AppLoader";
 // Lucide icons
 import { Hexagon, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "../../../components/ui/dialog";
@@ -31,6 +31,7 @@ export default function RegisterPage() {
 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isLoading, setIsLoading] = useState(false);
+    const [isCheckingSession, setIsCheckingSession] = useState(true);
     
     // Existing Supabase check
     const hasSupabaseEnv = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) && Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
@@ -40,10 +41,24 @@ export default function RegisterPage() {
             try {
                 const supabase = getSupabase();
                 const { data } = await supabase.auth.getSession();
-                if (data.session) router.replace('/home');
-            } catch {}
+                if (data.session) {
+                    router.replace('/home');
+                } else {
+                    setIsCheckingSession(false);
+                }
+            } catch {
+                setIsCheckingSession(false);
+            }
         })();
     }, [router]);
+
+    if (isCheckingSession) {
+        return (
+            <div className="min-h-screen bg-white flex items-center justify-center">
+                <AppLoader text="Verifying session..." />
+            </div>
+        );
+    }
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;

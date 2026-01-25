@@ -6,6 +6,7 @@ import { apiClient } from '../../lib/api';
 import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Label } from "../../components/ui/label";
+import AppLoader from "../../components/ui/AppLoader";
 
 export default function NotificationSettingsPage() {
     const router = useRouter();
@@ -64,7 +65,7 @@ export default function NotificationSettingsPage() {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                <AppLoader text="Loading Settings..." />
             </div>
         );
     }

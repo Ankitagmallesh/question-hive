@@ -7,6 +7,7 @@ import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
+import AppLoader from "../../components/ui/AppLoader";
 
 export default function ChangePasswordPage() {
     const router = useRouter();
@@ -96,7 +97,7 @@ export default function ChangePasswordPage() {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                <AppLoader text="Loading..." />
             </div>
         );
     }

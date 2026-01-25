@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { apiClient } from "../../lib/api";
 import { getSupabase } from "../../lib/supabase-client";
+import AppLoader from "../../../components/ui/AppLoader";
 // Lucide icons
 import { Check, ShieldCheck, Lock, Hexagon, Eye, EyeOff } from "lucide-react";
 
@@ -18,6 +19,7 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isLoading, setIsLoading] = useState(false);
+    const [isCheckingSession, setIsCheckingSession] = useState(true);
     const hasSupabaseEnv = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) && Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
     useEffect(() => {
@@ -35,10 +37,24 @@ export default function LoginPage() {
                 // I'll use `getSupabase().auth.getSession()` directly to be safe and clean.
                 const supabase = getSupabase();
                 const { data } = await supabase.auth.getSession();
-                if (data.session) router.replace('/home');
-            } catch {}
+                if (data.session) {
+                    router.replace('/home');
+                } else {
+                    setIsCheckingSession(false);
+                }
+            } catch {
+                setIsCheckingSession(false);
+            }
         })();
     }, [router]);
+
+    if (isCheckingSession) {
+        return (
+            <div className="min-h-screen bg-white flex items-center justify-center">
+                <AppLoader text="Verifying session..." />
+            </div>
+        );
+    }
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target;

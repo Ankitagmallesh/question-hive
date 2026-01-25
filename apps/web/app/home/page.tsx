@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion, animate, useInView } from "framer-motion";
 import { GraduationCap, Landmark, Trash2 } from "lucide-react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
+import AppLoader from "../../components/ui/AppLoader";
 import { getSupabase } from "../lib/supabase-client";
 
 // CountUp Component
@@ -80,7 +81,10 @@ export default function DashboardPage() {
         const res = await fetch(`/api/dashboard/stats?email=${session.user.email}`);
         const data = await res.json();
         if (data.success) {
-            setStats(data.stats);
+            setStats({
+                ...data.stats,
+                recentPapers: data.recentPapers || []
+            });
         }
     } catch (error) {
         console.error("Failed to fetch dashboard stats", error);
