@@ -144,7 +144,7 @@ const SortableQuestionItem = ({ question, index, onRemove }: { question: Questio
                     </div>
                     {question.options && question.options.length > 0 && (
                         <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2" style={{ fontSize: '0.9em' }}>
-                             {question.options.map((opt, idx) => (
+                             {question.options.map((opt: { id: string; text: string; order: number }, idx) => (
                                 <div key={opt.id} className="text-slate-600">
                                     <span className="font-semibold mr-1 text-indigo-600">({String.fromCharCode(65 + idx)})</span> 
                                     {opt.text}
@@ -158,7 +158,7 @@ const SortableQuestionItem = ({ question, index, onRemove }: { question: Questio
     );
 };
 
-const ChapterSelect = ({ options, selectedChapters, onChange }: { options: unknown[], selectedChapters: string[], onChange: (val: string) => void }) => {
+const ChapterSelect = ({ options, selectedChapters, onChange }: { options: { id: string; name: string }[], selectedChapters: string[], onChange: (val: string) => void }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -246,7 +246,7 @@ export default function PaperDesigner() {
         answerSpace: 'none',
         separator: 'none',
         
-        date: new Date().toISOString().split('T')[0],
+        date: new Date().toISOString().split('T')[0] ?? '',
         instructions: '<ul><li>All questions are compulsory.</li><li>Calculators are not allowed.</li></ul>',
         watermark: '',
         
@@ -354,7 +354,7 @@ export default function PaperDesigner() {
             if (allSaved) {
                 try {
                     const papers = JSON.parse(allSaved);
-                    const found = papers.find(p => p.id === savedId);
+                    const found = papers.find((p: { id: string }) => p.id === savedId);
                     if (found) {
                         setSettings(s => ({...s, ...found.settings}));
                         setPaperQuestions(found.paperQuestions);
@@ -476,17 +476,17 @@ export default function PaperDesigner() {
                 setTotalCount(total || 0);
 
                 // 2. Sort in memory (Priority -> Difficulty)
-                const sortedIds = allIds.sort((a: { chapters?: { name: string }; difficulty_levels?: { name: string } }, b: { chapters?: { name: string }; difficulty_levels?: { name: string } }) => {
+                const sortedIds = allIds.sort((a: { id: any; difficulty_levels: { name: any }[]; chapters: { name: any }[] }, b: { id: any; difficulty_levels: { name: any }[]; chapters: { name: any }[] }) => {
                     // Priority Chapter
-                    const aIsPriority = a.chapters?.name === priorityChapter;
-                    const bIsPriority = b.chapters?.name === priorityChapter;
+                    const aIsPriority = a.chapters?.[0]?.name === priorityChapter;
+                    const bIsPriority = b.chapters?.[0]?.name === priorityChapter;
                     if (aIsPriority && !bIsPriority) return -1;
                     if (!aIsPriority && bIsPriority) return 1;
 
                     // Difficulty
                     const diffWeight: {[k: string]: number} = { 'easy': 1, 'medium': 2, 'hard': 3 };
-                    const aWeight = diffWeight[a.difficulty_levels?.name?.toLowerCase() || ''] || 4;
-                    const bWeight = diffWeight[b.difficulty_levels?.name?.toLowerCase() || ''] || 4;
+                    const aWeight = diffWeight[a.difficulty_levels?.[0]?.name?.toLowerCase() || ''] || 4;
+                    const bWeight = diffWeight[b.difficulty_levels?.[0]?.name?.toLowerCase() || ''] || 4;
                     return aWeight - bWeight;
                 });
 
@@ -520,12 +520,12 @@ export default function PaperDesigner() {
                     
                      // Transform
                      const transformed = orderedData.map(q => ({
-                        id: q.id,
-                        text: q.content,
-                        type: q.question_types?.name,
-                        difficulty: q.difficulty_levels?.name,
-                        chapter: q.chapters?.name,
-                        options: q.question_options?.map(o => ({
+                        id: q?.id,
+                        text: q?.content,
+                        type: q?.question_types?.[0]?.name,
+                        difficulty: q?.difficulty_levels?.[0]?.name,
+                        chapter: q?.chapters?.[0]?.name,
+                        options: q?.question_options?.map(o => ({
                             id: o.id,
                             text: o.option_text,
                             order: o.option_order
@@ -565,9 +565,9 @@ export default function PaperDesigner() {
                     const transformed = data.map((q) => ({
                         id: q.id,
                         text: q.content,
-                        type: q.question_types?.name,
-                        difficulty: q.difficulty_levels?.name,
-                        chapter: q.chapters?.name,
+                        type: q.question_types?.[0]?.name,
+                        difficulty: q.difficulty_levels?.[0]?.name,
+                        chapter: q.chapters?.[0]?.name,
                         options: q.question_options?.map((o) => ({
                             id: o.id,
                             text: o.option_text,
@@ -1166,7 +1166,7 @@ export default function PaperDesigner() {
                             <div className="col">
                                 <label>Difficulty Mix</label>
                                 <div className="toggle-container">
-                                    {['easy', 'mixed', 'hard'].map(d => (
+                                    {(['easy', 'mixed', 'hard'] as const).map(d => (
                                         <button 
                                             key={d}
                                             className={`toggle-btn ${settings.difficulty === d ? 'active' : ''}`}
@@ -1215,7 +1215,7 @@ export default function PaperDesigner() {
                                             <div 
                                                 key={pos}
                                                 className={`visual-option ${settings.logoPosition === pos ? 'active' : ''}`}
-                                                onClick={() => setSettings({...settings, logoPosition: pos as unknown})}
+                                                onClick={() => setSettings({...settings, logoPosition: pos as 'left' | 'center' | 'right'})}
                                             >
                                                 <i className={`ri-align-${pos === 'center' ? 'center' : pos}`}></i>
                                                 <span className="capitalize">{pos}</span>
@@ -1254,7 +1254,7 @@ export default function PaperDesigner() {
                             <div className="row">
                                 <div className="col">
                                     <label>Answer Space</label>
-                                    <select className="input-box" value={settings.answerSpace} onChange={e => setSettings({...settings, answerSpace: e.target.value as string})}>
+                                    <select className="input-box" value={settings.answerSpace} onChange={e => setSettings({...settings, answerSpace: e.target.value as 'none' | 'lines' | 'box'})}>
                                         <option value="none">None</option>
                                         <option value="lines">Dotted Lines (2)</option>
                                         <option value="box">Empty Box</option>
@@ -1262,7 +1262,7 @@ export default function PaperDesigner() {
                                 </div>
                                 <div className="col">
                                     <label>Separator Line</label>
-                                    <select className="input-box" value={settings.separator} onChange={e => setSettings({...settings, separator: e.target.value})}>
+                                    <select className="input-box" value={settings.separator} onChange={e => setSettings({...settings, separator: e.target.value as 'none' | 'solid' | 'double' | 'dashed'})}>
                                         <option value="none">Hidden</option>
                                         <option value="solid">Solid Black</option>
                                         <option value="double">Double Line</option>
@@ -1274,7 +1274,7 @@ export default function PaperDesigner() {
                             <div className="row">
                                 <div className="col">
                                     <label>Page Border</label>
-                                    <select className="input-box" value={settings.pageBorder} onChange={e => setSettings({...settings, pageBorder: e.target.value})}>
+                                    <select className="input-box" value={settings.pageBorder} onChange={e => setSettings({...settings, pageBorder: e.target.value as 'none' | 'border-simple' | 'border-double'})}>
                                         <option value="none">None</option>
                                         <option value="border-simple">Simple Line</option>
                                         <option value="border-double">Double Line</option>
@@ -1282,7 +1282,7 @@ export default function PaperDesigner() {
                                 </div>
                                 <div className="col">
                                     <label>Font Family</label>
-                                    <select className="input-box" value={settings.font} onChange={e => setSettings({...settings, font: e.target.value as string})}>
+                                    <select className="input-box" value={settings.font} onChange={e => setSettings({...settings, font: e.target.value as 'jakarta' | 'merriweather' | 'inter' | 'mono'})}>
                                         <option value="jakarta">Jakarta Sans</option>
                                         <option value="merriweather">Merriweather (Serif)</option>
                                         <option value="inter">Inter</option>
@@ -1293,7 +1293,7 @@ export default function PaperDesigner() {
                              <div className="row">
                                 <div className="col">
                                     <label>Template</label>
-                                    <select className="input-box" value={settings.template} onChange={e => setSettings({...settings, template: e.target.value})}>
+                                    <select className="input-box" value={settings.template} onChange={e => setSettings({...settings, template: e.target.value as 'classic' | 'modern' | 'minimal'})}>
                                         <option value="classic">Classic</option>
                                         <option value="modern">Modern</option>
                                         <option value="minimal">Minimal</option>
@@ -1306,7 +1306,7 @@ export default function PaperDesigner() {
                                             <button 
                                                 key={m}
                                                 className={`toggle-btn ${settings.margin === m ? 'active' : ''}`}
-                                                onClick={() => setSettings({...settings, margin: m as number})}
+                                                onClick={() => setSettings({...settings, margin: m as 'S' | 'M' | 'L'})}
                                             >
                                                 {m}
                                             </button>
@@ -1348,7 +1348,7 @@ export default function PaperDesigner() {
                                             <div 
                                                 key={align}
                                                 className={`visual-option ${settings.contentAlignment === align ? 'active' : ''}`}
-                                                onClick={() => setSettings({...settings, contentAlignment: align as string})}
+                                                onClick={() => setSettings({...settings, contentAlignment: align as 'left' | 'center' | 'justify'})}
                                             >
                                                 <i className={`ri-align-${align}`}></i>
                                                 <span className="capitalize">{align}</span>
@@ -1417,7 +1417,7 @@ export default function PaperDesigner() {
                                 </div>
                                 <div className="col">
                                     <label>Page Numbering</label>
-                                    <select className="input-box" value={settings.pageNumbering} onChange={e => setSettings({...settings, pageNumbering: e.target.value as string})}>
+                                    <select className="input-box" value={settings.pageNumbering} onChange={e => setSettings({...settings, pageNumbering: e.target.value as 'page-x-of-y' | 'x-slash-y' | 'hidden'})}>
                                         <option value="page-x-of-y">Page 1 of 5</option>
                                         <option value="x-slash-y">1 / 5</option>
                                         <option value="hidden">Hidden</option>
@@ -1583,13 +1583,22 @@ export default function PaperDesigner() {
 
                 <div className="resizer" onMouseDown={handleResizeMouseDown}></div>
 
-                <div className="preview-panel" data-lenis-prevent style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <div
+                    className="preview-panel"
+                    data-lenis-prevent
+                    style={{
+                        overflow: 'auto',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: zoomLevel <= 100 ? 'flex-start' : 'center'
+                    }}
+                >
 
-                    <div className={`flex-1 bg-slate-50/50 p-8 flex ${zoomLevel <= 100 ? 'overflow-auto justify-start' : 'overflow-auto justify-center'}`}>
-                        <div 
-                            style={{ 
-                                transform: `scale(${zoomLevel / 100})`, 
-                                transformOrigin: 'top center',
+                    <div className={`flex-1 bg-slate-50/50 p-8 flex overflow-auto ${zoomLevel <= 100 ? 'justify-start' : 'justify-center'}`}>
+                        <div
+                            style={{
+                                transform: `scale(${zoomLevel / 100})`,
+                                transformOrigin: 'top left',
                                 transition: 'transform 0.2s cubic-bezier(0.2, 0, 0, 1)',
                                 minHeight: '100%'
                             }}

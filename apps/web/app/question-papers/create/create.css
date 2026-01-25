@@ -168,8 +168,7 @@ label {
     display: flex; 
     flex-direction: column; 
     transition: padding 0.3s;
-    transform-origin: top center;
-    transform: scale(0.7);
+    transform-origin: top left;
     margin-bottom: -80mm; /* Compensate for empty space (297mm * 0.3 = ~89mm). -80mm leaves ~9mm gap */
 }
 
