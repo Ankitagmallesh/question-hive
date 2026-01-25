@@ -145,6 +145,7 @@ const SortableQuestionItem = ({ question, index, onRemove }: { question: Questio
                     {question.options && question.options.length > 0 && (
                         <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2" style={{ fontSize: '0.9em' }}>
                              {question.options.map((opt: { id: string; text: string; order: number }, idx) => (
+                             {question.options.map((opt: { id: string; text: string; order: number }, idx) => (
                                 <div key={opt.id} className="text-slate-600">
                                     <span className="font-semibold mr-1 text-indigo-600">({String.fromCharCode(65 + idx)})</span> 
                                     {opt.text}
@@ -158,6 +159,7 @@ const SortableQuestionItem = ({ question, index, onRemove }: { question: Questio
     );
 };
 
+const ChapterSelect = ({ options, selectedChapters, onChange }: { options: { id: string; name: string }[], selectedChapters: string[], onChange: (val: string) => void }) => {
 const ChapterSelect = ({ options, selectedChapters, onChange }: { options: { id: string; name: string }[], selectedChapters: string[], onChange: (val: string) => void }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -635,7 +637,10 @@ export default function PaperDesigner() {
 
                 // 2. Sort in memory (Priority -> Difficulty)
                 const sortedIds = allIds.sort((a: { id: any; difficulty_levels: { name: any }[]; chapters: { name: any }[] }, b: { id: any; difficulty_levels: { name: any }[]; chapters: { name: any }[] }) => {
+                const sortedIds = allIds.sort((a: { id: any; difficulty_levels: { name: any }[]; chapters: { name: any }[] }, b: { id: any; difficulty_levels: { name: any }[]; chapters: { name: any }[] }) => {
                     // Priority Chapter
+                    const aIsPriority = a.chapters?.[0]?.name === priorityChapter;
+                    const bIsPriority = b.chapters?.[0]?.name === priorityChapter;
                     const aIsPriority = a.chapters?.[0]?.name === priorityChapter;
                     const bIsPriority = b.chapters?.[0]?.name === priorityChapter;
                     if (aIsPriority && !bIsPriority) return -1;
@@ -643,6 +648,8 @@ export default function PaperDesigner() {
 
                     // Difficulty
                     const diffWeight: {[k: string]: number} = { 'easy': 1, 'medium': 2, 'hard': 3 };
+                    const aWeight = diffWeight[a.difficulty_levels?.[0]?.name?.toLowerCase() || ''] || 4;
+                    const bWeight = diffWeight[b.difficulty_levels?.[0]?.name?.toLowerCase() || ''] || 4;
                     const aWeight = diffWeight[a.difficulty_levels?.[0]?.name?.toLowerCase() || ''] || 4;
                     const bWeight = diffWeight[b.difficulty_levels?.[0]?.name?.toLowerCase() || ''] || 4;
                     return aWeight - bWeight;

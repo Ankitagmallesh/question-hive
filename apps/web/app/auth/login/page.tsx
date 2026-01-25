@@ -24,8 +24,10 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isLoading, setIsLoading] = useState(false);
+    const [isCheckingSession, setIsCheckingSession] = useState(true);
     const [isCheckingSession, setIsCheckingSession] = useState(true);
     const [isCheckingSession, setIsCheckingSession] = useState(true);
     const hasSupabaseEnv = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) && Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
@@ -92,6 +94,21 @@ export default function LoginPage() {
         );
     }
 
+    if (isCheckingSession) {
+        return (
+            <div className="min-h-screen bg-white flex items-center justify-center">
+                <AppLoader text="Verifying session..." />
+            </div>
+        );
+    }
+    if (isCheckingSession) {
+        return (
+            <div className="min-h-screen bg-white flex items-center justify-center">
+                <AppLoader text="Verifying session..." />
+            </div>
+        );
+    }
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target;
         setFormData(prev => ({
@@ -102,11 +119,17 @@ export default function LoginPage() {
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: '' }));
             setErrors(prev => ({ ...prev, [name]: '' }));
+            setErrors(prev => ({ ...prev, [name]: '' }));
         }
     };
 
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
+        if (!formData.email.trim()) newErrors.email = 'Email is required';
+        else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Please enter a valid email';
+        
+        if (!formData.password) newErrors.password = 'Password is required';
+        
         if (!formData.email.trim()) newErrors.email = 'Email is required';
         else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Please enter a valid email';
         
@@ -125,11 +148,14 @@ export default function LoginPage() {
         e.preventDefault();
         if (!validateForm()) return;
         if (!validateForm()) return;
+        if (!validateForm()) return;
 
         setIsLoading(true);
         setErrors({});
 
         try {
+            const supabase = getSupabase();
+            const { data, error } = await supabase.auth.signInWithPassword({
             const supabase = getSupabase();
             const { data, error } = await supabase.auth.signInWithPassword({
             const supabase = getSupabase();
@@ -168,11 +194,28 @@ export default function LoginPage() {
                 apiClient.setAuthToken(data.session.access_token);
                 if (data.session.refresh_token) {
                     localStorage.setItem('refresh_token', data.session.refresh_token);
+            });
+
+            if (error) {
+                console.error('Login error:', error);
+                // Check for invalid credentials
+                if (error.message === 'Invalid login credentials') {
+                    setErrors({ general: 'Incorrect email or password. Please try again.' });
+                } else {
+                    setErrors({ general: error.message });
+                }
+            } else if (data.session) {
+                // Success
+                localStorage.setItem('auth_token', data.session.access_token);
+                apiClient.setAuthToken(data.session.access_token);
+                if (data.session.refresh_token) {
+                    localStorage.setItem('refresh_token', data.session.refresh_token);
                 }
                 router.push('/home');
             }
         } catch (error) {
             console.error('Login error:', error);
+            setErrors({ general: 'An unexpected error occurred. Please try again.' });
             setErrors({ general: 'An unexpected error occurred. Please try again.' });
             setErrors({ general: 'An unexpected error occurred. Please try again.' });
         } finally {
@@ -267,7 +310,37 @@ export default function LoginPage() {
                             <p className="text-slate-500">Please enter your details to access your dashboard.</p>
                         </div>
 
+                <div className="relative z-10">
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Secure Institutional Access</p>
+                    <div className="flex items-center gap-2 text-slate-400 text-xs">
+                        <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                        <span>SSO Enabled</span>
+                        <span className="mx-2">•</span>
+                        <Lock className="w-4 h-4 text-emerald-500" />
+                        <span>End-to-End Encrypted</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Right Side - Login Form */}
+            <div className="w-full lg:w-7/12 h-full overflow-y-auto bg-white" data-lenis-prevent>
+                <div className="w-full min-h-full flex flex-col justify-center items-center py-12 lg:py-20 px-6">
+                    <div className="max-w-md w-full">
+                    
+                        <div className="lg:hidden flex items-center gap-2 font-bold text-xl text-indigo-600 mb-8">
+                            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-lg">
+                               <Hexagon className="w-5 h-5 fill-indigo-600 text-white" />
+                            </div>
+                            Question Hive
+                        </div>
+
+                        <div className="mb-8">
+                            <h1 className="text-3xl font-bold text-slate-900 mb-2">Welcome back</h1>
+                            <p className="text-slate-500">Please enter your details to access your dashboard.</p>
+                        </div>
+
                         {errors.general && (
+                            <div className="mb-6 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm">
                             <div className="mb-6 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm">
                             <div className="mb-6 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm">
                                 {errors.general}
@@ -281,8 +354,27 @@ export default function LoginPage() {
                          {!hasSupabaseEnv && (
                              <div className="mb-6 p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-sm">
                                 Supabase keys missing in .env.local used for OAuth
+                        
+                         {!hasSupabaseEnv && (
+                             <div className="mb-6 p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-sm">
+                                Supabase keys missing in .env.local used for OAuth
                             </div>
                         )}
+                        )}
+
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="email">Email address</label>
+                            <input 
+                                type="email" 
+                                name="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                placeholder="name@university.edu" 
+                                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 transition-all"
+                            />
+                            {errors.email && <p className="text-sm text-red-600 mt-1">{errors.email}</p>}
+                        </div>
                         )}
 
                         <form onSubmit={handleSubmit} className="space-y-5">
@@ -326,6 +418,8 @@ export default function LoginPage() {
                                     name="password"
                                     value={formData.password}
                                     onChange={handleChange}
+                                    placeholder="Enter your password" 
+                                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 transition-all pr-10"
                                     placeholder="Enter your password" 
                                     className="w-full rounded-xl border border-slate-200 px-4 py-3 text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 transition-all pr-10"
                                     placeholder="Enter your password" 

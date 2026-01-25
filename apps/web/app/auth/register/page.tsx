@@ -20,8 +20,11 @@ export default function RegisterPage() {
     const [formData, setFormData] = useState({
         title: 'Prof.',
         title: 'Prof.',
+        title: 'Prof.',
         name: '',
         email: '',
+        institution: '',
+        department: '',
         institution: '',
         department: '',
         institution: '',
@@ -95,13 +98,23 @@ export default function RegisterPage() {
             const checked = (e.target as HTMLInputElement).checked;
             setFormData(prev => ({ ...prev, [name]: checked }));
             setFormData(prev => ({ ...prev, [name]: checked }));
+            setFormData(prev => ({ ...prev, [name]: checked }));
         } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
             setFormData(prev => ({ ...prev, [name]: value }));
             setFormData(prev => ({ ...prev, [name]: value }));
         }
 
         // Clear error when user starts typing
         if (errors[name]) {
+            setErrors(prev => ({ ...prev, [name]: '' }));
+        }
+    };
+    
+    const handleSelectChange = (name: string, value: string) => {
+        setFormData(prev => ({ ...prev, [name]: value }));
+         if (errors[name]) {
+            setErrors(prev => ({ ...prev, [name]: '' }));
             setErrors(prev => ({ ...prev, [name]: '' }));
         }
     };
@@ -126,6 +139,7 @@ export default function RegisterPage() {
 
         if (!formData.name.trim()) newErrors.name = 'Full name is required';
         if (!formData.name.trim()) newErrors.name = 'Full name is required';
+        if (!formData.name.trim()) newErrors.name = 'Full name is required';
         if (!formData.email.trim()) {
             newErrors.email = 'Email is required';
         } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
@@ -145,6 +159,7 @@ export default function RegisterPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        if (!validateForm()) return;
         if (!validateForm()) return;
         if (!validateForm()) return;
 
@@ -184,7 +199,12 @@ export default function RegisterPage() {
                 // Success - Show dialog instead of direct redirect
                 setNeedsEmailConfirmation(true); // Always require confirmation flow
                 setShowSuccessDialog(true);
+            } else if (data.session || (data.user && !data.session)) {
+                // Success - Show dialog instead of direct redirect
+                setNeedsEmailConfirmation(true); // Always require confirmation flow
+                setShowSuccessDialog(true);
             } else {
+                setErrors({ general: 'Registration failed.' });
                 setErrors({ general: 'Registration failed.' });
                 setErrors({ general: 'Registration failed.' });
             }
@@ -197,6 +217,35 @@ export default function RegisterPage() {
     };
 
     return (
+        <div className="h-screen flex overflow-hidden bg-white text-slate-900">
+            {/* Left Side - Testimonials */}
+            <div className="hidden lg:flex w-5/12 bg-slate-900 text-white flex-col justify-between p-12 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600 rounded-full blur-3xl opacity-20 -mr-20 -mt-20"></div>
+                <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-500 rounded-full blur-3xl opacity-20 -ml-20 -mb-20"></div>
+
+                <div className="relative z-10 flex items-center gap-2 font-bold text-2xl">
+                    <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center text-white shadow-lg">
+                        <Hexagon className="w-5 h-5 fill-indigo-500 text-white" />
+                    </div>
+                    Question Hive
+                </div>
+
+                <div className="relative z-10 space-y-6">
+                    <div className="space-y-2">
+                        <div className="flex gap-1 text-amber-400">
+                             {[...Array(5)].map((_, i) => (
+                                <svg key={i} className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                             ))}
+                        </div>
+                        <h2 className="text-3xl font-serif leading-tight">
+                            "It used to take me weekends to draft JEE papers. With Question Hive, I curate high-quality assessments in minutes."
+                        </h2>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        {/* Avatar removed as requested */}
+                        <div>
+                            <p className="font-bold text-white">Dr. Rajesh Kumar</p>
+                            <p className="text-sm text-slate-400">Senior Physics Faculty, Allen Institute</p>
         <div className="h-screen flex overflow-hidden bg-white text-slate-900">
             {/* Left Side - Testimonials */}
             <div className="hidden lg:flex w-5/12 bg-slate-900 text-white flex-col justify-between p-12 relative overflow-hidden">
@@ -276,7 +325,9 @@ export default function RegisterPage() {
                     <div className="max-w-md w-full">
                         
                         <div className="lg:hidden flex items-center gap-2 font-bold text-xl text-indigo-600 mb-8">
-                            <img src="/logo-new.png" alt="Logo" className="w-8 h-8 rounded-lg shadow-lg" />
+                            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-lg">
+                                 <Hexagon className="w-5 h-5 fill-indigo-600 text-white" />
+                            </div>
                             Question Hive
                         </div>
 
@@ -334,7 +385,12 @@ export default function RegisterPage() {
                                     className="w-full px-4 py-2.5 text-slate-700 placeholder:text-slate-400 focus:outline-none"
                                     placeholder="e.g. Sanjay Rao" 
                                     className="w-full px-4 py-2.5 text-slate-700 placeholder:text-slate-400 focus:outline-none"
+                                    placeholder="e.g. Sanjay Rao" 
+                                    className="w-full px-4 py-2.5 text-slate-700 placeholder:text-slate-400 focus:outline-none"
                                 />
+                            </div>
+                            {errors.name && <p className="text-sm text-red-600 mt-1">{errors.name}</p>}
+                        </div>
                             </div>
                             {errors.name && <p className="text-sm text-red-600 mt-1">{errors.name}</p>}
                         </div>
@@ -395,6 +451,15 @@ export default function RegisterPage() {
                                     value={formData.department}
                                     onChange={handleChange}
                                     className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-700 bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 transition-all cursor-pointer appearance-none"
+                                    className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-700 bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 transition-all cursor-pointer appearance-none"
+                                >
+                                    <option value="" disabled>Select Subject</option>
+                                    <option>Physics</option>
+                                    <option>Chemistry</option>
+                                    <option>Mathematics</option>
+                                    <option>Biology</option>
+                                    <option>Computer Science</option>
+                                    <option>Other</option>
                                     className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-700 bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 transition-all cursor-pointer appearance-none"
                                 >
                                     <option value="" disabled>Select Subject</option>
@@ -539,6 +604,21 @@ export default function RegisterPage() {
                                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                                 Your exam data is end-to-end encrypted.
                             </span>
+                        <button 
+                            type="submit" 
+                            disabled={isLoading}
+                            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-indigo-500/20 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                            {isLoading ? 'Creating Account...' : 'Create Account'}
+                        </button>
+
+                        <div className="text-xs text-slate-500 text-center leading-relaxed">
+                            By creating an account, you agree to our <Link href="/terms" className="text-slate-700 underline">Terms of Service</Link> & <Link href="/privacy" className="text-slate-700 underline">Privacy Policy</Link>.
+                            <br />
+                            <span className="flex items-center justify-center gap-1 mt-2 text-slate-400">
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                Your exam data is end-to-end encrypted.
+                            </span>
                         </div>
                     </form>
 
@@ -555,6 +635,30 @@ export default function RegisterPage() {
                 </div>
             </div>
             </div>
+
+            <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 mb-4">
+                            <CheckCircle2 className="h-10 w-10 text-green-600" />
+                        </div>
+                        <DialogTitle className="text-center text-xl">Account Created Successfully!</DialogTitle>
+                        <DialogDescription className="text-center pt-2">
+                           Welcome to Question Hive, {formData.title} {formData.name}. Your faculty account has been registered.
+                           <br/><br/>
+                           Please check your email to confirm your identity before logging in.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="sm:justify-center">
+                        <Button 
+                            className="w-full sm:w-auto min-w-[140px]" 
+                            onClick={() => router.push('/auth/login')}
+                        >
+                            Sign In
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
                 <DialogContent className="sm:max-w-md">
