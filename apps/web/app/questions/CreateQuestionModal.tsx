@@ -384,126 +384,113 @@ export default function CreateQuestionModal({ isOpen, onClose, onSuccess, userId
                         </div>
 
                         {/* Question Type & Difficulty - Section 2 */}
-                        <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-                            <div className="flex items-center gap-2 mb-4">
-                                <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
-                                    <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                                    </svg>
-                                </div>
-                                <span className="font-semibold text-slate-700">Question Settings</span>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <CustomDropdown
-                                    label="Question Type *"
-                                    options={questionTypes}
-                                    value={selectedType}
-                                    onChange={setSelectedType}
-                                    placeholder="Select Type"
-                                />
-                                <CustomDropdown
-                                    label="Difficulty *"
-                                    options={difficulties}
-                                    value={selectedDifficulty}
-                                    onChange={setSelectedDifficulty}
-                                    placeholder="Select Difficulty"
-                                />
-                                <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Marks *</label>
-                                    <Input 
-                                        type="number" 
-                                        min={1} 
-                                        value={marks} 
-                                        onChange={(e) => setMarks(Number(e.target.value))}
-                                        className="w-full h-[48px] rounded-xl border-slate-200 shadow-sm focus:ring-2 focus:ring-blue-500"
-                                    />
-                                </div>
-                            </div>
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
+                            <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                            </svg>
                         </div>
-
-                        {/* Question Content */}
+                        <span className="font-semibold text-slate-700">Question Settings</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <CustomDropdown
+                            label="Question Type *"
+                            options={questionTypes}
+                            value={selectedType}
+                            onChange={setSelectedType}
+                            placeholder="Select Type"
+                        />
+                        <CustomDropdown
+                            label="Difficulty *"
+                            options={difficulties}
+                            value={selectedDifficulty}
+                            onChange={setSelectedDifficulty}
+                            placeholder="Select Difficulty"
+                        />
                         <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Question *</label>
-                            <textarea 
-                                value={content}
-                                onChange={(e) => setContent(e.target.value)}
-                                placeholder="Enter your question here..."
-                                rows={3}
-                                className="w-full p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none shadow-sm text-slate-700 min-h-[100px]"
+                            <label htmlFor="marks" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Marks *</label>
+                            <Input 
+                                id="marks"
+                                type="number" 
+                                min={1} 
+                                value={marks} 
+                                onChange={(e) => setMarks(Number(e.target.value))}
+                                className="w-full h-[48px] rounded-xl border-slate-200 shadow-sm focus:ring-2 focus:ring-blue-500"
                             />
                         </div>
-
-                        {/* Options (for MCQ) */}
-                        {requiresOptions && (
-                            <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Options (Select correct answer)</label>
-                                <div className="space-y-3">
-                                    {questionOptions.map((opt, idx) => (
-                                        <div key={idx} className="flex items-center gap-3">
-                                            <button
-                                                type="button"
-                                                onClick={() => handleCorrectChange(idx)}
-                                                className={`flex-shrink-0 w-10 h-10 rounded-xl border-2 flex items-center justify-center font-bold text-sm transition-all shadow-sm ${
-                                                    opt.isCorrect 
-                                                        ? 'bg-gradient-to-br from-green-400 to-green-600 border-green-500 text-white scale-105' 
-                                                        : 'border-slate-200 text-slate-400 hover:border-green-300 hover:text-green-500 bg-white'
-                                                }`}
-                                            >
-                                                {String.fromCharCode(65 + idx)}
-                                            </button>
-                                            <Input 
-                                                value={opt.text}
-                                                onChange={(e) => handleOptionChange(idx, e.target.value)}
-                                                placeholder={`Option ${String.fromCharCode(65 + idx)}`}
-                                                className="flex-1 h-[48px] rounded-xl border-slate-200 shadow-sm focus:ring-2 focus:ring-blue-500"
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Correct Answer (for non-MCQ) */}
-                        {!requiresOptions && (
-                            <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Correct Answer</label>
-                                <Input 
-                                    value={correctAnswer}
-                                    onChange={(e) => setCorrectAnswer(e.target.value)}
-                                    placeholder="Enter the correct answer"
-                                    className="h-[48px] rounded-xl border-slate-200 shadow-sm focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-                        )}
-
-                        {/* Explanation */}
-                        <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Explanation (Optional)</label>
-                            <textarea 
-                                value={explanation}
-                                onChange={(e) => setExplanation(e.target.value)}
-                                placeholder="Add an explanation for the answer..."
-                                rows={2}
-                                className="w-full p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none shadow-sm text-slate-700 min-h-[80px]"
-                            />
-                        </div>
-                    </form>
+                    </div>
                 </div>
 
-                {/* Footer - Fixed at bottom */}
-                <div className="shrink-0 border-t border-slate-100 p-5 flex justify-end gap-3 bg-white rounded-b-2xl z-10">
-                    <Button type="button" variant="outline" onClick={onClose} disabled={loading} className="rounded-xl px-6 h-[42px]">
-                        Cancel
-                    </Button>
-                    <Button 
-                        type="submit" 
-                        form="create-question-form"
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl px-6 h-[42px] shadow-lg shadow-blue-500/25" 
-                        disabled={loading}
-                    >
-                        {loading ? (
-                            <span className="flex items-center gap-2">
-                                <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                {/* Question Content */}
+                <div>
+                    <label htmlFor="question" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Question *</label>
+                    <textarea 
+                        id="question"
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        placeholder="Enter your question here..."
+                        rows={3}
+                        className="w-full p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none shadow-sm text-slate-700 min-h-[100px]"
+                    />
+                </div>
+
+                {/* Options (for MCQ) */}
+                {requiresOptions && (
+                    <div>
+                        <p className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Options (Select correct answer)</p>
+                        <div className="space-y-3">
+                            {questionOptions.map((opt, idx) => (
+                                <div key={idx} className="flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleCorrectChange(idx)}
+                                        className={`flex-shrink-0 w-10 h-10 rounded-xl border-2 flex items-center justify-center font-bold text-sm transition-all shadow-sm ${
+                                            opt.isCorrect 
+                                                ? 'bg-gradient-to-br from-green-400 to-green-600 border-green-500 text-white scale-105' 
+                                                : 'border-slate-200 text-slate-400 hover:border-green-300 hover:text-green-500 bg-white'
+                                        }`}
+                                    >
+                                        {String.fromCharCode(65 + idx)}
+                                    </button>
+                                    <Input 
+                                        value={opt.text}
+                                        onChange={(e) => handleOptionChange(idx, e.target.value)}
+                                        placeholder={`Option ${String.fromCharCode(65 + idx)}`}
+                                        className="flex-1 h-[48px] rounded-xl border-slate-200 shadow-sm focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Correct Answer (for non-MCQ) */}
+                {!requiresOptions && (
+                    <div>
+                        <label htmlFor="correctAnswer" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Correct Answer</label>
+                        <Input 
+                            id="correctAnswer"
+                            value={correctAnswer}
+                            onChange={(e) => setCorrectAnswer(e.target.value)}
+                            placeholder="Enter the correct answer"
+                            className="h-[48px] rounded-xl border-slate-200 shadow-sm focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+                )}
+
+                {/* Explanation */}
+                <div>
+                    <label htmlFor="explanation" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Explanation (Optional)</label>
+                    <textarea 
+                        id="explanation"
+                        value={explanation}
+                        onChange={(e) => setExplanation(e.target.value)}
+                        placeholder="Add an explanation for the answer..."
+                        rows={2}
+                        className="w-full p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none shadow-sm text-slate-700 min-h-[80px]"
+                    />
+                </div>
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                                 </svg>

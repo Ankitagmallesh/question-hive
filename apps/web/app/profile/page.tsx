@@ -171,10 +171,11 @@ export default function ProfilePage() {
                             <form onSubmit={handleSave} className="p-6 space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                        <label htmlFor="fullName" className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
                                             <UserIcon size={16} className="text-slate-400" /> Full Name
                                         </label>
                                         <input 
+                                            id="fullName"
                                             type="text" 
                                             value={dbUser.name} 
                                             onChange={(e) => setDbUser(prev => ({ ...prev, name: e.target.value }))}
@@ -183,10 +184,11 @@ export default function ProfilePage() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                        <label htmlFor="email" className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
                                             <Mail size={16} className="text-slate-400" /> Email
                                         </label>
                                         <input 
+                                            id="email"
                                             type="email" 
                                             value={dbUser.email} 
                                             disabled 
@@ -196,10 +198,11 @@ export default function ProfilePage() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                    <label htmlFor="bio" className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
                                         <FileText size={16} className="text-slate-400" /> Bio
                                     </label>
                                     <textarea 
+                                        id="bio"
                                         rows={4}
                                         value={profile.bio || ''}
                                         onChange={(e) => setProfile(prev => ({ ...prev, bio: e.target.value }))}
@@ -210,10 +213,11 @@ export default function ProfilePage() {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                        <label htmlFor="phone" className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
                                             <Phone size={16} className="text-slate-400" /> Phone
                                         </label>
                                         <input 
+                                            id="phone"
                                             type="tel"
                                             value={profile.phone || ''}
                                             onChange={(e) => setProfile(prev => ({ ...prev, phone: e.target.value }))}
@@ -222,10 +226,11 @@ export default function ProfilePage() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                        <label htmlFor="address" className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
                                             <MapPin size={16} className="text-slate-400" /> Address
                                         </label>
                                         <input 
+                                            id="address"
                                             type="text"
                                             value={profile.address || ''}
                                             onChange={(e) => setProfile(prev => ({ ...prev, address: e.target.value }))}
