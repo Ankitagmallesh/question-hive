@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
+import AppLoader from '../../components/ui/AppLoader';
 import Link from 'next/link';
 
 export default function SavedPapersPage() {
@@ -68,6 +69,16 @@ export default function SavedPapersPage() {
              alert('Error deleting paper');
         }
     };
+
+    if (loadingPapers) {
+        return (
+            <DashboardLayout>
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                    <AppLoader text="Loading Saved Papers..." />
+                </div>
+            </DashboardLayout>
+        );
+    }
 
     return (
         <DashboardLayout>

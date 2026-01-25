@@ -34,9 +34,14 @@ export async function updateSession(request: NextRequest) {
   // issues with users being randomly logged out.
 
   // IMPORTANT: DO NOT REMOVE auth.getUser()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch (error) {
+    console.error('Middleware Auth Error:', error);
+    // Continue as unauthenticated if auth fails (e.g. network issue)
+  }
 
   const url = request.nextUrl.clone()
   
