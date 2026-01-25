@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { LogIn, ArrowRight } from 'lucide-react';
 import { Suspense } from 'react';
-import AppLoader from '../../components/ui/AppLoader';
+import AppLoader from '../../../components/ui/AppLoader';
 
 function ErrorContent() {
     const searchParams = useSearchParams();
