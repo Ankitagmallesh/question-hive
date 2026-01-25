@@ -14,14 +14,14 @@ export const getProfileByEmail = async (email: string) => {
         };
       }
 
-      const userId = user[0].id;
+      const userId = user[0]!.id;
       const profile = await db.select().from(profiles).where(eq(profiles.userId, userId)).limit(1);
 
       return {
         user: {
             id: userId,
-            name: user[0].name,
-            email: user[0].email,
+            name: user[0]!.name,
+            email: user[0]!.email,
         },
         profile: profile[0] || {}
       };

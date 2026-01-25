@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User } from '@repo/types';
-import { Button } from '../app/components/ui/button';
+import { Button } from './ui/button';
 
 interface ProfileMenuProps {
   user: User | null;
@@ -33,7 +33,7 @@ export default function ProfileMenu({ user, onLogout }: ProfileMenuProps) {
       return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     }
     if (email) {
-      return email.split('@')[0].slice(0, 2).toUpperCase();
+      return (email.split('@')[0] ?? '').slice(0, 2).toUpperCase();
     }
     return 'U';
   };

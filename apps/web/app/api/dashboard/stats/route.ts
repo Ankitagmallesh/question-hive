@@ -20,7 +20,7 @@ export async function GET(req: Request) {
             return NextResponse.json({ success: true, data: { stats: {}, recentPapers: [] } });
         }
 
-        const userId = userRes[0].id;
+        const userId = userRes[0]!.id;
         const data = await getDashboardStats(userId);
 
         return NextResponse.json({ success: true, ...data });

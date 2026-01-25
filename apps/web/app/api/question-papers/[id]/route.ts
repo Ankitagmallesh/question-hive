@@ -35,11 +35,12 @@ export async function GET(
 
 export async function DELETE(
     req: Request,
-    { params }: { params: { id: string } }
+    props: { params: Promise<{ id: string }> }
 ) {
     try {
         const { searchParams } = new URL(req.url);
         const email = searchParams.get('email');
+        const params = await props.params;
         const paperId = parseInt(params.id);
 
         if (!email) {
@@ -52,12 +53,12 @@ export async function DELETE(
 
         // Resolve userId for cache invalidation
         const userRes = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
-        const userId = userRes.length > 0 ? userRes[0].id : 0;
+        const userId = userRes.length > 0 ? userRes[0]!.id : 0;
 
         const result = await deleteQuestionPaperAction(paperId, userId);
         
         if (!result.success) {
-            return NextResponse.json({ success: false, error: result.error }, { status: 500 });
+            return NextResponse.json({ success: false, error: (result as any).error }, { status: 500 });
         }
 
         return NextResponse.json({ success: true });
