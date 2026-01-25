@@ -192,11 +192,12 @@ export default function ProfilePage() {
                             <form onSubmit={handleSave} className="p-6 space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                        <label htmlFor="fullName" className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
                                             <UserIcon size={16} className="text-slate-400" /> Full Name
                                         </label>
                                         <input 
-                                            type="text" 
+                                            type="text"
+                                            id="fullName"
                                             value={dbUser.name} 
                                             onChange={(e) => setDbUser(prev => ({ ...prev, name: e.target.value }))}
                                             className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
@@ -204,11 +205,12 @@ export default function ProfilePage() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                        <label htmlFor="email" className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
                                             <Mail size={16} className="text-slate-400" /> Email
                                         </label>
                                         <input 
-                                            type="email" 
+                                            type="email"
+                                            id="email"
                                             value={dbUser.email} 
                                             disabled 
                                             className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-500 cursor-not-allowed focus:outline-none"
@@ -217,10 +219,11 @@ export default function ProfilePage() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                    <label htmlFor="bio" className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
                                         <FileText size={16} className="text-slate-400" /> Bio
                                     </label>
                                     <textarea 
+                                        id="bio"
                                         rows={4}
                                         value={profile.bio || ''}
                                         onChange={(e) => setProfile(prev => ({ ...prev, bio: e.target.value }))}
@@ -231,11 +234,12 @@ export default function ProfilePage() {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                        <label htmlFor="phone" className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
                                             <Phone size={16} className="text-slate-400" /> Phone
                                         </label>
                                         <input 
                                             type="tel"
+                                            id="phone"
                                             value={profile.phone || ''}
                                             onChange={(e) => setProfile(prev => ({ ...prev, phone: e.target.value }))}
                                             className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
@@ -243,11 +247,12 @@ export default function ProfilePage() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                                        <label htmlFor="address" className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
                                             <MapPin size={16} className="text-slate-400" /> Address
                                         </label>
                                         <input 
                                             type="text"
+                                            id="address"
                                             value={profile.address || ''}
                                             onChange={(e) => setProfile(prev => ({ ...prev, address: e.target.value }))}
                                             className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
