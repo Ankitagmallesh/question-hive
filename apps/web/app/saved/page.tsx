@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
 import AppLoader from '../../components/ui/AppLoader';
+import AppLoader from '../../components/ui/AppLoader';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
