@@ -3,12 +3,18 @@ import { getQuestionPaperById } from '../../../server/db/queries/question-papers
 import { deleteQuestionPaperAction } from '../../../server/actions/question-papers';
 import { db } from '../../../lib/db'; // Keep generic db access if needed for user lookup
 import { users, eq } from '@repo/db';
+import { getQuestionPaperById } from '../../../server/db/queries/question-papers';
+import { deleteQuestionPaperAction } from '../../../server/actions/question-papers';
+import { db } from '../../../lib/db'; // Keep generic db access if needed for user lookup
+import { users, eq } from '@repo/db';
 
 export async function GET(
     req: Request,
     props: { params: Promise<{ id: string }> }
+    props: { params: Promise<{ id: string }> }
 ) {
     try {
+        const params = await props.params;
         const params = await props.params;
         const paperId = parseInt(params.id);
         
@@ -17,13 +23,16 @@ export async function GET(
         }
 
         const paper = await getQuestionPaperById(paperId);
+        const paper = await getQuestionPaperById(paperId);
         
+        if (!paper) {
         if (!paper) {
             return NextResponse.json({ success: false, error: 'Paper not found' }, { status: 404 });
         }
 
         return NextResponse.json({
             success: true,
+            paper
             paper
         });
 
@@ -42,6 +51,10 @@ export async function DELETE(
         const email = searchParams.get('email');
         const params = await props.params;
         const paperId = parseInt(params.id);
+
+        if (!email) {
+             return NextResponse.json({ success: false, error: 'Email required for auth check' }, { status: 401 });
+        }
 
         if (!email) {
              return NextResponse.json({ success: false, error: 'Email required for auth check' }, { status: 401 });
