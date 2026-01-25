@@ -409,8 +409,9 @@ export default function CreateQuestionModal({ isOpen, onClose, onSuccess, userId
                                     placeholder="Select Difficulty"
                                 />
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Marks *</label>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2" htmlFor="marks">Marks *</label>
                                     <Input 
+                                        id="marks"
                                         type="number" 
                                         min={1} 
                                         value={marks} 
@@ -423,8 +424,9 @@ export default function CreateQuestionModal({ isOpen, onClose, onSuccess, userId
 
                         {/* Question Content */}
                         <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Question *</label>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2" htmlFor="question">Question *</label>
                             <textarea 
+                                id="question"
                                 value={content}
                                 onChange={(e) => setContent(e.target.value)}
                                 placeholder="Enter your question here..."
@@ -436,8 +438,8 @@ export default function CreateQuestionModal({ isOpen, onClose, onSuccess, userId
                         {/* Options (for MCQ) */}
                         {requiresOptions && (
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Options (Select correct answer)</label>
-                                <div className="space-y-3">
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3" htmlFor="options">Options (Select correct answer)</label>
+                                <div className="space-y-3" id="options">
                                     {questionOptions.map((opt, idx) => (
                                         <div key={idx} className="flex items-center gap-3">
                                             <button
@@ -466,8 +468,9 @@ export default function CreateQuestionModal({ isOpen, onClose, onSuccess, userId
                         {/* Correct Answer (for non-MCQ) */}
                         {!requiresOptions && (
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Correct Answer</label>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2" htmlFor="correct-answer">Correct Answer</label>
                                 <Input 
+                                    id="correct-answer"
                                     value={correctAnswer}
                                     onChange={(e) => setCorrectAnswer(e.target.value)}
                                     placeholder="Enter the correct answer"
@@ -478,8 +481,9 @@ export default function CreateQuestionModal({ isOpen, onClose, onSuccess, userId
 
                         {/* Explanation */}
                         <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Explanation (Optional)</label>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2" htmlFor="explanation">Explanation (Optional)</label>
                             <textarea 
+                                id="explanation"
                                 value={explanation}
                                 onChange={(e) => setExplanation(e.target.value)}
                                 placeholder="Add an explanation for the answer..."
