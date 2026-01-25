@@ -28,6 +28,7 @@ import { z } from 'zod';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { getSupabase } from '../../lib/supabase-client';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
+import AppLoader from '../../../components/ui/AppLoader';
 import { 
     Eye, 
     Save, 
@@ -50,6 +51,7 @@ import { useDebounce } from '../../hooks/useDebounce';
 // --- Types ---
 interface Question {
     id: string;
+    instanceId?: string;
     text: string;
     type: string; 
     difficulty: 'easy' | 'medium' | 'hard';
@@ -60,6 +62,7 @@ interface Question {
         order: number;
     }[];
     marks?: number;
+    isAiGenerated?: boolean;
 }
 
 interface PaperSettings {
@@ -118,7 +121,7 @@ const SortableQuestionItem = ({ question, index, onRemove }: { question: Questio
         transform,
         transition,
         isDragging
-    } = useSortable({ id: question.id });
+    } = useSortable({ id: question.instanceId || question.id });
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -134,7 +137,7 @@ const SortableQuestionItem = ({ question, index, onRemove }: { question: Questio
             {...attributes} 
             {...listeners}
         >
-            <i className="ri-delete-bin-line remove-item" onClick={(e) => { e.stopPropagation(); onRemove(question.id); }}></i>
+            <i className="ri-delete-bin-line remove-item" onClick={(e) => { e.stopPropagation(); onRemove(question.instanceId || question.id); }}></i>
             <div className="flex gap-3">
                 <span className="font-bold text-slate-900 shrink-0">{index + 1}.</span>
                 <div className="flex-1 pr-16">
@@ -729,8 +732,8 @@ export default function PaperDesigner() {
         const { active, over } = event;
         if (active.id !== over?.id) {
             setPaperQuestions((items) => {
-                const oldIndex = items.findIndex(i => i.id === active.id);
-                const newIndex = items.findIndex(i => i.id === over?.id);
+                const oldIndex = items.findIndex(i => (i.instanceId || i.id) === active.id);
+                const newIndex = items.findIndex(i => (i.instanceId || i.id) === over?.id);
                 return arrayMove(items, oldIndex, newIndex);
             });
         }
@@ -762,7 +765,11 @@ export default function PaperDesigner() {
     // --- Actions ---
     const addToPaper = (q: Question) => {
         if (!paperQuestions.find(item => item.id === q.id)) {
-            setPaperQuestions([...paperQuestions, q]);
+            const questionWithInstance = {
+                ...q,
+                instanceId: `new-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+            };
+            setPaperQuestions([...paperQuestions, questionWithInstance]);
             
             // Auto-calculate metrics: 1 Q = 4 Marks, 1 Min
             const currentMarks = parseInt(settings.totalMarks) || 0;
@@ -810,8 +817,8 @@ export default function PaperDesigner() {
         });
     }, [sourceQuestions, searchQuery, settings.difficulty, settings.chapters, priorityChapter]);
 
-    const removeFromPaper = (id: string) => {
-        setPaperQuestions(paperQuestions.filter(q => q.id !== id));
+    const removeFromPaper = (idOrInstanceId: string) => {
+        setPaperQuestions(paperQuestions.filter(q => (q.instanceId || q.id) !== idOrInstanceId));
         
         // Auto-calculate metrics
         const currentMarks = parseInt(settings.totalMarks) || 0;
@@ -1051,7 +1058,7 @@ export default function PaperDesigner() {
                     onDragEnd={handleDragEnd}
                 >
                     <SortableContext 
-                        items={paperQuestions.map(q => q.id)} 
+                        items={paperQuestions.map(q => q.instanceId || q.id)} 
                         strategy={verticalListSortingStrategy}
                     >
                         {pages.map((pageQuestions, pageIndex) => (
@@ -1189,7 +1196,7 @@ export default function PaperDesigner() {
                                                 const currentIndex = globalIndex;
                                                 globalIndex++;
                                                 return (
-                                                    <div key={q.id} className={`q-wrapper ${settings.separator !== 'none' ? 'q-separator-' + settings.separator : ''}`} style={{breakInside: 'avoid'}}>
+                                                    <div key={q.instanceId || q.id} className={`q-wrapper ${settings.separator !== 'none' ? 'q-separator-' + settings.separator : ''}`} style={{breakInside: 'avoid'}}>
                                                         <SortableQuestionItem 
                                                             question={q} 
                                                             index={currentIndex} 
@@ -1229,6 +1236,16 @@ export default function PaperDesigner() {
             </div>
         );
     };
+
+    if (authLoading) {
+        return (
+            <DashboardLayout fullScreen={true}>
+                <div className="h-screen w-full flex items-center justify-center bg-gray-50">
+                    <AppLoader text="Verifying session..." />
+                </div>
+            </DashboardLayout>
+        );
+    }
 
     return (
         <DashboardLayout fullScreen={true}>
@@ -1612,14 +1629,13 @@ export default function PaperDesigner() {
                             )}
         
                             <div id="source-list">
-                                {isLoadingQuestions && (
-                                    <div style={{textAlign: 'center', padding: '20px', color: '#999'}}>
-                                        <i className="ri-loader-4-line animate-spin mb-2" style={{fontSize: '24px'}}></i>
-                                        <div className="text-xs font-semibold">Loading Question Bank...</div>
-                                    </div>
-                                )}
-        
-                                {!isLoadingQuestions && filteredQuestions.length === 0 && (
+                        {isLoadingQuestions && (
+                            <div className="py-12">
+                                <AppLoader text="Loading Question Bank..." />
+                            </div>
+                        )}
+
+                        {!isLoadingQuestions && filteredQuestions.length === 0 && (
                                     <div className="flex flex-col items-center justify-center py-10 text-slate-400 text-center">
                                         <i className="ri-inbox-2-line text-4xl mb-2 opacity-50"></i>
                                         {settings.difficulty === 'easy' ? (
