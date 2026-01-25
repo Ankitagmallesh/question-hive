@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
+import AppLoader from "../../components/ui/AppLoader";
 import { useSupabaseAuth } from "../hooks/useSupabaseAuth";
 import { signOut } from "../lib/google-auth";
 import { Loader2, Save, User as UserIcon, Mail, Phone, MapPin, FileText, Pencil, LogOut } from "lucide-react";
@@ -96,8 +97,8 @@ export default function ProfilePage() {
     if (authLoading || loading) {
         return (
             <DashboardLayout>
-                <div className="flex h-[80vh] items-center justify-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                    <AppLoader text="Loading Profile..." />
                 </div>
             </DashboardLayout>
         );
