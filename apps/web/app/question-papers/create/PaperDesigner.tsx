@@ -454,17 +454,17 @@ export default function PaperDesigner() {
                 setTotalCount(total || 0);
 
                 // 2. Sort in memory (Priority -> Difficulty)
-                const sortedIds = allIds.sort((a: { chapters?: { name: string }; difficulty_levels?: { name: string } }, b: { chapters?: { name: string }; difficulty_levels?: { name: string } }) => {
+                const sortedIds = allIds.sort((a: { id: any; difficulty_levels: { name: any }[]; chapters: { name: any }[] }, b: { id: any; difficulty_levels: { name: any }[]; chapters: { name: any }[] }) => {
                     // Priority Chapter
-                    const aIsPriority = a.chapters?.name === priorityChapter;
-                    const bIsPriority = b.chapters?.name === priorityChapter;
+                    const aIsPriority = a.chapters?.[0]?.name === priorityChapter;
+                    const bIsPriority = b.chapters?.[0]?.name === priorityChapter;
                     if (aIsPriority && !bIsPriority) return -1;
                     if (!aIsPriority && bIsPriority) return 1;
 
                     // Difficulty
                     const diffWeight: {[k: string]: number} = { 'easy': 1, 'medium': 2, 'hard': 3 };
-                    const aWeight = diffWeight[a.difficulty_levels?.name?.toLowerCase() || ''] || 4;
-                    const bWeight = diffWeight[b.difficulty_levels?.name?.toLowerCase() || ''] || 4;
+                    const aWeight = diffWeight[a.difficulty_levels?.[0]?.name?.toLowerCase() || ''] || 4;
+                    const bWeight = diffWeight[b.difficulty_levels?.[0]?.name?.toLowerCase() || ''] || 4;
                     return aWeight - bWeight;
                 });
 
@@ -498,12 +498,12 @@ export default function PaperDesigner() {
                     
                      // Transform
                      const transformed = orderedData.map(q => ({
-                        id: q.id,
-                        text: q.content,
-                        type: q.question_types?.name,
-                        difficulty: q.difficulty_levels?.name,
-                        chapter: q.chapters?.name,
-                        options: q.question_options?.map(o => ({
+                        id: q?.id,
+                        text: q?.content,
+                        type: q?.question_types?.[0]?.name,
+                        difficulty: q?.difficulty_levels?.[0]?.name,
+                        chapter: q?.chapters?.[0]?.name,
+                        options: q?.question_options?.map(o => ({
                             id: o.id,
                             text: o.option_text,
                             order: o.option_order
@@ -543,9 +543,9 @@ export default function PaperDesigner() {
                     const transformed = data.map((q) => ({
                         id: q.id,
                         text: q.content,
-                        type: q.question_types?.name,
-                        difficulty: q.difficulty_levels?.name,
-                        chapter: q.chapters?.name,
+                        type: q.question_types?.[0]?.name,
+                        difficulty: q.difficulty_levels?.[0]?.name,
+                        chapter: q.chapters?.[0]?.name,
                         options: q.question_options?.map((o) => ({
                             id: o.id,
                             text: o.option_text,

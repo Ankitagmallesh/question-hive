@@ -9,16 +9,34 @@ import AppLoader from "../../../components/ui/AppLoader";
 import { Hexagon, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "../../../components/ui/dialog";
 import { Button } from "../../../components/ui/button";
+import AppLoader from "../../../components/ui/AppLoader";
+// Lucide icons
+import { Hexagon, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "../../../components/ui/dialog";
+import { Button } from "../../../components/ui/button";
 
 export default function RegisterPage() {
     const router = useRouter();
     const [formData, setFormData] = useState({
         title: 'Prof.',
+        title: 'Prof.',
         name: '',
         email: '',
         institution: '',
         department: '',
+        institution: '',
+        department: '',
         password: '',
+        confirmPassword: '', 
+        inviteCode: '',
+    });
+    
+    // UI state
+    const [showInviteCode, setShowInviteCode] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+    const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false);
+
         confirmPassword: '', 
         inviteCode: '',
     });
@@ -49,6 +67,16 @@ export default function RegisterPage() {
             } catch {
                 setIsCheckingSession(false);
             }
+                const supabase = getSupabase();
+                const { data } = await supabase.auth.getSession();
+                if (data.session) {
+                    router.replace('/home');
+                } else {
+                    setIsCheckingSession(false);
+                }
+            } catch {
+                setIsCheckingSession(false);
+            }
         })();
     }, [router]);
 
@@ -66,12 +94,22 @@ export default function RegisterPage() {
         if (type === 'checkbox') {
             const checked = (e.target as HTMLInputElement).checked;
             setFormData(prev => ({ ...prev, [name]: checked }));
+            setFormData(prev => ({ ...prev, [name]: checked }));
         } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
             setFormData(prev => ({ ...prev, [name]: value }));
         }
 
         // Clear error when user starts typing
         if (errors[name]) {
+            setErrors(prev => ({ ...prev, [name]: '' }));
+        }
+    };
+    
+    const handleSelectChange = (name: string, value: string) => {
+        setFormData(prev => ({ ...prev, [name]: value }));
+         if (errors[name]) {
+            setErrors(prev => ({ ...prev, [name]: '' }));
             setErrors(prev => ({ ...prev, [name]: '' }));
         }
     };
@@ -86,6 +124,7 @@ export default function RegisterPage() {
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
 
+        if (!formData.name.trim()) newErrors.name = 'Full name is required';
         if (!formData.name.trim()) newErrors.name = 'Full name is required';
         if (!formData.email.trim()) {
             newErrors.email = 'Email is required';
@@ -106,6 +145,7 @@ export default function RegisterPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        if (!validateForm()) return;
         if (!validateForm()) return;
 
         setIsLoading(true);
@@ -129,6 +169,8 @@ export default function RegisterPage() {
                 options: {
                     data: metaData,
                     emailRedirectTo: `${window.location.origin}/auth/callback?next=/home`
+                    data: metaData,
+                    emailRedirectTo: `${window.location.origin}/auth/callback?next=/home`
                 }
             });
 
@@ -138,7 +180,12 @@ export default function RegisterPage() {
                 // Success - Show dialog instead of direct redirect
                 setNeedsEmailConfirmation(true); // Always require confirmation flow
                 setShowSuccessDialog(true);
+            } else if (data.session || (data.user && !data.session)) {
+                // Success - Show dialog instead of direct redirect
+                setNeedsEmailConfirmation(true); // Always require confirmation flow
+                setShowSuccessDialog(true);
             } else {
+                setErrors({ general: 'Registration failed.' });
                 setErrors({ general: 'Registration failed.' });
             }
         } catch (error) {
@@ -178,6 +225,7 @@ export default function RegisterPage() {
                             <p className="font-bold text-white">Dr. Rajesh Kumar</p>
                             <p className="text-sm text-slate-400">Senior Physics Faculty, Allen Institute</p>
                         </div>
+                    </div>
                     </div>
                 </div>
 
@@ -231,12 +279,34 @@ export default function RegisterPage() {
                                 </select>
                                 <input 
                                     type="text" 
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                        
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="name">Full Name</label>
+                            <div className="flex rounded-xl shadow-sm border border-slate-200 overflow-hidden focus-within:ring-4 focus-within:ring-indigo-500/10 focus-within:border-indigo-600 transition-all">
+                                <select 
+                                    className="bg-slate-50 border-r border-slate-200 px-3 py-2.5 text-sm text-slate-600 focus:outline-none cursor-pointer hover:bg-slate-100"
+                                    value={formData.title}
+                                    onChange={(e) => handleSelectChange('title', e.target.value)}
+                                >
+                                    <option>Prof.</option>
+                                    <option>Dr.</option>
+                                    <option>Mr.</option>
+                                    <option>Ms.</option>
+                                </select>
+                                <input 
+                                    type="text" 
                                     name="name"
                                     value={formData.name}
                                     onChange={handleChange}
                                     placeholder="e.g. Sanjay Rao" 
                                     className="w-full px-4 py-2.5 text-slate-700 placeholder:text-slate-400 focus:outline-none"
+                                    placeholder="e.g. Sanjay Rao" 
+                                    className="w-full px-4 py-2.5 text-slate-700 placeholder:text-slate-400 focus:outline-none"
                                 />
+                            </div>
+                            {errors.name && <p className="text-sm text-red-600 mt-1">{errors.name}</p>}
+                        </div>
                             </div>
                             {errors.name && <p className="text-sm text-red-600 mt-1">{errors.name}</p>}
                         </div>
@@ -287,9 +357,22 @@ export default function RegisterPage() {
                                 <select 
                                     name="department"
                                     value={formData.department}
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="department">Department</label>
+                                <select 
+                                    name="department"
+                                    value={formData.department}
                                     onChange={handleChange}
                                     className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-700 bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 transition-all cursor-pointer appearance-none"
+                                    className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-700 bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 transition-all cursor-pointer appearance-none"
                                 >
+                                    <option value="" disabled>Select Subject</option>
+                                    <option>Physics</option>
+                                    <option>Chemistry</option>
+                                    <option>Mathematics</option>
+                                    <option>Biology</option>
+                                    <option>Computer Science</option>
+                                    <option>Other</option>
                                     <option value="" disabled>Select Subject</option>
                                     <option>Physics</option>
                                     <option>Chemistry</option>
@@ -305,9 +388,16 @@ export default function RegisterPage() {
                             <div className="relative">
                                 <input 
                                     type={showPassword ? "text" : "password"}
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="password">Password</label>
+                            <div className="relative">
+                                <input 
+                                    type={showPassword ? "text" : "password"}
                                     name="password"
                                     value={formData.password}
                                     onChange={handleChange}
+                                    placeholder="Create a strong password" 
+                                    className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 transition-all pr-10"
                                     placeholder="Create a strong password" 
                                     className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 transition-all pr-10"
                                 />
@@ -322,10 +412,47 @@ export default function RegisterPage() {
                                         <Eye className="w-5 h-5" />
                                     )}
                                 </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                                >
+                                    {showPassword ? (
+                                        <EyeOff className="w-5 h-5" />
+                                    ) : (
+                                        <Eye className="w-5 h-5" />
+                                    )}
+                                </button>
                             </div>
                             {errors.password && <p className="text-sm text-red-600 mt-1">{errors.password}</p>}
                         </div>
+                            {errors.password && <p className="text-sm text-red-600 mt-1">{errors.password}</p>}
+                        </div>
 
+                         <div className="pt-2">
+                             <button
+                                type="button"
+                                onClick={() => setShowInviteCode(!showInviteCode)}
+                                className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1.5"
+                             >
+                                <svg className={`w-4 h-4 transition-transform ${showInviteCode ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
+                                Joining an existing department?
+                             </button>
+                             
+                             {showInviteCode && (
+                                 <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                                     <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="inviteCode">Invite Code</label>
+                                     <input 
+                                         type="text" 
+                                         name="inviteCode"
+                                         value={formData.inviteCode}
+                                         onChange={handleChange}
+                                         placeholder="Enter the code shared by your HOD" 
+                                         className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 transition-all"
+                                     />
+                                 </div>
+                             )}
+                         </div>
                          <div className="pt-2">
                              <button
                                 type="button"
@@ -366,6 +493,21 @@ export default function RegisterPage() {
                                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                                 Your exam data is end-to-end encrypted.
                             </span>
+                        <button 
+                            type="submit" 
+                            disabled={isLoading}
+                            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-indigo-500/20 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                            {isLoading ? 'Creating Account...' : 'Create Account'}
+                        </button>
+
+                        <div className="text-xs text-slate-500 text-center leading-relaxed">
+                            By creating an account, you agree to our <Link href="/terms" className="text-slate-700 underline">Terms of Service</Link> & <Link href="/privacy" className="text-slate-700 underline">Privacy Policy</Link>.
+                            <br />
+                            <span className="flex items-center justify-center gap-1 mt-2 text-slate-400">
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                Your exam data is end-to-end encrypted.
+                            </span>
                         </div>
                     </form>
 
@@ -374,7 +516,38 @@ export default function RegisterPage() {
                     </div>
                 </div>
             </div>
+                    </form>
+
+                    <div className="mt-8 text-center text-sm text-slate-600">
+                        Already have an account? <Link href="/auth/login" className="font-bold text-indigo-600 hover:underline">Sign in</Link>
+                    </div>
+                </div>
             </div>
+            </div>
+
+            <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 mb-4">
+                            <CheckCircle2 className="h-10 w-10 text-green-600" />
+                        </div>
+                        <DialogTitle className="text-center text-xl">Account Created Successfully!</DialogTitle>
+                        <DialogDescription className="text-center pt-2">
+                           Welcome to Question Hive, {formData.title} {formData.name}. Your faculty account has been registered.
+                           <br/><br/>
+                           Please check your email to confirm your identity before logging in.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="sm:justify-center">
+                        <Button 
+                            className="w-full sm:w-auto min-w-[140px]" 
+                            onClick={() => router.push('/auth/login')}
+                        >
+                            Sign In
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
                 <DialogContent className="sm:max-w-md">
