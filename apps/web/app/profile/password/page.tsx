@@ -98,6 +98,7 @@ export default function ChangePasswordPage() {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <AppLoader text="Loading..." />
+                <AppLoader text="Loading..." />
             </div>
         );
     }

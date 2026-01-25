@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { apiClient } from "../../lib/api";
 import { getSupabase } from "../../lib/supabase-client";
 import AppLoader from "../../../components/ui/AppLoader";
+import AppLoader from "../../../components/ui/AppLoader";
 // Lucide icons
 import { Check, ShieldCheck, Lock, Hexagon, Eye, EyeOff } from "lucide-react";
 import { getSupabase } from "../../lib/supabase-client";
@@ -75,6 +76,14 @@ export default function LoginPage() {
             </div>
         );
     }
+    if (isCheckingSession) {
+        return (
+            <div className="min-h-screen bg-white flex items-center justify-center">
+                <AppLoader text="Verifying session..." />
+            </div>
+        );
+    }
+
     if (isCheckingSession) {
         return (
             <div className="min-h-screen bg-white flex items-center justify-center">
