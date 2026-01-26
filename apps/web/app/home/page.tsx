@@ -4,9 +4,13 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, animate, useInView } from "framer-motion";
 import { GraduationCap, Landmark, Trash2, Coins } from "lucide-react";
+import { GraduationCap, Landmark, Trash2, Coins } from "lucide-react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import AppLoader from "../../components/ui/AppLoader";
 import { getSupabase } from "../lib/supabase-client";
+import { useSupabaseAuth } from "../hooks/useSupabaseAuth";
+import { Progress } from "../../components/ui/progress";
+import { Button } from "../../components/ui/button";
 import { useSupabaseAuth } from "../hooks/useSupabaseAuth";
 import { Progress } from "../../components/ui/progress";
 import { Button } from "../../components/ui/button";
@@ -50,10 +54,15 @@ const AnimatedProgressBar = ({ width, colorClass }: { width: string, colorClass:
 
 import { useRouter } from 'next/navigation';
 
+import { useRouter } from 'next/navigation';
+
 export default function DashboardPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState('');
   const currentDate = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const { user } = useSupabaseAuth();
   const { user } = useSupabaseAuth();
 
   const [stats, setStats] = useState<{
