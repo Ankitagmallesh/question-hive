@@ -25,16 +25,6 @@ export default function LoginPage() {
     useEffect(() => {
         (async () => {
             try {
-                // Reusing getSession from google-auth for now as it probably wraps supabase.auth.getSession
-                // Actually, I should check if I deleted the import... I am deleting it below.
-                // The original code used getSession from ../../lib/google-auth. 
-                // I need to import getSession or implement it. 
-                // Let's verify what getSession does. 
-                // Since I am removing the import `import { signInWithGoogle, getSession } from "../../lib/google-auth";`
-                // I need to make sure I don't break the useEffect check.
-                // I will replace `getSession()` with a direct supabase check or keep the import for getSession only if needed.
-                // But wait, the previous `getSession` was likely just checking supabase session.
-                // I'll use `getSupabase().auth.getSession()` directly to be safe and clean.
                 const supabase = getSupabase();
                 const { data } = await supabase.auth.getSession();
                 if (data.session) {
@@ -42,8 +32,11 @@ export default function LoginPage() {
                 } else {
                     setIsCheckingSession(false);
                 }
-            } catch {
+            } catch (err) {
                 setIsCheckingSession(false);
+                if (process.env.NODE_ENV === 'development') {
+                    console.warn('Session check failed:', err);
+                }
             }
         })();
     }, [router]);
@@ -209,6 +202,7 @@ export default function LoginPage() {
                             <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="password">Password</label>
                             <div className="relative">
                                 <input 
+                                    id="password"
                                     type={showPassword ? "text" : "password"}
                                     name="password"
                                     value={formData.password}

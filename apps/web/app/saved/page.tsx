@@ -6,9 +6,16 @@ import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
 import Link from 'next/link';
 
+interface SavedPaper {
+    id: string;
+    settings: { title: string; chapters: unknown[]; difficulty: string };
+    paperQuestions: unknown[];
+    savedAt: string;
+}
+
 export default function SavedPapersPage() {
     const { user, loading } = useSupabaseAuth();
-    const [savedPapers, setSavedPapers] = useState<{ id: string }[]>([]);
+    const [savedPapers, setSavedPapers] = useState<SavedPaper[]>([]);
     const router = useRouter();
 
     useEffect(() => {
