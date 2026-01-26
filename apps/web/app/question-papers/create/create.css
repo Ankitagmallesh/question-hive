@@ -147,10 +147,11 @@ label {
 /* --- Right: Preview Panel --- */
 .preview-panel {
     flex: 1; 
+    min-width: 0; /* Allow shrinking so horizontal scroll works when content (210mm) exceeds container */
     background: #e2e8f0; 
     padding: 20px; 
     overflow-y: auto;
-    overflow-x: auto; /* Show horizontal scroll when zoom < 100% */
+    overflow-x: auto; /* Show horizontal scroll when zoom <= 100% and content exceeds container */
     display: flex; 
     flex-direction: column; 
     align-items: center; 
