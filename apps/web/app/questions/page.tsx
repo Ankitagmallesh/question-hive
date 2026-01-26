@@ -189,14 +189,14 @@ export default function QuestionsPage() {
                                 type="search"
                                 placeholder="Search by question text…"
                                 value={search}
-                                onChange={(e) => setSearch(e.target.value)}
+                                onChange={handleSearchChange}
                                 className="pl-9"
                                 aria-label="Search questions"
                             />
                         </div>
                         <select
                             value={filterType}
-                            onChange={(e) => setFilterType(e.target.value)}
+                            onChange={handleFilterTypeChange}
                             className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             aria-label="Filter by type"
                         >
@@ -206,7 +206,7 @@ export default function QuestionsPage() {
                         </select>
                         <select
                             value={filterDifficulty}
-                            onChange={(e) => setFilterDifficulty(e.target.value)}
+                            onChange={handleFilterDifficultyChange}
                             className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             aria-label="Filter by difficulty"
                         >
@@ -218,7 +218,7 @@ export default function QuestionsPage() {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => { setSearch(''); setFilterType(''); setFilterDifficulty(''); }}
+                                onClick={handleClearFilters}
                             >
                                 Clear
                             </Button>
@@ -307,27 +307,39 @@ export default function QuestionsPage() {
                                 Previous
                             </Button>
                             
-                            {/* Simple Page Indicator for now */}
-                            <div className="flex items-center px-4 text-sm font-medium text-gray-700">
-                                Page {currentPage} of {totalPages}
-                            </div>
+                        const handleNextPage = React.useCallback(() => {
+                            setCurrentPage(p => Math.min(totalPages, p + 1));
+                        }, [totalPages]);
 
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
-                                disabled={currentPage === totalPages}
-                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                            >
-                                Next
-                            </Button>
+                        const handleCloseCreateModal = React.useCallback(() => {
+                            setShowCreateModal(false);
+                        }, []);
+
+                        const handleCreateSuccess = React.useCallback(() => {
+                            setRefreshCounter(c => c + 1);
+                        }, []);
+
+                        {/* Simple Page Indicator for now */}
+                        <div className="flex items-center px-4 text-sm font-medium text-gray-700">
+                            Page {currentPage} of {totalPages}
                         </div>
-                        <div className="text-xs text-slate-500">
-                            Showing {(currentPage - 1) * LIMIT + 1} - {Math.min(currentPage * LIMIT, totalCount)} of {totalCount} questions
-                        </div>
+
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            disabled={currentPage === totalPages}
+                            onClick={handleNextPage}
+                        >
+                            Next
+                        </Button>
                     </div>
-                )}
-            </main>
-        </div>
+                    <div className="text-xs text-slate-500">
+                        Showing {(currentPage - 1) * LIMIT + 1} - {Math.min(currentPage * LIMIT, totalCount)} of {totalCount} questions
+                    </div>
+                </div>
+            )}
+        </main>
+    </div>
 
             <CreateQuestionModal 
                 isOpen={showCreateModal}
