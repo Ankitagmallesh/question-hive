@@ -53,12 +53,21 @@ export default function QuestionsPage() {
 
     const abortRef = useRef<AbortController | null>(null);
     const prevFiltersRef = useRef({ search: '', type: '', difficulty: '' });
+    const lastFetchRef = useRef<{ page: number; search: string; type: string; difficulty: string } | null>(null);
 
     const loadQuestions = useCallback(async (opts: { page: number; search: string; type: string; difficulty: string }) => {
+        // Skip duplicate fetches (e.g., when setCurrentPage triggers re-render after filter change)
+        const fetchKey = `${opts.page}-${opts.search}-${opts.type}-${opts.difficulty}`;
+        const lastKey = lastFetchRef.current 
+            ? `${lastFetchRef.current.page}-${lastFetchRef.current.search}-${lastFetchRef.current.type}-${lastFetchRef.current.difficulty}`
+            : null;
+        if (fetchKey === lastKey) return;
+
         if (abortRef.current) abortRef.current.abort();
         abortRef.current = new AbortController();
         const { signal } = abortRef.current;
 
+        lastFetchRef.current = opts;
         setLoading(true);
         try {
             const params = new URLSearchParams({
@@ -92,6 +101,7 @@ export default function QuestionsPage() {
         } catch (err) {
             if ((err as Error).name === 'AbortError') return;
             console.error('Failed to load questions:', err);
+            lastFetchRef.current = null; // Reset on error so we can retry
         } finally {
             setLoading(false);
             abortRef.current = null;
