@@ -1,11 +1,15 @@
 import { db, chapters } from '@repo/db';
 import { eq, asc } from 'drizzle-orm';
-import { unstable_cache } from 'next/cache';
+import { cachedDbQuery } from '../../../lib/cache';
 
+/**
+ * Fetch chapters with optional subject filtering
+ * - Cached for 1 hour
+ * - Request deduplication prevents multiple DB hits
+ * - Cache tag: 'chapters' - revalidate on changes
+ */
 export const getChapters = async (subjectId?: number) => {
-  const cacheKey = subjectId ? ['chapters', `subject-${subjectId}`] : ['chapters', 'all'];
-
-  return unstable_cache(
+  return cachedDbQuery(
     async () => {
       if (subjectId) {
         return await db
@@ -17,10 +21,10 @@ export const getChapters = async (subjectId?: number) => {
         return await db.select().from(chapters).orderBy(asc(chapters.name));
       }
     },
-    cacheKey,
+    subjectId ? ['chapters', `subject-${subjectId}`] : ['chapters', 'all'],
     {
-      tags: ['chapters'],
       revalidate: 3600, // 1 hour
+      tags: ['chapters'],
     }
-  )();
+  );
 };

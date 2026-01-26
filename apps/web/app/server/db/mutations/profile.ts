@@ -30,9 +30,9 @@ export const updateProfileMutation = async (input: UpdateProfileInput) => {
       });
       userId = newUserId;
   } else {
-      userId = userResult[0].id;
+      userId = userResult[0]?.id ?? 0;
       // Update user name if changed
-      if (name && name !== userResult[0].name) {
+      if (name && name !== userResult[0]?.name) {
           await db.update(users).set({ name, updatedAt: new Date() }).where(eq(users.id, userId));
       }
   }

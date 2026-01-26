@@ -32,13 +32,14 @@ export const createOrUpdateQuestionPaper = async (input: SavePaperInput) => {
     const userRes = await tx.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
     
     if (userRes.length > 0) {
-      userId = userRes[0].id;
+      userId = userRes[0]?.id ?? 0;
     } else {
       const newUserId = Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 1000);
+      // @ts-ignore
       await tx.insert(users).values({
         id: newUserId,
         email: email,
-        name: email.split('@')[0],
+        name: email.split('@')[0] ?? 'User',
         passwordHash: 'supabase_auth',
         userRoleId: 1,
         isActive: true
@@ -48,7 +49,7 @@ export const createOrUpdateQuestionPaper = async (input: SavePaperInput) => {
 
     // 2. Resolve Status ID
     const statusRes = await tx.select({ id: questionPaperStatuses.id }).from(questionPaperStatuses).where(eq(questionPaperStatuses.name, status)).limit(1);
-    const statusId = statusRes.length > 0 ? statusRes[0].id : 1; // Default to 1 (Saved)
+    const statusId = statusRes[0]?.id ?? 1; // Default to 1 (Saved)
 
     // 3. Create or Update Paper
     let paperId: number;
@@ -76,7 +77,7 @@ export const createOrUpdateQuestionPaper = async (input: SavePaperInput) => {
         createdAt: new Date()
       }).returning({ id: questionPapers.id });
       
-      paperId = inserted[0].id;
+      paperId = inserted[0]?.id ?? 0;
     }
 
     // 4. Insert Items

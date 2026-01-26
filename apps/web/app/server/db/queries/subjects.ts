@@ -1,14 +1,17 @@
 import { db, subjects } from '@repo/db';
 import { eq, asc } from 'drizzle-orm';
-import { unstable_cache } from 'next/cache';
+import { cachedDbQuery } from '../../../lib/cache';
 
+/**
+ * Fetch subjects with optional exam filtering
+ * - Cached for 1 hour
+ * - Request deduplication prevents multiple DB hits
+ * - Cache tag: 'subjects' - revalidate on changes
+ */
 export const getSubjects = async (examId?: number) => {
-  const cacheKey = examId ? ['subjects', `exam-${examId}`] : ['subjects', 'all'];
-
-  return unstable_cache(
+  return cachedDbQuery(
     async () => {
       if (examId) {
-        // Use database filtering instead of JS filtering
         return await db
           .select()
           .from(subjects)
@@ -18,10 +21,10 @@ export const getSubjects = async (examId?: number) => {
         return await db.select().from(subjects).orderBy(asc(subjects.name));
       }
     },
-    cacheKey,
+    examId ? ['subjects', `exam-${examId}`] : ['subjects', 'all'],
     {
-      tags: ['subjects'],
       revalidate: 3600, // 1 hour
+      tags: ['subjects'],
     }
-  )();
+  );
 };
