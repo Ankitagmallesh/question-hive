@@ -98,6 +98,7 @@ export const users = pgTable('users', {
   passwordHash: text('password_hash').notNull(),
   userRoleId: bigint('user_role_id', { mode: 'number' }).notNull().references(() => userRoles.id),
   institutionId: bigint('institution_id', { mode: 'number' }).references(() => institutions.id),
+  credits: integer('credits').default(150).notNull(),
   isActive: boolean('is_active').default(true).notNull(),
   lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
 }, (t) => ({
