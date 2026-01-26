@@ -378,9 +378,10 @@ export async function POST(req: Request) {
                 // Production: Use puppeteer-core + @sparticuz/chromium
                 browser = await puppeteerCore.launch({
                     args: chromium.args,
-                    defaultViewport: chromium.defaultViewport,
+                    defaultViewport: { width: 800, height: 600 },
                     executablePath: await chromium.executablePath(),
-                    headless: chromium.headless,
+                    // @ts-ignore
+                    headless: chromium.headless === 'new' ? true : chromium.headless,
                 });
             } else {
                 // Local Development: Use standard puppeteer
@@ -466,7 +467,7 @@ export async function POST(req: Request) {
                 headers: {
                     'Content-Type': 'application/pdf',
                     'Content-Disposition': `attachment; filename="${data.title.replace(/[^a-z0-9]/gi, '_')}.pdf"`,
-                    'X-Credits-Remaining': deductionResult[0].updatedCredits.toString()
+                    'X-Credits-Remaining': (deductionResult[0]?.updatedCredits ?? 0).toString()
                 },
             });
 
@@ -475,20 +476,8 @@ export async function POST(req: Request) {
             if (browser) await browser.close();
             return new NextResponse('Failed to generate PDF', { status: 500 });
         }
-
-        return new NextResponse(Buffer.from(pdfBuffer), {
-            status: 200,
-            headers: {
-                'Content-Type': 'application/pdf',
-                'Content-Disposition': `attachment; filename="${data.title.replace(/[^a-z0-9]/gi, '_')}.pdf"`,
-            },
-        });
-
-    } catch (error) {
-        console.error('PDF generation error:', error);
-        return NextResponse.json(
-            { error: 'Failed to generate PDF' },
-            { status: 500 }
-        );
+    } catch (e) {
+        console.error("Export handler error", e);
+        return new NextResponse("Internal Server Error", { status: 500 });
     }
 }
