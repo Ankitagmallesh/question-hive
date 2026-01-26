@@ -3,10 +3,13 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, animate, useInView } from "framer-motion";
-import { GraduationCap, Landmark, Trash2 } from "lucide-react";
+import { GraduationCap, Landmark, Trash2, Coins } from "lucide-react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import AppLoader from "../../components/ui/AppLoader";
 import { getSupabase } from "../lib/supabase-client";
+import { useSupabaseAuth } from "../hooks/useSupabaseAuth";
+import { Progress } from "../../components/ui/progress";
+import { Button } from "../../components/ui/button";
 
 // CountUp Component
 // CountUp Component
@@ -45,8 +48,13 @@ const AnimatedProgressBar = ({ width, colorClass }: { width: string, colorClass:
   );
 };
 
+import { useRouter } from 'next/navigation';
+
 export default function DashboardPage() {
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState('');
   const currentDate = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const { user } = useSupabaseAuth();
 
   const [stats, setStats] = useState({
     totalQuestions: 0,
@@ -143,6 +151,23 @@ export default function DashboardPage() {
                 <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Welcome back, <span className="text-indigo-600">{userName || 'User'}!</span></h1>
                 <p className="text-slate-500 font-medium italic">{currentDate}</p>
             </div>
+            
+            <div className="flex flex-col gap-2 bg-white px-4 py-3 rounded-2xl shadow-sm border border-slate-100 min-w-[240px]">
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                         <div className="w-6 h-6 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600">
+                            <Coins className="w-3 h-3" />
+                        </div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Credits Status</p>
+                    </div>
+                     <span className={`text-xs font-black ${(user?.credits ?? 0) === 0 ? 'text-red-500' : 'text-slate-700'}`}>
+                        {user?.credits ?? 0}
+                        {(user?.credits ?? 0) <= 150 && <span className="text-slate-400"> / 150</span>}
+                    </span>
+                </div>
+                
+                <Progress value={Math.min(((user?.credits ?? 0) / 150) * 100, 100)} className="h-2" />
+            </div>
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -178,8 +203,30 @@ export default function DashboardPage() {
                 <div className="bg-indigo-600 w-12 h-12 rounded-xl flex items-center justify-center text-white mr-2 shadow-lg shadow-indigo-200 shrink-0">
                     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
                 </div>
-                <input type="text" placeholder="Create a 30-mark NEET Physics paper on Laws of Motion..." className="bg-transparent flex-1 p-3 focus:outline-none text-slate-700 font-medium w-full" />
-                <Link href="/question-papers" className="hidden sm:block bg-slate-900 text-white px-8 py-3 rounded-xl font-bold text-sm hover:bg-indigo-600 transition-colors cursor-pointer">Generate</Link>
+                <input 
+                    type="text" 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' && searchQuery.trim()) {
+                            router.push(`/question-papers/create?auto_query=${encodeURIComponent(searchQuery)}`);
+                        }
+                    }}
+                    placeholder="Create a 30-mark NEET Physics paper on Laws of Motion..." 
+                    className="bg-transparent flex-1 p-3 focus:outline-none text-slate-700 font-medium w-full" 
+                />
+                <button 
+                    onClick={() => {
+                        if (searchQuery.trim()) {
+                            router.push(`/question-papers/create?auto_query=${encodeURIComponent(searchQuery)}`);
+                        } else {
+                            router.push('/question-papers');
+                        }
+                    }}
+                    className="hidden sm:block bg-slate-900 text-white px-8 py-3 rounded-xl font-bold text-sm hover:bg-indigo-600 transition-colors cursor-pointer"
+                >
+                    Generate
+                </button>
             </div>
         </section>
 

@@ -35,10 +35,6 @@ export const getDashboardStats = async (userId: number) => {
           .groupBy(difficultyLevels.name);
           
       // E. Recent Papers (Limit 5)
-      // Also can be run independently, though usually we want to show valid papers. 
-      // Existing logic filtered by nothing specific other than createdBy, but logically should probably match the dashboard filter?
-      // The original code just filtered by createdBy. We'll keep it consistent but maybe add status filter if needed?
-      // Original code: .where(eq(questionPapers.createdBy, userId))
       const recentPapersPromise = db.select({
               id: questionPapers.id,
               title: questionPapers.title,
@@ -47,46 +43,44 @@ export const getDashboardStats = async (userId: number) => {
           })
           .from(questionPapers)
           .leftJoin(questionPaperStatuses, eq(questionPapers.statusId, questionPaperStatuses.id))
-          .where(eq(questionPapers.createdBy, userId))
+          .where(and(
+              eq(questionPapers.createdBy, userId),
+              eq(questionPapers.isActive, true)
+          ))
           .orderBy(sql`${questionPapers.updatedAt} DESC`)
           .limit(5);
 
       if (targetStatuses.length > 0) {
           const statusIds = targetStatuses.map((s: { id: number }) => s.id);
 
-          // A. Total Papers
-          const totalPapersPromise = db.select({ count: sql<number>`count(DISTINCT ${questionPapers.id})` })
+          // A. Total Papers (All Saved/Published papers)
+          const totalPapersPromise = db.select({ count: sql<number>`count(${questionPapers.id})` })
               .from(questionPapers)
-              .innerJoin(questionPaperItems, eq(questionPapers.id, questionPaperItems.questionPaperId))
               .where(and(
                   eq(questionPapers.createdBy, userId),
-                  inArray(questionPapers.statusId, statusIds),
-                  isNotNull(questionPapers.durationMinutes),
-                  gt(questionPapers.totalMarks, 0)
-              ));
-
-          // B. Total Questions (Unique questions in valid papers)
-          const totalQuestionsPromise = db.select({ count: sql<number>`count(DISTINCT ${questionPaperItems.questionId})` })
-              .from(questionPaperItems)
-              .innerJoin(questionPapers, eq(questionPaperItems.questionPaperId, questionPapers.id))
-              .where(and(
-                  eq(questionPapers.createdBy, userId),
+                  eq(questionPapers.isActive, true),
                   inArray(questionPapers.statusId, statusIds)
               ));
 
-          // C. Type Breakdown (from valid papers)
+          // B. Total Questions (All active questions created by user)
+          const totalQuestionsPromise = db.select({ count: sql<number>`count(${questions.id})` })
+              .from(questions)
+              .where(and(
+                  eq(questions.createdBy, userId),
+                  eq(questions.isActive, true)
+              ));
+
+          // C. Type Breakdown (From all active questions)
           const typeBreakdownPromise = db
               .select({
                   type: questionTypes.name,
-                  count: sql<number>`count(DISTINCT ${questionPaperItems.questionId})`
+                  count: sql<number>`count(${questions.id})`
               })
-              .from(questionPaperItems)
-              .innerJoin(questionPapers, eq(questionPaperItems.questionPaperId, questionPapers.id))
-              .innerJoin(questions, eq(questionPaperItems.questionId, questions.id))
+              .from(questions)
               .leftJoin(questionTypes, eq(questions.questionTypeId, questionTypes.id))
               .where(and(
-                  eq(questionPapers.createdBy, userId),
-                  inArray(questionPapers.statusId, statusIds)
+                  eq(questions.createdBy, userId),
+                  eq(questions.isActive, true)
               ))
               .groupBy(questionTypes.name);
 
