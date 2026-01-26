@@ -90,6 +90,10 @@ export default function ProfileMenu({ user, onLogout }: ProfileMenuProps) {
 
           {/* Menu Items */}
           <div className="py-1">
+            <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-100 flex justify-between items-center">
+                <span className="font-medium">Credits</span>
+                <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">{user.credits || 0}</span>
+            </div>
             <button
               onClick={handleViewProfile}
               className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"

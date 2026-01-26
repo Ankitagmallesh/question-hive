@@ -28,12 +28,14 @@ export function useSupabaseAuth(): AuthState {
              // Fetch local profile to get the numeric ID
              let localId = 0;
              let role = 'user';
+             let credits = 0;
              
              try {
                 const res = await fetch(`/api/profile?email=${u.email}`);
                 const data = await res.json();
                 if (data.success && data.user?.id) {
                     localId = data.user.id;
+                    credits = data.user.credits || 0;
                     // Could also map role here if returned
                 }
              } catch (err) {
@@ -45,6 +47,7 @@ export function useSupabaseAuth(): AuthState {
               id: localId, // Using local numeric ID
               name: u?.user_metadata?.full_name || u?.email || 'User',
               email: u?.email || '',
+              credits: credits,
               avatarUrl: u?.user_metadata?.avatar_url || undefined,
               role: role as any,
             } as any;
