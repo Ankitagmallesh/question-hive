@@ -468,8 +468,8 @@ export default function PaperDesigner() {
                     return aWeight - bWeight;
                 });
 
-                // 3. Slice for current page
-                const slicedIds = sortedIds.slice(from, to).map(x => x.id);
+                // 3. Slice for current page (slice end is exclusive; use from + PAGE_SIZE for PAGE_SIZE items)
+                const slicedIds = sortedIds.slice(from, from + PAGE_SIZE).map(x => x.id);
 
                 if (slicedIds.length === 0) {
                     setSourceQuestions([]);
@@ -503,7 +503,7 @@ export default function PaperDesigner() {
                         type: q?.question_types?.[0]?.name,
                         difficulty: q?.difficulty_levels?.[0]?.name,
                         chapter: q?.chapters?.[0]?.name,
-                        options: q?.question_options?.map(o => ({
+                        options: (q?.question_options ?? []).map(o => ({
                             id: o.id,
                             text: o.option_text,
                             order: o.option_order
@@ -546,7 +546,7 @@ export default function PaperDesigner() {
                         type: q.question_types?.[0]?.name,
                         difficulty: q.difficulty_levels?.[0]?.name,
                         chapter: q.chapters?.[0]?.name,
-                        options: q.question_options?.map((o) => ({
+                        options: (q.question_options ?? []).map((o) => ({
                             id: o.id,
                             text: o.option_text,
                             order: o.option_order

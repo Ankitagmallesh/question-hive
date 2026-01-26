@@ -438,8 +438,8 @@ export default function CreateQuestionModal({ isOpen, onClose, onSuccess, userId
                         {/* Options (for MCQ) */}
                         {requiresOptions && (
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3" htmlFor="options">Options (Select correct answer)</label>
-                                <div className="space-y-3" id="options">
+                                <span id="options-label" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Options (Select correct answer)</span>
+                                <div className="space-y-3" role="group" aria-labelledby="options-label">
                                     {questionOptions.map((opt, idx) => (
                                         <div key={idx} className="flex items-center gap-3">
                                             <button
