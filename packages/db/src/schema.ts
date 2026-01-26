@@ -249,4 +249,3 @@ export const profiles = pgTable('profiles', {
 }, (t) => ({
   profilesUserIdUnique: uniqueIndex('profiles_user_id_key').on(t.userId),
 }));
-
