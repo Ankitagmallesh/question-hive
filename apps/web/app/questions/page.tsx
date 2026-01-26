@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, ChangeEvent } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
@@ -38,9 +38,9 @@ export default function QuestionsPage() {
     const [questions, setQuestions] = useState<Question[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const [search, setSearch] = useState('');
-    const [filterType, setFilterType] = useState('');
-    const [filterDifficulty, setFilterDifficulty] = useState('');
+    const [search, _setSearch] = useState('');
+    const [filterType, _setFilterType] = useState('');
+    const [filterDifficulty, _setFilterDifficulty] = useState('');
     const debouncedSearch = useDebounce(search, DEBOUNCE_MS);
     const debouncedType = useDebounce(filterType, DEBOUNCE_MS);
     const debouncedDifficulty = useDebounce(filterDifficulty, DEBOUNCE_MS);
@@ -48,8 +48,8 @@ export default function QuestionsPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
-    const [showCreateModal, setShowCreateModal] = useState(false);
-    const [refreshCounter, setRefreshCounter] = useState(0);
+    const [showCreateModal, _setShowCreateModal] = useState(false);
+    const [refreshCounter, _setRefreshCounter] = useState(0);
 
     const abortRef = useRef<AbortController | null>(null);
     const prevFiltersRef = useRef({ search: '', type: '', difficulty: '' });
@@ -226,52 +226,56 @@ export default function QuestionsPage() {
                                         </svg>
                                     </div>
                                     <h3 className="text-lg font-medium text-gray-900 mb-2">No questions found</h3>
-                                    <p className="text-gray-600 mb-4">Click 'Create Question' to add one</p>
+                                    <p className="text-gray-600 mb-4">Click &apos;Create Question&apos; to add one</p>
                                 </CardContent>
                             </Card>
                         ) : (
-                            questions.map((question) => (
-                                <Card key={question.id} className="hover:shadow-md transition-shadow">
-                                    <CardContent className="p-6">
-                                        <div className="flex justify-between items-start mb-4">
-                                        <div className="flex-1">
-                                            <p className="text-lg font-medium text-gray-900 mb-2">
-                                                {question.text}
-                                            </p>
-                                            <div className="flex items-center space-x-4 text-sm text-gray-600">
-                                                <span><strong>Subject:</strong> {question.subject}</span>
-                                                <span><strong>Chapter:</strong> {question.chapter}</span>
-                                                <span><strong>Marks:</strong> {question.marks}</span>
-                                            </div>
-                                        </div>
-                                        <div className="flex flex-col space-y-2 ml-4">
-                                            <Badge className={getTypeColor(question.type)}>
-                                                {question.type.toUpperCase()}
-                                            </Badge>
-                                            <Badge className={getDifficultyColor(question.difficulty)}>
-                                                {question.difficulty}
-                                            </Badge>
+                        const QuestionCardContent = ({ question }) => (
+                            <>
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex-1">
+                                        <p className="text-lg font-medium text-gray-900 mb-2">
+                                            {question.text}
+                                        </p>
+                                        <div className="flex items-center space-x-4 text-sm text-gray-600">
+                                            <span><strong>Subject:</strong> {question.subject}</span>
+                                            <span><strong>Chapter:</strong> {question.chapter}</span>
+                                            <span><strong>Marks:</strong> {question.marks}</span>
                                         </div>
                                     </div>
-
-                                    <Separator className="my-4" />
-
-                                    <div className="flex justify-between items-center">
-                                        <div className="text-sm text-gray-500">
-                                            Created: {new Date(question.createdAt).toLocaleDateString()}
-                                        </div>
-                                        <div className="flex space-x-2">
-                                            <Button variant="outline" size="sm">
-                                                Edit
-                                            </Button>
-                                            <Button variant="outline" size="sm">
-                                                View
-                                            </Button>
-                                            <Button variant="destructive" size="sm">
-                                                Delete
-                                            </Button>
-                                        </div>
+                                    <div className="flex flex-col space-y-2 ml-4">
+                                        <Badge className={getTypeColor(question.type)}>
+                                            {question.type.toUpperCase()}
+                                        </Badge>
+                                        <Badge className={getDifficultyColor(question.difficulty)}>
+                                            {question.difficulty}
+                                        </Badge>
                                     </div>
+                                </div>
+                                <Separator className="my-4" />
+                                <div className="flex justify-between items-center">
+                                    <div className="text-sm text-gray-500">
+                                        Created: {new Date(question.createdAt).toLocaleDateString()}
+                                    </div>
+                                    <div className="flex space-x-2">
+                                        <Button variant="outline" size="sm">
+                                            Edit
+                                        </Button>
+                                        <Button variant="outline" size="sm">
+                                            View
+                                        </Button>
+                                        <Button variant="destructive" size="sm">
+                                            Delete
+                                        </Button>
+                                    </div>
+                                </div>
+                            </>
+                        );
+
+                        questions.map((question) => (
+                            <Card key={question.id} className="hover:shadow-md transition-shadow">
+                                <CardContent className="p-6">
+                                    <QuestionCardContent question={question} />
                                 </CardContent>
                             </Card>
                         ))
