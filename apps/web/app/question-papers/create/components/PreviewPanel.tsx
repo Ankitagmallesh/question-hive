@@ -26,26 +26,13 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
 }) => {
     return (
         <div 
-            className={`preview-panel relative ${mobileTab === 'preview' ? 'flex' : 'hidden'} lg:flex`} 
+            className={`preview-panel ${mobileTab === 'preview' ? 'flex' : 'hidden'} lg:flex`} 
             data-lenis-prevent 
             style={{ 
                 overflow: 'hidden', 
                 flexDirection: 'column' 
             }}
         >
-            {/* Export PDF Button - Top Right (Mobile Only, Preview Mode) */}
-            {mobileTab === 'preview' && (
-                <div className="lg:hidden absolute top-4 right-4 z-50">
-                    <button 
-                        onClick={handleExportClick}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 font-semibold text-sm transition-all"
-                    >
-                        <i className="ri-file-pdf-line"></i>
-                        Export
-                    </button>
-                </div>
-            )}
-            
             <div className={`flex-1 bg-slate-50/50 p-4 lg:p-8 flex ${zoomLevel <= 100 ? 'overflow-auto justify-start' : 'overflow-auto justify-center'}`}>
                 <div 
                     style={{ 
@@ -64,6 +51,8 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
                     />
                 </div>
             </div>
+            
+            <button className="fab-export" onClick={handleExportClick}><i className="ri-file-pdf-line"></i> Export PDF</button>
         </div>
     );
 };

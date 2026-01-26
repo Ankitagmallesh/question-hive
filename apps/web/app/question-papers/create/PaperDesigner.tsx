@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
     KeyboardSensor,
@@ -295,6 +295,7 @@ export default function PaperDesigner() {
                     const newHistory = [...prev];
                     const lastMsg = newHistory[newHistory.length - 1];
                     if (lastMsg && lastMsg.role === 'assistant') {
+                    if (lastMsg && lastMsg.role === 'assistant') {
                         lastMsg.content = `I've generated ${object.questions?.length} questions for you. Click on any question to add it to your paper.`;
                         lastMsg.questions = object.questions as Question[];
                     }
@@ -325,7 +326,7 @@ export default function PaperDesigner() {
 
 
 
-    const handleSendMessage = (text?: string) => {
+    const handleSendMessage = useCallback((text?: string) => {
         const prompt = text || chatInput.trim();
         if (!prompt || isStreaming) return;
         
@@ -338,7 +339,7 @@ export default function PaperDesigner() {
         setChatMessages(prev => [...prev, { role: 'assistant', content: 'QuestionHive is thinking...', questions: undefined }]);
         
         submit({ prompt });
-    };
+    }, [chatInput, isStreaming, submit]);
 
     // --- Auto-Generate from URL ---
     const hasTriggeredAutoRef = useRef(false);
@@ -487,6 +488,7 @@ export default function PaperDesigner() {
 
     
     // 3. Load logic - API ONLY
+    const savedId = searchParams.get('savedId');
     useEffect(() => {
         const loadPaper = async () => {
             if (!user?.id) return;
@@ -563,6 +565,7 @@ export default function PaperDesigner() {
 
             toast.success("Paper saved successfully!");
 
+        } catch (error: unknown) {
         } catch (error: unknown) {
             console.error('Save failed:', error);
             toast.error(error.message || "Failed to save paper.");
@@ -839,6 +842,7 @@ export default function PaperDesigner() {
             duration: String(Math.max(0, currentDuration - 1))
         });
     };
+
 
 
 
@@ -1247,6 +1251,13 @@ export default function PaperDesigner() {
                     <div className="close-modal" onClick={() => setShowPreviewModal(false)}><i className="ri-close-circle-line"></i></div>
                     <div className="modal-content">
                         <div style={{ pointerEvents: 'none', transform: 'scale(1)', transformOrigin: 'top center' }}>
+                            <PaperContent 
+                                settings={settings}
+                                paperQuestions={paperQuestions}
+                                sensors={sensors}
+                                onDragEnd={handleDragEnd}
+                                onRemoveQuestion={removeFromPaper}
+                            />
                             <PaperContent 
                                 settings={settings}
                                 paperQuestions={paperQuestions}

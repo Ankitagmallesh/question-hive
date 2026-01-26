@@ -261,34 +261,7 @@ export const SettingsForm = ({
                     </div>
                     <div className="col">
                         <label>Watermark Text</label>
-                        <div className="input-group-locked">
-                            <input 
-                                type="text" 
-                                className="input-box disabled-input" 
-                                value={"Question Hive" as string} 
-                                disabled 
-                                readOnly
-                                style={{ backgroundColor: '#f1f5f9', color: '#64748b', cursor: 'not-allowed' }}
-                            />
-                            <i className="ri-lock-fill lock-icon" style={{ position: 'absolute', right: '30px', top: '38px', color: '#94a3b8' }}></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="row">
-                    <div className="col">
-                         <label className="checkbox-label" style={{fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer'}}>
-                            <input 
-                                type="checkbox" 
-                                checked={!!settings.withAnswerKey} 
-                                onChange={e => setSettings({...settings, withAnswerKey: e.target.checked})} 
-                                style={{width: '16px', height: '16px', accentColor: '#4F46E5'}}
-                            /> 
-                            Include Answer Key in Export <span className="badge badge-sm bg-blue-50 text-blue-700 border border-blue-200" style={{fontSize: '10px', padding: '2px 6px', borderRadius: '4px'}}>NEW</span>
-                        </label>
-                         <p style={{fontSize: '12px', color: '#64748b', marginTop: '4px', marginLeft: '28px', lineHeight: 1.4}}>
-                            Downloads a ZIP file containing separate PDFs for the Question Paper and Answer Key.
-                        </p>
+                        <input type="text" className="input-box" placeholder="e.g. CONFIDENTIAL" value={settings.watermark || ''} onChange={e => setSettings({...settings, watermark: e.target.value})} />
                     </div>
                 </div>
             </div>
