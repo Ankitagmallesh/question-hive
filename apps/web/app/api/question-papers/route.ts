@@ -22,7 +22,11 @@ export async function GET(req: Request) {
             return NextResponse.json({ success: true, data: [] }); // No user = No papers
         }
 
-        const userId = userRes[0].id;
+        const userId = userRes[0]?.id;
+
+        if (!userId) {
+             return NextResponse.json({ success: true, data: [] });
+        }
 
         // 2. Fetch Papers with details (Cached)
         const transformed = await getQuestionPapers(userId);

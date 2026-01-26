@@ -440,9 +440,10 @@ export async function POST(req: Request) {
                 // Production: Use puppeteer-core + @sparticuz/chromium
                 browser = await puppeteerCore.launch({
                     args: chromium.args,
-                    defaultViewport: chromium.defaultViewport,
+                    defaultViewport: { width: 800, height: 600 },
                     executablePath: await chromium.executablePath(),
-                    headless: chromium.headless,
+                    // @ts-ignore
+                    headless: chromium.headless === 'new' ? true : chromium.headless,
                 });
             } else {
                 // Local Development: Use standard puppeteer
