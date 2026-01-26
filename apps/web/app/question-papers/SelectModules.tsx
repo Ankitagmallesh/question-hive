@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { 
     GraduationCap, 
     BookOpen, 
@@ -24,7 +24,7 @@ import AppLoader from '../../components/ui/AppLoader';
 import LoadingOverlay from '../../components/LoadingOverlay';
 
 // Animation variants
-const containerVariants = {
+const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: { 
         opacity: 1,
@@ -34,7 +34,7 @@ const containerVariants = {
     }
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
     hidden: { opacity: 0, y: 15 },
     visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
 };
