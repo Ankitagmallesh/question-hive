@@ -43,6 +43,7 @@ export default function LoginPage() {
                     setIsCheckingSession(false);
                 }
             } catch (err) {
+            } catch (err) {
                 setIsCheckingSession(false);
                 if (process.env.NODE_ENV === 'development') {
                     console.warn('Session check failed:', err);
@@ -408,6 +409,7 @@ export default function LoginPage() {
                             <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="password">Password</label>
                             <div className="relative">
                                 <input 
+                                    id="password"
                                     id="password"
                                     type={showPassword ? "text" : "password"}
                         <div>
