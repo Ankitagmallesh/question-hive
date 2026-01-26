@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
@@ -160,7 +160,7 @@ export default function QuestionsPage() {
                                 <h2 className="text-3xl font-bold text-gray-900">Questions</h2>
                                 <p className="mt-2 text-gray-600">Manage your question bank and create new questions</p>
                             </div>
-                            <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setShowCreateModal(true)}>
+                            <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleShowCreateModal}>
                                 <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                                 </svg>
@@ -179,14 +179,14 @@ export default function QuestionsPage() {
                                 type="search"
                                 placeholder="Search by question text…"
                                 value={search}
-                                onChange={(e) => setSearch(e.target.value)}
+                                onChange={handleSearchChange}
                                 className="pl-9"
                                 aria-label="Search questions"
                             />
                         </div>
                         <select
                             value={filterType}
-                            onChange={(e) => setFilterType(e.target.value)}
+                            onChange={handleFilterTypeChange}
                             className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             aria-label="Filter by type"
                         >
@@ -196,7 +196,7 @@ export default function QuestionsPage() {
                         </select>
                         <select
                             value={filterDifficulty}
-                            onChange={(e) => setFilterDifficulty(e.target.value)}
+                            onChange={handleFilterDifficultyChange}
                             className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             aria-label="Filter by difficulty"
                         >
@@ -208,7 +208,7 @@ export default function QuestionsPage() {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => { setSearch(''); setFilterType(''); setFilterDifficulty(''); }}
+                                onClick={handleClearFilters}
                             >
                                 Clear
                             </Button>
@@ -216,24 +216,24 @@ export default function QuestionsPage() {
                     </div>
 
                 {/* Questions List */}
-                <div className="space-y-4">
-                    {questions.length === 0 ? (
-                        <Card>
-                            <CardContent className="text-center py-8">
-                                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <h3 className="text-lg font-medium text-gray-900 mb-2">No questions found</h3>
-                                <p className="text-gray-600 mb-4">Click 'Create Question' to add one</p>
-                            </CardContent>
-                        </Card>
-                    ) : (
-                        questions.map((question) => (
-                            <Card key={question.id} className="hover:shadow-md transition-shadow">
-                                <CardContent className="p-6">
-                                    <div className="flex justify-between items-start mb-4">
+                    <div className="space-y-4">
+                        {questions.length === 0 ? (
+                            <Card>
+                                <CardContent className="text-center py-8">
+                                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <h3 className="text-lg font-medium text-gray-900 mb-2">No questions found</h3>
+                                    <p className="text-gray-600 mb-4">Click 'Create Question' to add one</p>
+                                </CardContent>
+                            </Card>
+                        ) : (
+                            questions.map((question) => (
+                                <Card key={question.id} className="hover:shadow-md transition-shadow">
+                                    <CardContent className="p-6">
+                                        <div className="flex justify-between items-start mb-4">
                                         <div className="flex-1">
                                             <p className="text-lg font-medium text-gray-900 mb-2">
                                                 {question.text}
@@ -300,7 +300,7 @@ export default function QuestionsPage() {
                                 variant="outline" 
                                 size="sm" 
                                 disabled={currentPage === totalPages}
-                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                onClick={handleNextPage}
                             >
                                 Next
                             </Button>
@@ -315,8 +315,8 @@ export default function QuestionsPage() {
 
             <CreateQuestionModal 
                 isOpen={showCreateModal}
-                onClose={() => setShowCreateModal(false)}
-                onSuccess={() => setRefreshCounter((c) => c + 1)}
+                onClose={handleCloseCreateModal}
+                onSuccess={handleSuccessCreateModal}
                 userId={typeof user?.id === 'number' ? user.id : 1}
             />
         </DashboardLayout>
