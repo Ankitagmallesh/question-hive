@@ -1,13 +1,17 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "../components/ui/button";
+import { Card, CardContent } from "../components/ui/card";
 import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Separator } from "../components/ui/separator";
 import { Input } from "../components/ui/input";
+import { Input } from "../components/ui/input";
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
+import { useDebounce } from '../hooks/useDebounce';
 import { useDebounce } from '../hooks/useDebounce';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
 import { Question } from '../lib/questions-data';
@@ -32,11 +36,38 @@ const DIFFICULTY_OPTIONS = [
     { value: 'hard', label: 'Hard' },
 ];
 
+const DEBOUNCE_MS = 400;
+const LIMIT = 20;
+
+const TYPE_OPTIONS = [
+    { value: '', label: 'All types' },
+    { value: 'MCQ', label: 'MCQ' },
+    { value: 'Short', label: 'Short' },
+    { value: 'Long', label: 'Long' },
+    { value: 'Numerical', label: 'Numerical' },
+];
+
+const DIFFICULTY_OPTIONS = [
+    { value: '', label: 'All difficulties' },
+    { value: 'easy', label: 'Easy' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'hard', label: 'Hard' },
+];
+
 export default function QuestionsPage() {
     const router = useRouter();
     const { user, loading: authLoading } = useSupabaseAuth();
+    const { user, loading: authLoading } = useSupabaseAuth();
     const [questions, setQuestions] = useState<Question[]>([]);
     const [loading, setLoading] = useState(true);
+
+    const [search, setSearch] = useState('');
+    const [filterType, setFilterType] = useState('');
+    const [filterDifficulty, setFilterDifficulty] = useState('');
+    const debouncedSearch = useDebounce(search, DEBOUNCE_MS);
+    const debouncedType = useDebounce(filterType, DEBOUNCE_MS);
+    const debouncedDifficulty = useDebounce(filterDifficulty, DEBOUNCE_MS);
+
 
     const [search, setSearch] = useState('');
     const [filterType, setFilterType] = useState('');
@@ -73,18 +104,28 @@ export default function QuestionsPage() {
             const params = new URLSearchParams({
                 page: String(opts.page),
                 limit: String(LIMIT),
+                page: String(opts.page),
+                limit: String(LIMIT),
             });
+            if (opts.search) params.set('search', opts.search);
+            if (opts.type) params.set('type', opts.type);
+            if (opts.difficulty) params.set('difficulty', opts.difficulty);
             if (opts.search) params.set('search', opts.search);
             if (opts.type) params.set('type', opts.type);
             if (opts.difficulty) params.set('difficulty', opts.difficulty);
 
             const res = await fetch(`/api/questions?${params.toString()}`, { signal });
+            const res = await fetch(`/api/questions?${params.toString()}`, { signal });
             const json = await res.json();
+
 
             if (json.success) {
                 const mapped: Question[] = json.data.map((q: { id: string; content: string; questionType?: string; difficulty?: string; marks?: string | number; createdAt: string }) => ({
+                const mapped: Question[] = json.data.map((q: { id: string; content: string; questionType?: string; difficulty?: string; marks?: string | number; createdAt: string }) => ({
                     id: q.id,
                     text: q.content,
+                    subject: '—',
+                    chapter: '—',
                     subject: '—',
                     chapter: '—',
                     type: (q.questionType || 'mcq').toLowerCase(),
@@ -105,7 +146,28 @@ export default function QuestionsPage() {
         } finally {
             setLoading(false);
             abortRef.current = null;
+            abortRef.current = null;
         }
+    }, []);
+
+    useEffect(() => {
+        if (authLoading) return;
+        if (!user) {
+            router.push('/auth/login');
+            return;
+        }
+
+        const prev = prevFiltersRef.current;
+        const filtersChanged =
+            prev.search !== debouncedSearch || prev.type !== debouncedType || prev.difficulty !== debouncedDifficulty;
+        if (filtersChanged) {
+            setCurrentPage(1);
+            prevFiltersRef.current = { search: debouncedSearch, type: debouncedType, difficulty: debouncedDifficulty };
+        }
+        const pageToUse = filtersChanged ? 1 : currentPage;
+
+        loadQuestions({ page: pageToUse, search: debouncedSearch, type: debouncedType, difficulty: debouncedDifficulty });
+    }, [authLoading, user, router, currentPage, debouncedSearch, debouncedType, debouncedDifficulty, refreshCounter, loadQuestions]);
     }, []);
 
     useEffect(() => {
