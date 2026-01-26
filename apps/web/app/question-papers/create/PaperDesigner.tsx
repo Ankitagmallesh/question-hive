@@ -47,6 +47,16 @@ import {
 import './create.css';
 import { RichTextEditor } from './RichTextEditor';
 import { useDebounce } from '../../hooks/useDebounce';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../../components/ui/alert-dialog";
 
 // --- Types ---
 interface Question {
@@ -283,6 +293,7 @@ export default function PaperDesigner() {
     const [paperQuestions, setPaperQuestions] = useState<Question[]>([]);
     const [sourceQuestions, setSourceQuestions] = useState<Question[]>([]);
     const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
+    const [isExportAlertOpen, setIsExportAlertOpen] = useState(false);
     const searchParams = useSearchParams();
     // --- AI Chat Logic with Streaming ---
     const { object, submit, isLoading: isStreaming } = experimental_useObject({
@@ -351,6 +362,17 @@ export default function PaperDesigner() {
         
         submit({ prompt });
     };
+
+    // --- Auto-Generate from URL ---
+    const hasTriggeredAutoRef = useRef(false);
+    useEffect(() => {
+        const autoQuery = searchParams.get('auto_query');
+        if (autoQuery && !hasTriggeredAutoRef.current) {
+            hasTriggeredAutoRef.current = true;
+            setActiveTab('auto');
+            handleSendMessage(autoQuery);
+        }
+    }, [searchParams]);
 
     const suggestedPrompts = [
         "Create 3 hard multiple choice questions on Calculus",
@@ -859,13 +881,30 @@ export default function PaperDesigner() {
 
     // --- PDF Export Function using Puppeteer API ---
     // --- PDF Export Function using Puppeteer API ---
-    const handleExportPDF = async () => {
+    const handleExportClick = () => {
         if (paperQuestions.length === 0) {
             toast.error('No questions to export', {
                 description: 'Please add some questions to your paper first.'
             });
             return;
         }
+        
+        const cost = paperQuestions.length;
+        const currentCredits = user?.credits || 0;
+
+        if (currentCredits < cost) {
+            toast.error('Insufficient Credits', {
+                description: `You need ${cost} credits but have only ${currentCredits}. Please purchase more.`
+            });
+            return;
+        }
+
+        setIsExportAlertOpen(true);
+    };
+
+    const processExport = async () => {
+        // Validation handled by click handler
+        if (paperQuestions.length === 0) return;
 
         try {
             toast.info('Generating PDF...', {
@@ -927,7 +966,17 @@ export default function PaperDesigner() {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to generate PDF');
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.error || 'Failed to generate PDF');
+            }
+            
+            // Check for credit update header
+            const remainingCredits = response.headers.get('X-Credits-Remaining');
+            if (remainingCredits) {
+                // Manually update the user credits in the UI if possible
+                // We might need to force a re-fetch of the user session or update local state
+                // Since useSupabaseAuth doesn't expose a setter, we can trigger a global event or just reload
+                window.location.reload(); 
             }
 
             // Get the PDF blob
@@ -1277,7 +1326,10 @@ export default function PaperDesigner() {
                                     Reset
                                 </button>
                             </div>
-                            <button className="btn-action" onClick={handleSavePaper}><i className="ri-save-line"></i> Save</button>
+                            <button className="btn-action" onClick={handleSavePaper} disabled={isSaving}>
+                                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <i className="ri-save-line"></i>}
+                                {isSaving ? 'Saving...' : 'Save'}
+                            </button>
                         </div>
                     </div>
 
@@ -1882,8 +1934,25 @@ export default function PaperDesigner() {
                         </div>
                     </div>
                     
-                    <button className="fab-export" onClick={handleExportPDF}><i className="ri-file-pdf-line"></i> Export PDF</button>
+                    <button className="fab-export" onClick={handleExportClick}><i className="ri-file-pdf-line"></i> Export PDF</button>
                 </div>
+
+                <AlertDialog open={isExportAlertOpen} onOpenChange={setIsExportAlertOpen}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Confirm Export</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This export will consume <span className="font-bold text-indigo-600">{paperQuestions.length} credits</span> from your balance.
+                                <br />
+                                Are you sure you want to proceed?
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={processExport}>Confirm Export</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
 
                 <div className={`modal-overlay ${showPreviewModal ? 'active' : ''}`}>
                     <div className="close-modal" onClick={() => setShowPreviewModal(false)}><i className="ri-close-circle-line"></i></div>

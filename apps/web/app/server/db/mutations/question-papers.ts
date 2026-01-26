@@ -107,16 +107,10 @@ export const createOrUpdateQuestionPaper = async (input: SavePaperInput) => {
           const defaultTypeId = typeMap.get('multiple choice') || allTypes[0]?.id || 1;
           const defaultChapterId = allChapters[0]?.id || 1; // Fallback if no chapter matches
 
-          // 1. Fetch current MAX IDs
-          const [maxQIdResult] = await tx
-              .select({ maxId: sql<number>`COALESCE(MAX(${questions.id}), 0)` })
-              .from(questions);
-          let nextQuestionId = (maxQIdResult?.maxId || 0) + 1;
-
-          const [maxOptIdResult] = await tx
-              .select({ maxId: sql<number>`COALESCE(MAX(${questionOptions.id}), 0)` })
-              .from(questionOptions);
-          let nextOptionId = (maxOptIdResult?.maxId || 0) + 1;
+          // Use timestamp-based IDs to avoid race conditions and collisions
+          // Date.now() * 1000 gives us microsecond-level precision and fits within MAX_SAFE_INTEGER
+          let nextQuestionId = Date.now() * 1000 + Math.floor(Math.random() * 1000);
+          let nextOptionId = nextQuestionId + 100000; // Offset for options
 
           // Insert New Questions
           for (const q of newQuestions) {

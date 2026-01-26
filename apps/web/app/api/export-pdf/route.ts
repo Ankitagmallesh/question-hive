@@ -1,4 +1,8 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@/utils/supabase/server';
+import { db } from '@/lib/db';
+import { users } from '@repo/db';
+import { eq, sql, and } from 'drizzle-orm';
 // @ts-ignore
 import puppeteerCore from 'puppeteer-core';
 // @ts-ignore
@@ -339,69 +343,138 @@ export async function POST(req: Request) {
     try {
         const data: PaperData = await req.json();
 
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user || !user.email) {
+            return new NextResponse('Unauthorized', { status: 401 });
+        }
+
+        const cost = data.questions.length;
+
+        // 1. Check if user has enough credits (Read-Only first)
+        const [userRecord] = await db
+            .select({ id: users.id, credits: users.credits })
+            .from(users)
+            .where(eq(users.email, user.email))
+            .limit(1);
+
+        if (!userRecord) {
+             return new NextResponse('User not found', { status: 404 });
+        }
+
+        if (userRecord.credits < cost) {
+            return new NextResponse(JSON.stringify({ error: `Insufficient credits. You need ${cost} credits.` }), { 
+                status: 403,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
         const html = generatePaperHTML(data);
         let browser;
 
-        if (isProduction) {
-            // Production: Use puppeteer-core + @sparticuz/chromium
-            browser = await puppeteerCore.launch({
-                args: chromium.args,
-                defaultViewport: chromium.defaultViewport,
-                executablePath: await chromium.executablePath(),
-                headless: chromium.headless,
-            });
-        } else {
-            // Local Development: Use standard puppeteer
-            browser = await puppeteer.launch({ headless: true });
-        }
-
-        const page = await browser.newPage();
-        await page.setContent(html, { waitUntil: 'networkidle0' });
-
-        const getMarginMM = (m: string) => {
-             switch(m) {
-                 case 'S': return '7mm';   // ~24px (Preview padding)
-                 case 'M': return '12.7mm'; // ~48px (Preview padding)
-                 case 'L': return '19mm';  // ~72px (Preview padding)
-                 default: return '12.7mm';
-             }
-        };
-        const marginValue = getMarginMM(data.margin);
-
-        // Footer template
-        const footerStyle = 'font-size: 10px; width: 100%; padding: 0 20px; color: #666; border-top: 1px solid #ddd; margin-top: 10px; display: flex; justify-content: space-between; align-items: center;';
-        let footerTemplate = `<div style="${footerStyle}">`;
-        
-        // Left side: Footer Text
-        footerTemplate += `<span>${data.footerText || ''}</span>`;
-        
-        // Right side: Page Numbering
-        if (data.pageNumbering === 'page-x-of-y') {
-            footerTemplate += '<span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>';
-        } else if (data.pageNumbering === 'x-slash-y') {
-            footerTemplate += '<span><span class="pageNumber"></span> / <span class="totalPages"></span></span>';
-        } else {
-            footerTemplate += '<span></span>';
-        }
-        
-        footerTemplate += '</div>';
-
-        const pdfBuffer = await page.pdf({
-            format: 'A4',
-            printBackground: true,
-            displayHeaderFooter: true,
-            headerTemplate: '<div></div>',
-            footerTemplate: footerTemplate,
-            margin: {
-                // Reduced top margin for bordered pages to minimize white space above border
-                top: data.pageBorder && data.pageBorder !== 'none' ? '10mm' : marginValue, 
-                bottom: '15mm',
-                left: marginValue,
-                right: marginValue
+        try {
+            if (isProduction) {
+                // Production: Use puppeteer-core + @sparticuz/chromium
+                browser = await puppeteerCore.launch({
+                    args: chromium.args,
+                    defaultViewport: chromium.defaultViewport,
+                    executablePath: await chromium.executablePath(),
+                    headless: chromium.headless,
+                });
+            } else {
+                // Local Development: Use standard puppeteer
+                browser = await puppeteer.launch({ headless: true });
             }
-        });
 
-        await browser.close();
+            const page = await browser.newPage();
+            await page.setContent(html, { waitUntil: 'networkidle0' });
+
+            const getMarginMM = (m: string) => {
+                switch(m) {
+                    case 'S': return '7mm';   // ~24px (Preview padding)
+                    case 'M': return '12.7mm'; // ~48px (Preview padding)
+                    case 'L': return '19mm';  // ~72px (Preview padding)
+                    default: return '12.7mm';
+                }
+            };
+            const marginValue = getMarginMM(data.margin);
+
+            // Footer template
+            const footerStyle = 'font-size: 10px; width: 100%; padding: 0 20px; color: #666; border-top: 1px solid #ddd; margin-top: 10px; display: flex; justify-content: space-between; align-items: center;';
+            let footerTemplate = `<div style="${footerStyle}">`;
+            
+            // Left side: Footer Text
+            footerTemplate += `<span>${data.footerText || ''}</span>`;
+            
+            // Right side: Page Numbering
+            if (data.pageNumbering === 'page-x-of-y') {
+                footerTemplate += '<span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>';
+            } else if (data.pageNumbering === 'x-slash-y') {
+                footerTemplate += '<span><span class="pageNumber"></span> / <span class="totalPages"></span></span>';
+            } else {
+                footerTemplate += '<span></span>';
+            }
+            
+            footerTemplate += '</div>';
+
+            const pdfBuffer = await page.pdf({
+                format: 'A4',
+                printBackground: true,
+                displayHeaderFooter: true,
+                headerTemplate: '<div></div>',
+                footerTemplate: footerTemplate,
+                margin: {
+                    // Reduced top margin for bordered pages to minimize white space above border
+                    top: data.pageBorder && data.pageBorder !== 'none' ? '10mm' : marginValue, 
+                    bottom: '15mm',
+                    left: marginValue,
+                    right: marginValue
+                }
+            });
+
+            await browser.close();
+
+            // 2. Deduct credits (Only after successful generation)
+            // Using a transaction/update that ensures balance didn't drop below 0 in the meantime
+            const deductionResult = await db
+                .update(users)
+                .set({ credits: sql`${users.credits} - ${cost}` })
+                .where(
+                    and(
+                        eq(users.id, userRecord.id),
+                        sql`${users.credits} >= ${cost}` // Optimistic concurrency check
+                    )
+                )
+                .returning({ updatedCredits: users.credits });
+
+            if (deductionResult.length === 0) {
+                 // Race condition: Credits were spent elsewhere during generation
+                 // Since we already generated the PDF, we could either:
+                 // A) Return error (strict)
+                 // B) Allow it (lenient)
+                 // Requirement: "Failed or cancelled exports do not deduct credits"
+                 // Implication: "Successful exports MUST deduct credits"
+                 // If we can't deduct, strictly we should fail. 
+                 return new NextResponse(JSON.stringify({ error: `Transaction failed: Insufficient credits (spent during generation).` }), { 
+                    status: 409, // Conflict
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
+
+            return new NextResponse(pdfBuffer, {
+                headers: {
+                    'Content-Type': 'application/pdf',
+                    'Content-Disposition': `attachment; filename="${data.title.replace(/[^a-z0-9]/gi, '_')}.pdf"`,
+                    'X-Credits-Remaining': deductionResult[0].updatedCredits.toString()
+                },
+            });
+
+        } catch (error) {
+            console.error('PDF Generation failed:', error);
+            if (browser) await browser.close();
+            return new NextResponse('Failed to generate PDF', { status: 500 });
+        }
 
         return new NextResponse(Buffer.from(pdfBuffer), {
             status: 200,
