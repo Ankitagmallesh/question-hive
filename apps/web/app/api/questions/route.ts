@@ -8,8 +8,17 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
+    const search = searchParams.get('search')?.trim() || searchParams.get('q')?.trim() || '';
+    const type = searchParams.get('type')?.trim() || '';
+    const difficulty = searchParams.get('difficulty')?.trim() || '';
 
     const offset = (page - 1) * limit;
+
+    const conditions = [];
+    if (search) conditions.push(ilike(questions.content, `%${search}%`));
+    if (type) conditions.push(eq(questionTypes.name, type));
+    if (difficulty) conditions.push(eq(difficultyLevels.name, difficulty));
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     // Base Query for Data
     const baseQuery = db
@@ -38,8 +47,8 @@ export async function GET(request: Request) {
       .from(questions)
       .leftJoin(difficultyLevels, eq(questions.difficultyLevelId, difficultyLevels.id))
       .leftJoin(questionTypes, eq(questions.questionTypeId, questionTypes.id));
-    
-    
+    const countQuery = whereClause ? countBase.where(whereClause) : countBase;
+
     const [totalResult] = await countQuery;
     const total = Number(totalResult?.count || 0);
 
