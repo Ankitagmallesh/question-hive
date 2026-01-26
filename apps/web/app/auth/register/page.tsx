@@ -195,7 +195,7 @@ export default function RegisterPage() {
                              ))}
                         </div>
                         <h2 className="text-3xl font-serif leading-tight">
-                            "It used to take me weekends to draft JEE papers. With Question Hive, I curate high-quality assessments in minutes."
+                            &quot;It used to take me weekends to draft JEE papers. With Question Hive, I curate high-quality assessments in minutes.&quot;
                         </h2>
                     </div>
                     <div className="flex items-center gap-4">

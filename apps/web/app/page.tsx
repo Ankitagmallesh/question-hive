@@ -235,7 +235,7 @@ export default function LandingPage() {
                     <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><School /> EduTech High</span>
                     <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><GraduationCap /> Greenwood Academy</span>
                     <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><BookOpen /> BrightPath Tutors</span>
-                    <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><Landmark /> King's College</span>
+                    <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><Landmark /> King&apos;s College</span>
                     <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><FlaskConical /> Science Labs Inc</span>
                     <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><Microscope /> Future Minds</span>
                 </div>
@@ -244,7 +244,7 @@ export default function LandingPage() {
                     <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><School /> EduTech High</span>
                     <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><GraduationCap /> Greenwood Academy</span>
                     <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><BookOpen /> BrightPath Tutors</span>
-                    <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><Landmark /> King's College</span>
+                    <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><Landmark /> King&apos;s College</span>
                     <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><FlaskConical /> Science Labs Inc</span>
                     <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><Microscope /> Future Minds</span>
                 </div>
@@ -253,7 +253,7 @@ export default function LandingPage() {
                     <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><School /> EduTech High</span>
                     <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><GraduationCap /> Greenwood Academy</span>
                     <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><BookOpen /> BrightPath Tutors</span>
-                    <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><Landmark /> King's College</span>
+                    <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><Landmark /> King&apos;s College</span>
                     <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><FlaskConical /> Science Labs Inc</span>
                     <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><Microscope /> Future Minds</span>
                 </div>
@@ -262,7 +262,7 @@ export default function LandingPage() {
                     <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><School /> EduTech High</span>
                     <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><GraduationCap /> Greenwood Academy</span>
                     <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><BookOpen /> BrightPath Tutors</span>
-                    <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><Landmark /> King's College</span>
+                    <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><Landmark /> King&apos;s College</span>
                     <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><FlaskConical /> Science Labs Inc</span>
                     <span className="flex items-center gap-2 text-xl font-bold text-slate-400/80"><Microscope /> Future Minds</span>
                 </div>
@@ -834,7 +834,7 @@ export default function LandingPage() {
                         </div>
                         <h3 className="text-2xl font-bold mb-3">White-Label Licensing</h3>
                         <p className="text-indigo-200 text-sm leading-relaxed mb-8">
-                            Make Question Hive your own. We provide custom branding, your own domain url, and a dedicated student test portal under your institute's name.
+                            Make Question Hive your own. We provide custom branding, your own domain url, and a dedicated student test portal under your institute&apos;s name.
                         </p>
                         <div className="flex items-center gap-4">
                              <div className="flex-1 py-3 px-4 bg-white/10 rounded-xl border border-white/10">

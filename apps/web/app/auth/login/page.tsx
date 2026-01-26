@@ -138,7 +138,7 @@ export default function LoginPage() {
                             <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span> New Feature
                         </div>
                         <h2 className="text-3xl font-serif leading-tight">
-                            "The new AI-Assisted Grading has saved our department countless hours this semester."
+                            &quot;The new AI-Assisted Grading has saved our department countless hours this semester.&quot;
                         </h2>
                     </div>
                     <div className="flex items-center gap-4">
@@ -259,7 +259,7 @@ export default function LoginPage() {
 
 
                     <div className="mt-8 text-center text-sm text-slate-600">
-                        Don't have an account? <Link href="/auth/register" className="font-bold text-indigo-600 hover:underline">Apply for access</Link>
+                        Don&apos;t have an account? <Link href="/auth/register" className="font-bold text-indigo-600 hover:underline">Apply for access</Link>
                     </div>
                 </div>
             </div>
