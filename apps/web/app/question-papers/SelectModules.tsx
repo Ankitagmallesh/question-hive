@@ -159,7 +159,7 @@ export default function SelectModules() {
     const isAllSelected = chapters.length > 0 && chapters.every(c => selectedChapters.includes(c.id));
 
     const handleGenerate = () => {
-        if (!selectedExamId || selectedChapters.length === 0) return;
+        if (!selectedExamId || selectedChapters.length === 0 || !selectedSubjectId) return;
         
         const examName = exams.find(e => e.id === selectedExamId)?.name || '';
         // Find all subjects involved in the selection (in case we support multi-subject later, though UI is single view)
@@ -178,7 +178,8 @@ export default function SelectModules() {
         const params = new URLSearchParams({
             exam: examName,
             subjects: selectedSubjectNames.join(','),
-            chapters: chapterNames.join(',')
+            chapters: chapterNames.join(','),
+            subjectId: selectedSubjectId.toString()
         });
         router.push(`/question-papers/create?${params.toString()}`);
     };

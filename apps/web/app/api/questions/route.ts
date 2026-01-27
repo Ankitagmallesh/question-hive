@@ -7,14 +7,20 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     
+    // Parse and validate integers safely
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '20', 10);
+    const subjectIdParam = searchParams.get('subjectId');
+    const chapterIdParam = searchParams.get('chapterId');
+    
     // Validate input
     const queryValidation = validateInput(FetchQuestionsSchema, {
-      page: parseInt(searchParams.get('page') || '1'),
-      limit: parseInt(searchParams.get('limit') || '20'),
-      subjectId: searchParams.get('subjectId') ? parseInt(searchParams.get('subjectId')!) : undefined,
-      chapterId: searchParams.get('chapterId') ? parseInt(searchParams.get('chapterId')!) : undefined,
-      difficulty: searchParams.get('difficulty'),
-      type: searchParams.get('type'),
+      page: isNaN(page) ? 1 : page,
+      limit: isNaN(limit) ? 20 : limit,
+      subjectId: subjectIdParam ? parseInt(subjectIdParam, 10) : undefined,
+      chapterId: chapterIdParam ? parseInt(chapterIdParam, 10) : undefined,
+      difficulty: searchParams.get('difficulty') || undefined,
+      type: searchParams.get('type') || undefined,
     });
 
     if (!queryValidation.success) {

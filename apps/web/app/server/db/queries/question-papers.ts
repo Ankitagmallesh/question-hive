@@ -169,6 +169,7 @@ export const getQuestionPaperById = async (paperId: number) => {
         id: String(paper.id),
         settings: fullSettings,
         paperQuestions: papersQuestions,
+        subjectId: paper.subjectId,
         savedAt: paper.updatedAt ?? new Date()
       };
     },

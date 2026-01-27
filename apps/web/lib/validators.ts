@@ -8,7 +8,7 @@ import { z } from 'zod';
 // --- Question Paper Schemas ---
 
 export const SavePaperInputSchema = z.object({
-  id: z.union([z.string(), z.number()]).optional(),
+  id: z.union([z.string(), z.number()]).optional().nullable(),
   settings: z.object({
     title: z.string().min(1, 'Title is required').max(200),
     description: z.string().optional().default(''),
@@ -18,7 +18,7 @@ export const SavePaperInputSchema = z.object({
     template: z.string().optional(),
     // Additional paper settings
     institution: z.string().optional(),
-    logo: z.string().url().optional().nullable(),
+    logo: z.string().optional().nullable(),
     logoPosition: z.enum(['left', 'center', 'right']).optional(),
     font: z.string().optional(),
     fontSize: z.number().positive().optional(),
@@ -28,7 +28,23 @@ export const SavePaperInputSchema = z.object({
     answerSpace: z.enum(['none', 'lines', 'box']).optional(),
     separator: z.enum(['none', 'solid', 'double', 'dashed']).optional(),
     pageBorder: z.enum(['none', 'border-simple', 'border-double']).optional(),
-  }).strict(),
+    // PDF/Paper rendering settings
+    metaFontSize: z.number().positive().optional(),
+    date: z.string().optional(),
+    instructions: z.string().optional(),
+    watermark: z.string().optional(),
+    studentName: z.boolean().optional(),
+    rollNumber: z.boolean().optional(),
+    classSection: z.boolean().optional(),
+    dateField: z.boolean().optional(),
+    invigilatorSign: z.boolean().optional(),
+    footerText: z.string().optional(),
+    roughWorkArea: z.enum(['none', 'right']).optional(),
+    pageNumbering: z.enum(['hidden', 'page-x-of-y', 'x-slash-y']).optional(),
+    studentDetailsGap: z.number().optional(),
+    contentAlignment: z.enum(['left', 'center', 'justify']).optional(),
+    chapters: z.array(z.union([z.string(), z.number()])).optional(),
+  }).passthrough(), // Changed from .strict() to allow additional fields
   paperQuestions: z.array(z.object({
     id: z.union([z.string(), z.number()]).optional(),
     text: z.string().min(1),
@@ -105,7 +121,7 @@ export const FetchQuestionsSchema = z.object({
   limit: z.number().int().positive().max(100).optional().default(20),
   subjectId: z.number().int().positive().optional(),
   chapterId: z.number().int().positive().optional(),
-  difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
+  difficulty: z.enum(['easy', 'medium', 'hard', 'mixed']).optional(),
   type: z.string().optional(),
 });
 
