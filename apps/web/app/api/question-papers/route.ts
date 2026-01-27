@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { db } from '../../lib/db';
+import { db } from '@/lib/db';
 import { users, eq } from '@repo/db';
-import { getQuestionPapers } from '../../server/db/queries/question-papers';
-import { saveQuestionPaperAction } from '../../server/actions/question-papers';
+import { getQuestionPapers } from '@/server/db/queries/question-papers';
+import { saveQuestionPaperAction } from '@/server/actions/question-papers';
+import { SavePaperInputSchema, validateInput } from '@/lib/validators';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,25 +36,45 @@ export async function GET(req: Request) {
 
     } catch (error: any) {
         console.error('Fetch Papers Error:', error);
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+        return NextResponse.json({ 
+            success: false, 
+            error: error.message || 'Failed to fetch papers' 
+        }, { status: 500 });
     }
 }
 
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const result = await saveQuestionPaperAction(body);
         
-        if (!result.success) {
-            // @ts-ignore
-            return NextResponse.json({ success: false, error: result.error }, { status: 500 });
+        // Validate input
+        const validation = validateInput(SavePaperInputSchema, body);
+        if (!validation.success) {
+            return NextResponse.json({ 
+                success: false, 
+                error: `Validation error: ${validation.error}` 
+            }, { status: 400 });
         }
 
-        // @ts-ignore
-        return NextResponse.json({ success: true, paperId: result.paperId });
+        const result = await saveQuestionPaperAction(validation.data);
+        
+        if (!result.success) {
+            return NextResponse.json({ 
+                success: false, 
+                error: result.error || 'Failed to save paper' 
+            }, { status: 500 });
+        }
+
+        return NextResponse.json({ 
+            success: true, 
+            paperId: result.paperId 
+        });
 
     } catch (error: any) {
         console.error('Save Paper Error:', error);
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+        return NextResponse.json({ 
+            success: false, 
+            error: error.message || 'Failed to save paper' 
+        }, { status: 500 });
     }
 }
