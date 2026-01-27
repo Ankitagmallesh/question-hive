@@ -153,7 +153,7 @@ export const chapterWeightages = pgTable('chapter_weightages', {
 });
 
 export const questions = pgTable('questions', {
-  id: bigint('id', { mode: 'number' }).primaryKey().notNull(),
+  id: bigserial('id', { mode: 'number' }).primaryKey().notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
@@ -176,7 +176,7 @@ export const questions = pgTable('questions', {
 }));
 
 export const questionOptions = pgTable('question_options', {
-  id: bigint('id', { mode: 'number' }).primaryKey().notNull(),
+  id: bigserial('id', { mode: 'number' }).primaryKey().notNull(),
   questionId: bigint('question_id', { mode: 'number' }).notNull().references(() => questions.id),
   optionText: text('option_text').notNull(),
   optionOrder: integer('option_order').notNull(),
