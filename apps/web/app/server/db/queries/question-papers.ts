@@ -155,7 +155,7 @@ export const getQuestionPaperById = async (paperId: number) => {
         id: String(paper.id),
         settings: fullSettings,
         paperQuestions: papersQuestions,
-        savedAt: paper.updatedAt
+        savedAt: paper.updatedAt ?? new Date()
       };
     },
     [`question-paper-${paperId}`],

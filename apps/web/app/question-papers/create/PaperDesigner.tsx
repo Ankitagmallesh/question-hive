@@ -271,6 +271,7 @@ export default function PaperDesigner() {
     const [sourceQuestions, setSourceQuestions] = useState<Question[]>([]);
     const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
     const [isExportAlertOpen, setIsExportAlertOpen] = useState(false);
+    const [subjectId, setSubjectId] = useState<number | null>(null);
     const searchParams = useSearchParams();
     // --- AI Chat Logic with Streaming ---
     const { object, submit, isLoading: isStreaming } = experimental_useObject({
@@ -487,7 +488,15 @@ export default function PaperDesigner() {
     }, [debouncedSettings, debouncedQuestions]); // Trigger when these stabilize
 
     
-    // 3. Load logic - API ONLY
+    // 3. Extract subjectId from URL
+    useEffect(() => {
+        const subjectIdParam = searchParams.get('subjectId');
+        if (subjectIdParam) {
+            setSubjectId(parseInt(subjectIdParam, 10));
+        }
+    }, [searchParams]);
+
+    // 4. Load logic - API ONLY
     const savedId = searchParams.get('savedId');
     useEffect(() => {
         const loadPaper = async () => {
@@ -524,6 +533,11 @@ export default function PaperDesigner() {
             return;
         }
 
+        if (!subjectId) {
+            toast.error("Please select a subject before saving");
+            return;
+        }
+
         setIsSaving(true);
         
         try {
@@ -536,11 +550,12 @@ export default function PaperDesigner() {
             };
 
             const payload = {
-                id: savedId, 
+                id: savedId ? parseInt(savedId, 10) : undefined, 
                 settings: safeSettings,
                 paperQuestions,
                 status: 'Saved', // Finalized Status
-                email: user?.email 
+                email: user?.email,
+                subjectId: subjectId
             };
 
             const response = await fetch('/api/question-papers', {
@@ -930,24 +945,25 @@ export default function PaperDesigner() {
 
             // Prepare data for the API
             const paperData = {
-                title: settings.title,
-                institution: settings.institution,
-                duration: settings.duration,
-                totalMarks: settings.totalMarks,
-                template: settings.template,
-                font: settings.font,
-                fontSize: settings.fontSize,
-                margin: settings.margin,
-                
-                // New Branding Fields
-                logo: settings.logo,
-                logoPosition: settings.logoPosition,
-                layout: settings.layout,
-                lineHeight: settings.lineHeight,
-                answerSpace: settings.answerSpace,
-                separator: settings.separator,
-                pageBorder: settings.pageBorder,
-                metaFontSize: settings.metaFontSize,
+                data: {
+                    title: settings.title,
+                    institution: settings.institution,
+                    duration: settings.duration,
+                    totalMarks: settings.totalMarks,
+                    template: settings.template,
+                    font: settings.font,
+                    fontSize: settings.fontSize,
+                    margin: settings.margin,
+                    
+                    // New Branding Fields
+                    logo: settings.logo,
+                    logoPosition: settings.logoPosition,
+                    layout: settings.layout,
+                    lineHeight: settings.lineHeight,
+                    answerSpace: settings.answerSpace,
+                    separator: settings.separator,
+                    pageBorder: settings.pageBorder,
+                    metaFontSize: settings.metaFontSize,
 
                 date: settings.date,
                 instructions: settings.instructions,
