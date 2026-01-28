@@ -16,14 +16,43 @@ const jakarta = Plus_Jakarta_Sans({
 // strictly following the user's "as it is" request for imports.
 
 export const metadata: Metadata = {
-  title: "Question Hive - AI-Powered Question Paper Generation",
+  metadataBase: new URL('https://questionhive.in'), // Replace with actual domain
+  title: {
+    default: "Question Hive - AI-Powered Question Paper Generation",
+    template: "%s | Question Hive"
+  },
   description: "Streamline question paper creation for educational institutions with our comprehensive platform featuring AI-generated questions, automated grading, and seamless exam management.",
-  keywords: ["education", "question papers", "AI", "exam management", "educational technology"],
+  keywords: ["education", "question papers", "AI", "exam management", "educational technology", "CBSE", "JEE", "NEET"],
   authors: [{ name: "Question Hive Team" }],
+  creator: "Question Hive",
+  publisher: "Question Hive",
+  icons: {
+    icon: "/logo-new.png",
+    shortcut: "/logo-new.png",
+    apple: "/logo-new.png",
+  },
   openGraph: {
-    title: "Question Hive - AI-Powered Question Paper Generation",
-    description: "Streamline question paper creation for educational institutions",
     type: "website",
+    locale: "en_US",
+    url: "https://questionhive.in",
+    title: "Question Hive - Create Exam Papers in Minutes",
+    description: "AI-powered question paper generator for schools and tutors. Automate formatting, balanced difficulty, and instant PDF export.",
+    siteName: "Question Hive",
+    images: [
+      {
+        url: "/logo-new.png",
+        width: 800,
+        height: 800,
+        alt: "Question Hive Logo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary", // Use summary for square logo, summary_large_image for landscape
+    title: "Question Hive",
+    description: "Create professional exam papers in minutes with AI.",
+    images: ["/logo-new.png"],
+    creator: "@questionhive",
   },
 };
 
