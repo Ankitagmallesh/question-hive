@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { db } from '@/lib/db';
-import { users } from '@repo/db';
-import { eq, sql, and } from 'drizzle-orm';
+import { users, questionOptions } from '@repo/db';
+import { eq, sql, and, inArray } from 'drizzle-orm';
 // @ts-ignore
 import puppeteerCore from 'puppeteer-core';
 // @ts-ignore
 import chromium from '@sparticuz/chromium';
 import puppeteer from 'puppeteer';
+import JSZip from 'jszip';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -56,6 +57,7 @@ interface PaperData {
     pageNumbering?: 'hidden' | 'page-x-of-y' | 'x-slash-y';
     studentDetailsGap?: number;
     contentAlignment?: 'left' | 'center' | 'justify';
+    withAnswerKey?: boolean;
 }
 
 function getTemplateStyles(template: string): { headerBorder: string; headerAlign: string; titleColor: string } {
@@ -80,6 +82,60 @@ function getTemplateStyles(template: string): { headerBorder: string; headerAlig
                 titleColor: 'color: #000;'
             };
     }
+}
+
+function generateAnswerKeyHTML(data: PaperData, answers: { questionId: number, text: string, order: number }[]): string {
+     const fontFamily = data.font === 'jakarta' 
+        ? "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif"
+        : "'Merriweather', Georgia, serif";
+
+     // Map answers for easy lookup
+     const answerMap = new Map();
+     answers.forEach(a => answerMap.set(a.questionId, a));
+
+     return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: ${fontFamily}; font-size: ${data.fontSize}px; line-height: 1.5; color: #000; background: #fff; padding: 40px; }
+        .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
+        .title { font-size: 24px; font-weight: 800; text-transform: uppercase; margin-bottom: 10px; }
+        .subtitle { font-size: 16px; font-weight: 600; color: #666; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 40px; } /* 2 Columns */
+        .item { display: flex; align-items: baseline; border-bottom: 1px dashed #eee; padding-bottom: 4px; }
+        .q-num { font-weight: 800; width: 40px; }
+        .ans-text { font-weight: 500; }
+        .opt-char { font-weight: 700; margin-right: 8px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">Answer Key</div>
+        <div class="subtitle">${data.title}</div>
+    </div>
+    <div class="grid">
+        ${data.questions.map((q, idx) => {
+            const ans = answerMap.get(parseInt(q.id));
+            // Find option character (A, B, C...)
+            // We need to match the logic used in PaperDesigner. 
+            // The answers passed here might only have the correct text. 
+            // In a real scenario, we'd need to know the index of the correct option relative to the shuffled options shown in PDF.
+            // Assumption: The 'order' field or text matching can preserve consistency if options aren't shuffled randomly per instance differently.
+            // For now, we will display the Option Text directly.
+            return `
+            <div class="item">
+                <span class="q-num">Q${idx + 1}</span>
+                <span class="ans-text">${ans ? ans.text : 'N/A'}</span>
+            </div>
+            `;
+        }).join('')}
+    </div>
+</body>
+</html>`;
 }
 
 function generatePaperHTML(data: PaperData): string {
@@ -159,7 +215,7 @@ function generatePaperHTML(data: PaperData): string {
             z-index: 50; pointer-events: none; opacity: 0.08; /* Increased opacity slightly and z-index */
         }
         .watermark-text {
-            transform: rotate(-45deg); font-size: 80px; font-weight: 800; 
+            transform: rotate(-45deg); font-size: 60px; font-weight: 800; 
             border: 4px solid #000; padding: 20px 40px; border-radius: 20px; text-transform: uppercase;
             color: #000; mix-blend-mode: multiply;
         }
@@ -174,15 +230,15 @@ function generatePaperHTML(data: PaperData): string {
         
         .logo-img { width: 80px; height: 80px; object-fit: contain; display: block; }
 
-        .p-institution { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #1e293b; letter-spacing: 1px; margin-bottom: 4px; display: ${data.institution ? 'block' : 'none'}; line-height: 1.3; }
-        .p-title { font-size: 18px; font-weight: 900; text-transform: uppercase; margin-bottom: 4px; color: #0f172a; line-height: 1.2; }
+        .p-institution { font-size: ${data.fontSize * 0.8}px; font-weight: 700; text-transform: uppercase; color: #1e293b; letter-spacing: 1px; margin-bottom: 4px; display: ${data.institution ? 'block' : 'none'}; line-height: 1.3; }
+        .p-title { font-size: ${data.fontSize * 1.5}px; font-weight: 900; text-transform: uppercase; margin-bottom: 4px; color: #0f172a; line-height: 1.2; }
         
         /* Meta: Added strong border to separate header from content */
         .p-meta { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: ${data.studentDetailsGap || 12}px; }
         .meta-col-left { display: flex; flex-direction: column; align-items: flex-start; }
         .meta-col-right { display: flex; flex-direction: column; align-items: flex-end; }
-        .meta-label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; margin-bottom: 2px; }
-        .meta-value { font-weight: 700; color: #0f172a; font-size: 12px; }
+        .meta-label { font-size: ${data.fontSize * 0.7}px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; margin-bottom: 2px; }
+        .meta-value { font-weight: 700; color: #0f172a; font-size: ${data.fontSize}px; }
         
         /* Template Styles */
         .t-modern .paper-header { ${templateStyles.headerBorder} ${templateStyles.headerAlign} }
@@ -433,6 +489,71 @@ export async function POST(req: Request) {
                 }
             });
 
+            // --- Answer Key Generation ---
+            let finalBuffer = pdfBuffer;
+            let contentType = 'application/pdf';
+            let filename = `${data.title.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+
+            console.log('Export Request - withAnswerKey:', data.withAnswerKey);
+            console.log('Export Request - Questions Count:', data.questions.length);
+
+            if (data.withAnswerKey) {
+                console.log('Export: Generating Answer Key...');
+                
+                // Fetch correct answers
+                const questionIds = data.questions.map(q => {
+                    const parsed = parseInt(q.id);
+                    // console.log(`ID Mapping: ${q.id} -> ${parsed}`);
+                    return parsed;
+                }).filter(id => !isNaN(id));
+
+                console.log(`Export: Found ${questionIds.length} valid numeric IDs out of ${data.questions.length} questions.`);
+
+                let answers: { questionId: number, text: string, order: number }[] = [];
+
+                if (questionIds.length > 0) {
+                     answers = await db.select({
+                        questionId: questionOptions.questionId,
+                        text: questionOptions.optionText,
+                        order: questionOptions.optionOrder
+                    }).from(questionOptions)
+                    .where(
+                        and(
+                            inArray(questionOptions.questionId, questionIds),
+                            eq(questionOptions.isCorrect, true)
+                        )
+                    );
+                    console.log(`Export: Fetched ${answers.length} correct answers from DB.`);
+                } else {
+                    console.warn('Export: No valid numeric IDs found. Answer Key will be empty.');
+                }
+
+                // ALWAYS generate the second PDF if requested, even if empty
+                const answerKeyHTML = generateAnswerKeyHTML(data, answers);
+                
+                const page2 = await browser.newPage();
+                await page2.setContent(answerKeyHTML, { waitUntil: 'networkidle0' });
+                const answerKeyBuffer = await page2.pdf({
+                    format: 'A4',
+                    printBackground: true,
+                    margin: { top: '20mm', bottom: '20mm', left: '20mm', right: '20mm' }
+                });
+                await page2.close();
+
+                // Join PDF and Answer Key into ZIP
+                const zip = new JSZip();
+                zip.file(`${data.title.replace(/[^a-z0-9]/gi, '_')}_QuestionPaper.pdf`, pdfBuffer);
+                zip.file(`${data.title.replace(/[^a-z0-9]/gi, '_')}_AnswerKey.pdf`, answerKeyBuffer);
+                
+                finalBuffer = await zip.generateAsync({ type: 'nodebuffer' });
+                contentType = 'application/zip';
+                filename = `${data.title.replace(/[^a-z0-9]/gi, '_')}_Set.zip`;
+                
+                console.log('Export: ZIP bundle created successfully.');
+            } else {
+                console.log('Export: withAnswerKey is FALSE. Returning single PDF.');
+            }
+
             await browser.close();
 
             // 2. Deduct credits (Only after successful generation)
@@ -449,23 +570,16 @@ export async function POST(req: Request) {
                 .returning({ updatedCredits: users.credits });
 
             if (deductionResult.length === 0) {
-                 // Race condition: Credits were spent elsewhere during generation
-                 // Since we already generated the PDF, we could either:
-                 // A) Return error (strict)
-                 // B) Allow it (lenient)
-                 // Requirement: "Failed or cancelled exports do not deduct credits"
-                 // Implication: "Successful exports MUST deduct credits"
-                 // If we can't deduct, strictly we should fail. 
                  return new NextResponse(JSON.stringify({ error: `Transaction failed: Insufficient credits (spent during generation).` }), { 
                     status: 409, // Conflict
                     headers: { 'Content-Type': 'application/json' }
                 });
             }
 
-            return new NextResponse(pdfBuffer, {
+            return new NextResponse(finalBuffer, {
                 headers: {
-                    'Content-Type': 'application/pdf',
-                    'Content-Disposition': `attachment; filename="${data.title.replace(/[^a-z0-9]/gi, '_')}.pdf"`,
+                    'Content-Type': contentType,
+                    'Content-Disposition': `attachment; filename="${filename}"`,
                     'X-Credits-Remaining': deductionResult[0].updatedCredits.toString()
                 },
             });
@@ -475,15 +589,6 @@ export async function POST(req: Request) {
             if (browser) await browser.close();
             return new NextResponse('Failed to generate PDF', { status: 500 });
         }
-
-        return new NextResponse(Buffer.from(pdfBuffer), {
-            status: 200,
-            headers: {
-                'Content-Type': 'application/pdf',
-                'Content-Disposition': `attachment; filename="${data.title.replace(/[^a-z0-9]/gi, '_')}.pdf"`,
-            },
-        });
-
     } catch (error) {
         console.error('PDF generation error:', error);
         return NextResponse.json(
