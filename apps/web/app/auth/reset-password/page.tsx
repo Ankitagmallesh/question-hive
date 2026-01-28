@@ -70,9 +70,7 @@ export default function ResetPasswordPage() {
                 <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-500 rounded-full blur-3xl opacity-20 -ml-20 -mb-20"></div>
 
                 <div className="relative z-10 flex items-center gap-2 font-bold text-2xl">
-                    <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center text-white shadow-lg">
-                        <Hexagon className="w-5 h-5 fill-indigo-500 text-white" />
-                    </div>
+                    <img src="/logo.jpg" alt="Logo" className="w-8 h-8 rounded-lg shadow-lg" />
                     Question Hive
                 </div>
 
@@ -93,9 +91,7 @@ export default function ResetPasswordPage() {
                     <div className="max-w-md w-full">
                     
                         <div className="lg:hidden flex items-center gap-2 font-bold text-xl text-indigo-600 mb-8">
-                            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-lg">
-                               <Hexagon className="w-5 h-5 fill-indigo-600 text-white" />
-                            </div>
+                            <img src="/logo-new.png" alt="Logo" className="w-8 h-8 rounded-lg shadow-lg" />
                             Question Hive
                         </div>
 
