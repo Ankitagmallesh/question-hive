@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db } from '../../lib/db';
 import { users, eq } from '@repo/db';
-import { getQuestionPapers } from '@/server/db/queries/question-papers';
-import { saveQuestionPaperAction } from '@/server/actions/question-papers';
-import { SavePaperInputSchema, validateInput } from '@/lib/validators';
+import { getQuestionPapers } from '../../server/db/queries/question-papers';
+import { saveQuestionPaperAction } from '../../server/actions/question-papers';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,11 +22,7 @@ export async function GET(req: Request) {
             return NextResponse.json({ success: true, data: [] }); // No user = No papers
         }
 
-        const userId = userRes[0]?.id;
-
-        if (!userId) {
-             return NextResponse.json({ success: true, data: [] });
-        }
+        const userId = userRes[0].id;
 
         // 2. Fetch Papers with details (Cached)
         const transformed = await getQuestionPapers(userId);
@@ -36,10 +31,7 @@ export async function GET(req: Request) {
 
     } catch (error: any) {
         console.error('Fetch Papers Error:', error);
-        return NextResponse.json({ 
-            success: false, 
-            error: error.message || 'Failed to fetch papers' 
-        }, { status: 500 });
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
 
