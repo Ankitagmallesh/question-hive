@@ -69,7 +69,7 @@ export default function PaperDesigner() {
         layout: 'single',
         margin: 'M',
         fontSize: 14,
-        lineHeight: 1.5,
+        lineHeight: 1,
         metaFontSize: 12,
         
         pageBorder: 'none',
@@ -78,7 +78,7 @@ export default function PaperDesigner() {
         
         date: new Date().toISOString().split('T')[0],
         instructions: '<ul><li>All questions are compulsory.</li><li>Calculators are not allowed.</li></ul>',
-        watermark: '',
+        watermark: 'Question Hive',
         
         studentName: true,
         rollNumber: true,
@@ -602,6 +602,7 @@ export default function PaperDesigner() {
         if (!paperQuestions.find(item => item.id === q.id)) {
             const questionWithInstance = {
                 ...q,
+                marks: 4,
                 instanceId: `new-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
             };
             setPaperQuestions([...paperQuestions, questionWithInstance]);
@@ -746,6 +747,7 @@ export default function PaperDesigner() {
                 footerText: settings.footerText,
                 roughWorkArea: settings.roughWorkArea,
                 pageNumbering: settings.pageNumbering,
+                withAnswerKey: settings.withAnswerKey,
                 questions: paperQuestions.map(q => ({
                     id: q.id,
                     text: q.text,
@@ -775,26 +777,28 @@ export default function PaperDesigner() {
             const remainingCredits = response.headers.get('X-Credits-Remaining');
             if (remainingCredits) {
                 // Manually update the user credits in the UI if possible
-                // We might need to force a re-fetch of the user session or update local state
-                // Since useSupabaseAuth doesn't expose a setter, we can trigger a global event or just reload
                 window.location.reload(); 
             }
 
-            // Get the PDF blob
-            const pdfBlob = await response.blob();
+            // Get Content Type to determine extension (PDF vs ZIP)
+            const contentType = response.headers.get('content-type');
+            const fileExtension = contentType && contentType.includes('zip') ? 'zip' : 'pdf';
+
+            // Get the blob
+            const fileBlob = await response.blob();
             
             // Create download link
-            const url = window.URL.createObjectURL(pdfBlob);
+            const url = window.URL.createObjectURL(fileBlob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `${settings.title.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+            link.download = `${settings.title.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.${fileExtension}`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
 
-            toast.success('PDF Downloaded!', {
-                description: 'Your paper has been saved successfully.'
+            toast.success(fileExtension === 'zip' ? 'Paper & Key Downloaded!' : 'PDF Downloaded!', {
+                description: 'Your files have been saved successfully.'
             });
         } catch (error) {
             console.error('PDF export error:', error);
@@ -831,7 +835,7 @@ export default function PaperDesigner() {
             <div className="main-container" ref={containerRef}>
                 
                 <div className={`editor-panel ${mobileTab === 'editor' ? 'block' : 'hidden'} lg:block`} style={{ width: `${leftPanelWidth}%` }} data-lenis-prevent>
-                    <div className="editor-header">
+                    <div className="editor-header sticky top-0 z-20 bg-white -mt-4 -mx-4 pt-1 px-4 lg:-mt-8 lg:-mx-8 lg:pt-1 lg:px-8 pb-4 border-b border-slate-100/80 backdrop-blur-sm shadow-sm transition-all duration-200">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
                                 <button onClick={() => router.back()} className="p-1 hover:bg-slate-100 rounded-full">
@@ -941,6 +945,24 @@ export default function PaperDesigner() {
                                 Are you sure you want to proceed?
                             </AlertDialogDescription>
                         </AlertDialogHeader>
+                        <div className="py-4 px-6">
+                            <label className="flex items-center gap-3 cursor-pointer">
+                                <input 
+                                    type="checkbox" 
+                                    checked={settings.withAnswerKey || false}
+                                    onChange={(e) => setSettings(s => ({ ...s, withAnswerKey: e.target.checked }))}
+                                    className="w-4 h-4 rounded border-gray-300"
+                                />
+                                <span className="text-sm font-medium text-gray-700">
+                                    Include Answer Key PDF
+                                </span>
+                            </label>
+                            {settings.withAnswerKey && (
+                                <p className="text-xs text-gray-500 mt-2">
+                                    ✓ Both Question Paper and Answer Key will be downloaded as a ZIP file
+                                </p>
+                            )}
+                        </div>
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction onClick={processExport}>Confirm Export</AlertDialogAction>
