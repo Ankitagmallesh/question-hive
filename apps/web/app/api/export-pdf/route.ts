@@ -3,32 +3,13 @@ import { createClient } from '@/utils/supabase/server';
 import { db } from '@/lib/db';
 import { users } from '@repo/db';
 import { eq, sql, and } from 'drizzle-orm';
+// @ts-ignore
 import puppeteerCore from 'puppeteer-core';
+// @ts-ignore
 import chromium from '@sparticuz/chromium';
-import { ExportPdfRequestSchema, validateInput } from '@/lib/validators';
+import puppeteer from 'puppeteer';
 
 const isProduction = process.env.NODE_ENV === 'production';
-
-/**
- * Launches a browser with proper configuration for serverless environments
- * Uses @sparticuz/chromium on production, fallback to system puppeteer-core in dev
- */
-async function launchBrowser() {
-  if (isProduction) {
-    return puppeteerCore.launch({
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
-      headless: chromium.headless,
-    });
-  } else {
-    // Development: use system Chrome
-    return puppeteerCore.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
-  }
-}
 
 interface Option {
     text: string;
@@ -360,31 +341,13 @@ function generatePaperHTML(data: PaperData): string {
 
 export async function POST(req: Request) {
     try {
-        const body = await req.json();
-        
-        // Validate input
-        const validation = validateInput(ExportPdfRequestSchema, body);
-        if (!validation.success) {
-            return NextResponse.json({ 
-                success: false, 
-                error: `Invalid request: ${validation.error}` 
-            }, { status: 400 });
-        }
-
-        const { data, email } = validation.data;
+        const data: PaperData = await req.json();
 
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user || !user.email) {
             return new NextResponse('Unauthorized', { status: 401 });
-        }
-
-        // Verify email matches
-        if (user.email !== email) {
-            return NextResponse.json({ 
-                error: 'Email mismatch' 
-            }, { status: 403 });
         }
 
         const cost = data.questions.length;
@@ -411,15 +374,20 @@ export async function POST(req: Request) {
         let browser;
 
         try {
-            // Launch browser with proper serverless configuration
-            browser = await launchBrowser();
+            if (isProduction) {
+                // Production: Use puppeteer-core + @sparticuz/chromium
+                browser = await puppeteerCore.launch({
+                    args: chromium.args,
+                    defaultViewport: chromium.defaultViewport,
+                    executablePath: await chromium.executablePath(),
+                    headless: chromium.headless,
+                });
+            } else {
+                // Local Development: Use standard puppeteer
+                browser = await puppeteer.launch({ headless: true });
+            }
 
             const page = await browser.newPage();
-            
-            // Set timeout to prevent hanging on large documents (120 seconds)
-            page.setDefaultTimeout(120000);
-            page.setDefaultNavigationTimeout(120000);
-            
             await page.setContent(html, { waitUntil: 'networkidle0' });
 
             const getMarginMM = (m: string) => {
@@ -498,28 +466,29 @@ export async function POST(req: Request) {
                 headers: {
                     'Content-Type': 'application/pdf',
                     'Content-Disposition': `attachment; filename="${data.title.replace(/[^a-z0-9]/gi, '_')}.pdf"`,
-                    'X-Credits-Remaining': (deductionResult[0]?.updatedCredits ?? 0).toString()
+                    'X-Credits-Remaining': deductionResult[0].updatedCredits.toString()
                 },
             });
 
         } catch (error) {
             console.error('PDF Generation failed:', error);
             if (browser) await browser.close();
-            const errorMessage = error instanceof Error ? error.message : 'Failed to generate PDF';
-            const statusCode = errorMessage.includes('Timeout') ? 408 : 500;
-            return new NextResponse(
-                JSON.stringify({ 
-                    error: 'PDF generation failed. Please try again.' ,
-                    details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
-                }),
-                { 
-                    status: statusCode,
-                    headers: { 'Content-Type': 'application/json' }
-                }
-            );
+            return new NextResponse('Failed to generate PDF', { status: 500 });
         }
-    } catch (e) {
-        console.error("Export handler error", e);
-        return new NextResponse("Internal Server Error", { status: 500 });
+
+        return new NextResponse(Buffer.from(pdfBuffer), {
+            status: 200,
+            headers: {
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': `attachment; filename="${data.title.replace(/[^a-z0-9]/gi, '_')}.pdf"`,
+            },
+        });
+
+    } catch (error) {
+        console.error('PDF generation error:', error);
+        return NextResponse.json(
+            { error: 'Failed to generate PDF' },
+            { status: 500 }
+        );
     }
 }
