@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { db } from '@/lib/db';
-import { users } from '@repo/db';
-import { eq, sql, and } from 'drizzle-orm';
+import { users, questionOptions } from '@repo/db';
+import { eq, sql, and, inArray } from 'drizzle-orm';
+// @ts-ignore
 import puppeteerCore from 'puppeteer-core';
 // @ts-ignore
+// @ts-ignore
 import chromium from '@sparticuz/chromium';
-import { ExportPdfRequestSchema, validateInput } from '@/lib/validators';
+import puppeteer from 'puppeteer';
+import JSZip from 'jszip';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -396,6 +399,7 @@ function generatePaperHTML(data: PaperData): string {
 export async function POST(req: Request) {
     try {
         const data: PaperData = await req.json();
+        const data: PaperData = await req.json();
 
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -404,14 +408,9 @@ export async function POST(req: Request) {
             return new NextResponse('Unauthorized', { status: 401 });
         }
 
-        // Verify email matches
-        if (user.email !== email) {
-            return NextResponse.json({ 
-                error: 'Email mismatch' 
-            }, { status: 403 });
-        }
-
-        const cost = data.questions.length;
+        // Count only MCQs (questions with options) - 1 MCQ = 1 credit
+        const mcqCount = data.questions.filter(q => q.options && q.options.length > 0).length;
+        const cost = mcqCount;
 
         // 1. Check if user has enough credits (Read-Only first)
         const [userRecord] = await db
@@ -439,16 +438,23 @@ export async function POST(req: Request) {
         let browser;
 
         try {
-            // Launch browser with proper serverless configuration
-            browser = await launchBrowser();
+            if (isProduction) {
+                // Production: Use puppeteer-core + @sparticuz/chromium
+                browser = await puppeteerCore.launch({
+                    args: chromium.args,
+                    defaultViewport: { width: 800, height: 600 },
+                    executablePath: await chromium.executablePath(),
+                    // @ts-ignore
+                    headless: chromium.headless === 'new' ? true : chromium.headless,
+                });
+            } else {
+                // Local Development: Use standard puppeteer
+                browser = await puppeteer.launch({ headless: true });
+            }
 
             const page = await browser.newPage();
-            
-            // Set timeout to prevent hanging on large documents (120 seconds)
-            page.setDefaultTimeout(120000);
-            page.setDefaultNavigationTimeout(120000);
-            
-            await page.setContent(html, { waitUntil: 'networkidle0' });
+            // Use 'domcontentloaded' instead of 'networkidle0' to avoid timeout when external resources can't load
+            await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 10000 });
 
             const getMarginMM = (m: string) => {
                 switch(m) {
@@ -582,30 +588,22 @@ export async function POST(req: Request) {
 
             return new NextResponse(finalBuffer, {
                 headers: {
-                    'Content-Type': 'application/pdf',
-                    'Content-Disposition': `attachment; filename="${data.title.replace(/[^a-z0-9]/gi, '_')}.pdf"`,
-                    'X-Credits-Remaining': (deductionResult[0]?.updatedCredits ?? 0).toString()
+                    'Content-Type': contentType,
+                    'Content-Disposition': `attachment; filename="${filename}"`,
+                    'X-Credits-Remaining': deductionResult[0].updatedCredits.toString()
                 },
             });
 
         } catch (error) {
             console.error('PDF Generation failed:', error);
             if (browser) await browser.close();
-            const errorMessage = error instanceof Error ? error.message : 'Failed to generate PDF';
-            const statusCode = errorMessage.includes('Timeout') ? 408 : 500;
-            return new NextResponse(
-                JSON.stringify({ 
-                    error: 'PDF generation failed. Please try again.' ,
-                    details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
-                }),
-                { 
-                    status: statusCode,
-                    headers: { 'Content-Type': 'application/json' }
-                }
-            );
+            return new NextResponse('Failed to generate PDF', { status: 500 });
         }
-    } catch (e) {
-        console.error("Export handler error", e);
-        return new NextResponse("Internal Server Error", { status: 500 });
+    } catch (error: any) {
+        console.error('PDF generation error:', error);
+        return NextResponse.json(
+            { error: error.message || 'Failed to generate PDF' },
+            { status: 500 }
+        );
     }
 }

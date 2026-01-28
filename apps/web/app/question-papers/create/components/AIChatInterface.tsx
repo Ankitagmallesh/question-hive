@@ -11,7 +11,7 @@ interface AIChatInterfaceProps {
     chatInput: string;
     setChatInput: (value: string) => void;
     handleSendMessage: (text?: string) => void;
-    chatEndRef: React.RefObject<HTMLDivElement | null>;
+    chatEndRef: React.RefObject<HTMLDivElement>;
 }
 
 export const AIChatInterface: React.FC<AIChatInterfaceProps> = ({

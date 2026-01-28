@@ -505,25 +505,30 @@ export default function PaperDesigner() {
             if (!user?.id) return;
 
             const savedId = searchParams.get('savedId');
-            if (!savedId) return;
 
-            try {
-                const res = await fetch(`/api/question-papers/${savedId}`);
-                if (res.ok) {
-                    const json = await res.json();
-                    if (json.success && json.paper) {
-                        setSettings(s => ({ ...s, ...json.paper.settings }));
-                        setPaperQuestions(json.paper.paperQuestions);
-                    }
-                }
-            } catch (e) {
-                console.error("Failed to load paper from API", e);
-                toast.error("Could not load the saved paper.");
+        if (resume) {
+            const saved = localStorage.getItem(`current_paper_draft_${user.id}`);
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.settings) setSettings(s => ({...s, ...parsed.settings}));
+                    if (parsed.paperQuestions) setPaperQuestions(parsed.paperQuestions);
+                } catch (e) { console.error(e); }
             }
-        };
-
-        loadPaper();
-    }, [searchParams.get('savedId'), user]); // Only reload if ID changes or user changes
+        } else if (savedId) {
+            const allSaved = localStorage.getItem(`saved_papers_${user.id}`);
+            if (allSaved) {
+                try {
+                    const papers = JSON.parse(allSaved);
+                    const found = papers.find((p: { id: string }) => p.id === savedId);
+                    if (found) {
+                        setSettings(s => ({...s, ...found.settings}));
+                        setPaperQuestions(found.paperQuestions);
+                    }
+                } catch (e) { console.error(e); }
+            }
+        }
+    }, [searchParams, user]);
 
     const [isSaving, setIsSaving] = useState(false);
 
@@ -978,7 +983,6 @@ export default function PaperDesigner() {
                 footerText: settings.footerText,
                 roughWorkArea: settings.roughWorkArea,
                 pageNumbering: settings.pageNumbering,
-                withAnswerKey: settings.withAnswerKey,
                 questions: paperQuestions.map(q => ({
                     id: q.id,
                     text: q.text,
@@ -1099,54 +1103,60 @@ export default function PaperDesigner() {
                 ref={containerRef as React.RefObject<HTMLDivElement>}
             >
                 
-                <div 
-                    className={`editor-panel ${mobileTab === 'editor' ? 'block' : 'hidden'} lg:block`} 
-                    style={{ '--left-width': `${leftPanelWidth}%` } as React.CSSProperties} 
-                    data-lenis-prevent
-                >
-                    <div className="editor-header sticky top-0 z-20 bg-white/80 px-4 lg:px-8 py-3 border-b border-slate-100/80 backdrop-blur-md shadow-sm transition-all duration-200">
-                        <div className="flex items-center justify-between w-full">
-                            <div className="flex items-center gap-2 overflow-hidden">
-                                <div className="min-w-0">
-                                    <h1 className="text-lg lg:text-2xl font-bold truncate">{settings.title || 'Paper Designer'}</h1>
-                                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate">
-                                        <span className="flex items-center gap-1"><i className="ri-folder-open-line"></i> {settings.chapters.length} Chapters</span>
-                                        <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                                        <span className="flex items-center gap-1"><i className="ri-question-line"></i> {paperQuestions.length} Qs</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-2 shrink-0">
-
-                                
-                                <button className="p-2.5 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-100 lg:hidden" onClick={handleSavePaper} disabled={isSaving}>
-                                    {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <i className="ri-save-line text-lg"></i>}
+                <div className={`editor-panel ${mobileTab === 'editor' ? 'block' : 'hidden'} lg:block`} style={{ width: `${leftPanelWidth}%` }} data-lenis-prevent>
+                    <div className="editor-header">
+                        <div>
+                            <div className="flex items-center gap-2 mb-1">
+                                <button onClick={() => router.back()} className="p-1 hover:bg-slate-100 rounded-full">
+                                    <i className="ri-arrow-left-line text-slate-500" style={{fontSize: '18px'}}></i>
                                 </button>
-                                
-
-
-                                <button className="btn-action hidden lg:flex" onClick={handleSavePaper} disabled={isSaving}>
-                                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <i className="ri-save-line"></i>}
-                                    {isSaving ? 'Saving...' : 'Save'}
-                                </button>
-                                
-                                <div className="hidden lg:flex items-center gap-1 bg-slate-100 rounded-lg px-2 py-1">
-                                    <button className="p-1 hover:bg-slate-200 rounded text-slate-600 transition-colors" onClick={handleZoomOut} title="Zoom Out">
-                                        <i className="ri-subtract-line"></i>
-                                    </button>
-                                    <span className="text-xs font-bold w-10 text-center text-slate-700">{zoomLevel}%</span>
-                                    <button className="p-1 hover:bg-slate-200 rounded text-slate-600 transition-colors" onClick={handleZoomIn} title="Zoom In">
-                                        <i className="ri-add-line"></i>
-                                    </button>
-                                    <div className="w-px h-3 bg-slate-300 mx-1"></div>
-                                    <button className="p-1.5 hover:bg-slate-200 rounded text-slate-600 text-[10px] font-semibold transition-colors uppercase tracking-wider" onClick={handleZoomReset}>
-                                        Reset
-                                    </button>
-                                </div>
+                                <h1>Paper Designer</h1>
                             </div>
+                            <div className="breadcrumbs">Home / {settings.chapters.join(', ')} / {settings.title}</div>
+                        </div>
+                        <div className="header-actions">
+                            <button className="btn-action hidden lg:flex" onClick={() => setShowPreviewModal(true)}><i className="ri-eye-line"></i> Preview</button>
+                            <div className="flex items-center gap-1 bg-slate-100 rounded-lg px-2 py-1">
+                                <button className="p-1 hover:bg-slate-200 rounded text-slate-600 transition-colors" onClick={handleZoomOut} title="Zoom Out">
+                                    <i className="ri-subtract-line"></i>
+                                </button>
+                                <span className="text-xs font-bold w-10 text-center text-slate-700">{zoomLevel}%</span>
+                                <button className="p-1 hover:bg-slate-200 rounded text-slate-600 transition-colors" onClick={handleZoomIn} title="Zoom In">
+                                    <i className="ri-add-line"></i>
+                                </button>
+                                <div className="w-px h-3 bg-slate-300 mx-1"></div>
+                                <button className="p-1.5 hover:bg-slate-200 rounded text-slate-600 text-[10px] font-semibold transition-colors uppercase tracking-wider" onClick={handleZoomReset}>
+                                    Reset
+                                </button>
+                            </div>
+                            <button className="btn-action" onClick={handleSavePaper} disabled={isSaving}>
+                                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <i className="ri-save-line"></i>}
+                                {isSaving ? 'Saving...' : 'Save'}
+                            </button>
                         </div>
                     </div>
+
+                    <div className="settings-card">
+                        
+                        <div className="row">
+                            <div className="col" style={{flex: 1}}>
+                                <label>Paper Title</label>
+                                <input type="text" className="input-box" value={settings.title} onChange={e => setSettings({...settings, title: e.target.value})} />
+                            </div>
+                            <div className="col">
+                                <label>Chapter</label>
+                                <ChapterSelect 
+                                    options={chaptersList} 
+                                    selectedChapters={settings.chapters}
+                                    onChange={(val) => {
+                                        if (!settings.chapters.includes(val)) {
+                                            setSettings(s => ({...s, chapters: [...s.chapters, val]}));
+                                            setCurrentPage(1);
+                                        }
+                                    }}
+                                />
+                            </div>
+                        </div>
 
                     <SettingsForm 
                         settings={settings} 
