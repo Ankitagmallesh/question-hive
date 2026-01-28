@@ -983,6 +983,7 @@ export default function PaperDesigner() {
                 footerText: settings.footerText,
                 roughWorkArea: settings.roughWorkArea,
                 pageNumbering: settings.pageNumbering,
+                withAnswerKey: settings.withAnswerKey,
                 questions: paperQuestions.map(q => ({
                     id: q.id,
                     text: q.text,
@@ -1104,7 +1105,7 @@ export default function PaperDesigner() {
             >
                 
                 <div className={`editor-panel ${mobileTab === 'editor' ? 'block' : 'hidden'} lg:block`} style={{ width: `${leftPanelWidth}%` }} data-lenis-prevent>
-                    <div className="editor-header">
+                    <div className="editor-header sticky top-0 z-20 bg-white -mt-4 -mx-4 pt-1 px-4 lg:-mt-8 lg:-mx-8 lg:pt-1 lg:px-8 pb-4 border-b border-slate-100/80 backdrop-blur-sm shadow-sm transition-all duration-200">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
                                 <button onClick={() => router.back()} className="p-1 hover:bg-slate-100 rounded-full">
