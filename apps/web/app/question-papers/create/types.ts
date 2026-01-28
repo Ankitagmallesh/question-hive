@@ -60,8 +60,10 @@ export interface PaperSettings {
     // Content Alignment
     contentAlignment?: 'left' | 'center' | 'justify';
     
-    // Footer
     footerText: string;
     roughWorkArea: 'none' | 'right' | 'bottom';
     pageNumbering: 'page-x-of-y' | 'x-slash-y' | 'hidden';
+
+    // Export Options
+    withAnswerKey?: boolean;
 }

@@ -173,11 +173,17 @@ export const PaperContent: React.FC<PaperContentProps> = ({
                                                 <img src={settings.logo} alt="Logo" className="w-[80px] h-[80px] object-contain mb-2" />
                                             )}
                                             {settings.institution && (
-                                                <div className="p-institution font-bold uppercase tracking-wide text-slate-800 mb-1 leading-snug">
+                                                <div 
+                                                    className="p-institution font-bold uppercase tracking-wide text-slate-800 mb-1 leading-snug"
+                                                    style={{ fontSize: `${settings.fontSize * 0.8}px` }}
+                                                >
                                                     {settings.institution}
                                                 </div>
                                             )}
-                                            <div className="p-title font-black text-xl uppercase tracking-tight text-slate-900 leading-tight">
+                                            <div 
+                                                className="p-title font-black uppercase tracking-tight text-slate-900 leading-tight"
+                                                style={{ fontSize: `${settings.fontSize * 1.5}px` }}
+                                            >
                                                 {settings.title}
                                             </div>
                                         </div>
@@ -195,12 +201,12 @@ export const PaperContent: React.FC<PaperContentProps> = ({
                                         style={{ marginBottom: `${settings.studentDetailsGap || 12}px` }}
                                     >
                                         <div className="flex flex-col items-start">
-                                            <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Duration</span>
-                                            <span className="font-bold text-slate-900">{settings.duration || '3 Hours'}</span>
+                                            <span className="uppercase font-bold text-slate-500 tracking-wider" style={{ fontSize: `${settings.fontSize * 0.7}px` }}>Duration</span>
+                                            <span className="font-bold text-slate-900" style={{ fontSize: `${settings.fontSize}px` }}>{settings.duration || '0 Min'}</span>
                                         </div>
                                         <div className="flex flex-col items-end">
-                                            <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Max Marks</span>
-                                            <span className="font-bold text-slate-900">{settings.totalMarks || '100'}</span>
+                                            <span className="uppercase font-bold text-slate-500 tracking-wider" style={{ fontSize: `${settings.fontSize * 0.7}px` }}>Max Marks</span>
+                                            <span className="font-bold text-slate-900" style={{ fontSize: `${settings.fontSize}px` }}>{settings.totalMarks || '0'}</span>
                                         </div>
                                     </div>
 
@@ -266,7 +272,7 @@ export const PaperContent: React.FC<PaperContentProps> = ({
                             {/* Watermark */}
                             {settings.watermark && (
                                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 opacity-[0.04] overflow-hidden select-none">
-                                    <div className="transform -rotate-45 text-6xl font-bold whitespace-nowrap text-slate-900 border-4 border-slate-900 p-4 rounded-xl">
+                                    <div className="transform -rotate-45 text-5xl font-bold whitespace-nowrap text-slate-900 border-4 border-slate-900 p-4 rounded-xl">
                                         {settings.watermark}
                                     </div>
                                 </div>
