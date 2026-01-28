@@ -39,7 +39,7 @@ export default function LoadingOverlay({ onComplete }: LoadingOverlayProps) {
                 <div className="flex flex-col items-center">
                     <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mb-6 relative">
                         <div className="absolute inset-0 bg-indigo-500 rounded-2xl animate-ping opacity-20"></div>
-                        <FlaskConical className="w-8 h-8 text-indigo-600 relative z-10" />
+                        <img src="/logo-new.png" alt="Logo" className="w-10 h-10 object-contain relative z-10 rounded-lg" />
                     </div>
                     
                     <h2 className="text-2xl font-bold text-slate-900">Generating Assessment</h2>

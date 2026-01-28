@@ -1,5 +1,5 @@
 import { db, questionPapers, questionPaperItems, questionPaperStatuses, sql, eq, desc, asc, and, inArray, questions, questionTypes, difficultyLevels, chapters, users, questionOptions } from '@repo/db';
-import { cachedDbQuery } from '../../../lib/cache';
+import { unstable_cache } from 'next/cache';
 
 // --- Types ---
 export interface QuestionPaperListItem {
@@ -18,14 +18,8 @@ export interface QuestionPaperDetail {
 
 // --- Queries ---
 
-/**
- * Fetch all question papers for a user with caching
- * - Cached for 1 hour per user
- * - Request deduplication prevents multiple DB hits
- * - Cache tag: `question-papers-user-${userId}` - revalidate on changes
- */
 export const getQuestionPapers = async (userId: number) => {
-  return cachedDbQuery(
+  return unstable_cache(
     async () => {
       const papers = await db.select({
         id: questionPapers.id,
@@ -35,17 +29,17 @@ export const getQuestionPapers = async (userId: number) => {
         instructions: questionPapers.instructions,
         questionsCount: sql<number>`(SELECT count(*) FROM ${questionPaperItems} WHERE ${questionPaperItems.questionPaperId} = ${questionPapers.id})`
       })
-        .from(questionPapers)
-        .leftJoin(questionPaperStatuses, eq(questionPapers.statusId, questionPaperStatuses.id))
-        .where(eq(questionPapers.createdBy, userId))
-        .orderBy(desc(questionPapers.updatedAt));
+      .from(questionPapers)
+      .leftJoin(questionPaperStatuses, eq(questionPapers.statusId, questionPaperStatuses.id))
+      .where(eq(questionPapers.createdBy, userId))
+      .orderBy(desc(questionPapers.updatedAt));
 
       // Transform results
       return papers.map(p => {
         let settings: any = {};
         try {
           settings = typeof p.instructions === 'string' ? JSON.parse(p.instructions) : p.instructions;
-        } catch (e) { }
+        } catch (e) {}
 
         return {
           id: String(p.id),
@@ -53,40 +47,32 @@ export const getQuestionPapers = async (userId: number) => {
           settings: {
             title: p.title,
             difficulty: settings.difficulty || 'mixed',
-            chapters: settings.template ? [] : [],
+            chapters: settings.template ? [] : [], 
             ...settings
           },
-          paperQuestions: Array(Number(p.questionsCount)).fill({})
+          paperQuestions: Array(Number(p.questionsCount)).fill({}) 
         };
       });
     },
-    ['question-papers-list', `user-${userId}`],
+    [`question-papers-list-${userId}`],
     {
-      revalidate: 3600, // 1 hour
-      tags: [`question-papers-user-${userId}`, 'papers'],
+      tags: [`question-papers-user-${userId}`],
+      revalidate: 3600
     }
-  );
+  )();
 };
 
-/**
- * Fetch a single question paper by ID with all details
- * - Cached for 1 hour per paper
- * - Includes questions, options, and metadata
- * - Cache tag: `question-paper-${paperId}` - revalidate on changes
- */
 export const getQuestionPaperById = async (paperId: number) => {
-  return cachedDbQuery(
+  return unstable_cache(
     async () => {
       // 1. Fetch Paper Metadata
       const paperRes = await db.select().from(questionPapers).where(eq(questionPapers.id, paperId));
-
+      
       if (paperRes.length === 0) {
         return null;
       }
 
       const paper = paperRes[0];
-      if (!paper) return null;
-
       let settings: any = {};
       try {
         const parsed = typeof paper.instructions === 'string' ? JSON.parse(paper.instructions) : paper.instructions;
@@ -104,15 +90,15 @@ export const getQuestionPaperById = async (paperId: number) => {
 
       // 2. Fetch Items
       const items = await db.select({
-        itemId: questionPaperItems.id,
-        order: questionPaperItems.orderIndex,
-        marks: questionPaperItems.marks,
-        qId: questions.id,
-        qText: questions.content,
-        qType: questionTypes.name,
-        qDiff: difficultyLevels.name,
-        qChapter: chapters.name,
-      })
+          itemId: questionPaperItems.id,
+          order: questionPaperItems.orderIndex,
+          marks: questionPaperItems.marks,
+          qId: questions.id,
+          qText: questions.content,
+          qType: questionTypes.name,
+          qDiff: difficultyLevels.name,
+          qChapter: chapters.name,
+        })
         .from(questionPaperItems)
         .innerJoin(questions, eq(questionPaperItems.questionId, questions.id))
         .leftJoin(difficultyLevels, eq(questions.difficultyLevelId, difficultyLevels.id))
@@ -123,9 +109,9 @@ export const getQuestionPaperById = async (paperId: number) => {
 
       // 2.1 Fetch Options for these questions
       const questionIds = items.map(i => i.qId).filter((id): id is number => id !== null && id !== undefined);
-
+      
       let optionsMap: Record<number, any[]> = {};
-
+      
       if (questionIds.length > 0) {
         const optionsRes = await db.select({
           id: questionOptions.id,
@@ -134,16 +120,16 @@ export const getQuestionPaperById = async (paperId: number) => {
           isCorrect: questionOptions.isCorrect,
           order: questionOptions.optionOrder
         })
-          .from(questionOptions)
-          .where(inArray(questionOptions.questionId, questionIds))
-          .orderBy(questionOptions.optionOrder);
+        .from(questionOptions)
+        .where(inArray(questionOptions.questionId, questionIds))
+        .orderBy(questionOptions.optionOrder);
 
         // Group options by questionId
         optionsRes.forEach(opt => {
           if (!optionsMap[opt.questionId]) {
             optionsMap[opt.questionId] = [];
           }
-          optionsMap[opt.questionId]!.push({
+          optionsMap[opt.questionId].push({
             id: String(opt.id),
             text: opt.text,
             isCorrect: opt.isCorrect
@@ -169,14 +155,13 @@ export const getQuestionPaperById = async (paperId: number) => {
         id: String(paper.id),
         settings: fullSettings,
         paperQuestions: papersQuestions,
-        subjectId: paper.subjectId,
-        savedAt: paper.updatedAt ?? new Date()
+        savedAt: paper.updatedAt
       };
     },
-    ['question-paper', `id-${paperId}`],
+    [`question-paper-${paperId}`],
     {
-      revalidate: 3600, // 1 hour
-      tags: [`question-paper-${paperId}`, 'papers'],
+      tags: [`question-paper-${paperId}`],
+      revalidate: 3600
     }
-  );
+  )();
 };

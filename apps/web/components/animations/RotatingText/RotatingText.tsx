@@ -13,10 +13,9 @@ import React, {
 import {
   motion,
   AnimatePresence,
-  type Transition,
+  Transition,
   type VariantLabels,
   type Target,
-  // @ts-ignore
   type AnimationControls,
   type TargetAndTransition,
 } from "framer-motion";
@@ -94,7 +93,7 @@ const RotatingText = forwardRef<RotatingTextRef, RotatingTextProps>(
     };
 
     const elements = useMemo(() => {
-      const currentText: string = texts[currentTextIndex] ?? '';
+      const currentText: string = texts[currentTextIndex];
       if (splitBy === "characters") {
         const words = currentText.split(" ");
         return words.map((word, i) => ({

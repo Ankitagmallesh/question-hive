@@ -4,11 +4,11 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./app/*"],
-      "@/components/*": ["./app/components/*", "./components/*"],
-      "@/lib/*": ["./app/lib/*", "./lib/*"],
-      "@/utils/*": ["./app/utils/*", "./utils/*"],
-      "@/types/*": ["./app/types/*", "./types/*"],
-      "@/hooks/*": ["./app/hooks/*", "./hooks/*"]
+      "@/components/*": ["./app/components/*"],
+      "@/lib/*": ["./app/lib/*"],
+      "@/utils/*": ["./app/utils/*"],
+      "@/types/*": ["./app/types/*"],
+      "@/hooks/*": ["./app/hooks/*"]
     },
     "plugins": [
       {

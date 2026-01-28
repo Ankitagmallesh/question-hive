@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
     KeyboardSensor,
@@ -43,7 +43,7 @@ import { QuestionList } from './components/QuestionList';
 import { AIChatInterface } from './components/AIChatInterface';
 import { PaperContent } from './components/PaperContent';
 import { PreviewPanel } from './components/PreviewPanel';
-import { Question, PaperSettings } from './types';
+import { Question, PaperSettings, ChatMessage } from './types';
 
 export default function PaperDesigner() {
     const router = useRouter();
@@ -76,7 +76,7 @@ export default function PaperDesigner() {
         answerSpace: 'none',
         separator: 'none',
         
-        date: new Date().toISOString().split('T')[0] ?? '',
+        date: new Date().toISOString().split('T')[0],
         instructions: '<ul><li>All questions are compulsory.</li><li>Calculators are not allowed.</li></ul>',
         watermark: '',
         
@@ -107,7 +107,6 @@ export default function PaperDesigner() {
     const [sourceQuestions, setSourceQuestions] = useState<Question[]>([]);
     const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
     const [isExportAlertOpen, setIsExportAlertOpen] = useState(false);
-    const [subjectId, setSubjectId] = useState<number | null>(null);
     const searchParams = useSearchParams();
     // --- AI Chat Logic with Streaming ---
     const { object, submit, isLoading: isStreaming } = experimental_useObject({
@@ -131,7 +130,7 @@ export default function PaperDesigner() {
                 setChatMessages(prev => {
                     const newHistory = [...prev];
                     const lastMsg = newHistory[newHistory.length - 1];
-                    if (lastMsg && lastMsg.role === 'assistant') {
+                    if (lastMsg.role === 'assistant') {
                         lastMsg.content = `I've generated ${object.questions?.length} questions for you. Click on any question to add it to your paper.`;
                         lastMsg.questions = object.questions as Question[];
                     }
@@ -162,7 +161,7 @@ export default function PaperDesigner() {
 
 
 
-    const handleSendMessage = useCallback((text?: string) => {
+    const handleSendMessage = (text?: string) => {
         const prompt = text || chatInput.trim();
         if (!prompt || isStreaming) return;
         
@@ -175,7 +174,7 @@ export default function PaperDesigner() {
         setChatMessages(prev => [...prev, { role: 'assistant', content: 'QuestionHive is thinking...', questions: undefined }]);
         
         submit({ prompt });
-    }, [chatInput, isStreaming, submit]);
+    };
 
     // --- Auto-Generate from URL ---
     const hasTriggeredAutoRef = useRef(false);
@@ -323,20 +322,12 @@ export default function PaperDesigner() {
     }, [debouncedSettings, debouncedQuestions]); // Trigger when these stabilize
 
     
-    // 3. Extract subjectId from URL
-    useEffect(() => {
-        const subjectIdParam = searchParams.get('subjectId');
-        if (subjectIdParam) {
-            setSubjectId(parseInt(subjectIdParam, 10));
-        }
-    }, [searchParams]);
-
-    // 4. Load logic - API ONLY
-    const savedId = searchParams.get('savedId');
+    // 3. Load logic - API ONLY
     useEffect(() => {
         const loadPaper = async () => {
             if (!user?.id) return;
 
+            const savedId = searchParams.get('savedId');
             if (!savedId) return;
 
             try {
@@ -346,10 +337,6 @@ export default function PaperDesigner() {
                     if (json.success && json.paper) {
                         setSettings(s => ({ ...s, ...json.paper.settings }));
                         setPaperQuestions(json.paper.paperQuestions);
-                        // Restore subjectId from the saved paper
-                        if (json.paper.subjectId) {
-                            setSubjectId(json.paper.subjectId);
-                        }
                     }
                 }
             } catch (e) {
@@ -359,18 +346,13 @@ export default function PaperDesigner() {
         };
 
         loadPaper();
-    }, [savedId, user]); // Only reload if ID changes or user changes
+    }, [searchParams.get('savedId'), user]); // Only reload if ID changes or user changes
 
     const [isSaving, setIsSaving] = useState(false);
 
     const handleSavePaper = async () => {
         if (!settings.title) {
             toast.error("Please enter a paper title");
-            return;
-        }
-
-        if (!subjectId) {
-            toast.error("Please select a subject before saving");
             return;
         }
 
@@ -386,12 +368,11 @@ export default function PaperDesigner() {
             };
 
             const payload = {
-                id: savedId ? parseInt(savedId, 10) : undefined, 
+                id: savedId, 
                 settings: safeSettings,
                 paperQuestions,
                 status: 'Saved', // Finalized Status
-                email: user?.email,
-                subjectId: subjectId
+                email: user?.email 
             };
 
             const response = await fetch('/api/question-papers', {
@@ -416,10 +397,9 @@ export default function PaperDesigner() {
 
             toast.success("Paper saved successfully!");
 
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error('Save failed:', error);
-            const msg = error instanceof Error ? error.message : "Failed to save paper.";
-            toast.error(msg);
+            toast.error(error.message || "Failed to save paper.");
         } finally {
             setIsSaving(false);
         }
@@ -734,50 +714,47 @@ export default function PaperDesigner() {
 
             // Prepare data for the API
             const paperData = {
-                data: {
-                    title: settings.title,
-                    institution: settings.institution,
-                    duration: settings.duration,
-                    totalMarks: settings.totalMarks,
-                    template: settings.template,
-                    font: settings.font,
-                    fontSize: settings.fontSize,
-                    margin: settings.margin,
-                    
-                    // New Branding Fields
-                    logo: settings.logo,
-                    logoPosition: settings.logoPosition,
-                    layout: settings.layout,
-                    lineHeight: settings.lineHeight,
-                    answerSpace: settings.answerSpace,
-                    separator: settings.separator,
-                    pageBorder: settings.pageBorder,
-                    metaFontSize: settings.metaFontSize,
+                title: settings.title,
+                institution: settings.institution,
+                duration: settings.duration,
+                totalMarks: settings.totalMarks,
+                template: settings.template,
+                font: settings.font,
+                fontSize: settings.fontSize,
+                margin: settings.margin,
+                
+                // New Branding Fields
+                logo: settings.logo,
+                logoPosition: settings.logoPosition,
+                layout: settings.layout,
+                lineHeight: settings.lineHeight,
+                answerSpace: settings.answerSpace,
+                separator: settings.separator,
+                pageBorder: settings.pageBorder,
+                metaFontSize: settings.metaFontSize,
 
-                    date: settings.date,
-                    instructions: settings.instructions,
-                    contentAlignment: settings.contentAlignment,
-                    watermark: settings.watermark,
-                    studentName: settings.studentName,
-                    rollNumber: settings.rollNumber,
-                    classSection: settings.classSection,
-                    dateField: settings.dateField,
-                    invigilatorSign: settings.invigilatorSign,
-                    studentDetailsGap: settings.studentDetailsGap,
-                    footerText: settings.footerText,
-                    roughWorkArea: settings.roughWorkArea,
-                    pageNumbering: settings.pageNumbering,
-                    questions: paperQuestions.map(q => ({
-                        id: q.id,
-                        text: q.text,
-                        marks: q.marks,
-                        options: q.options?.map(opt => ({
-                            id: opt.id,
-                            text: opt.text
-                        }))
+                date: settings.date,
+                instructions: settings.instructions,
+                contentAlignment: settings.contentAlignment,
+                watermark: settings.watermark,
+                studentName: settings.studentName,
+                rollNumber: settings.rollNumber,
+                classSection: settings.classSection,
+                dateField: settings.dateField,
+                invigilatorSign: settings.invigilatorSign,
+                studentDetailsGap: settings.studentDetailsGap,
+                footerText: settings.footerText,
+                roughWorkArea: settings.roughWorkArea,
+                pageNumbering: settings.pageNumbering,
+                questions: paperQuestions.map(q => ({
+                    id: q.id,
+                    text: q.text,
+                    marks: q.marks,
+                    options: q.options?.map(opt => ({
+                        id: opt.id,
+                        text: opt.text
                     }))
-                },
-                email: user?.email
+                }))
             };
 
             // Call the Puppeteer API
@@ -883,21 +860,6 @@ export default function PaperDesigner() {
                                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <i className="ri-save-line"></i>}
                                 {isSaving ? 'Saving...' : 'Save'}
                             </button>
-                        </div>
-                    </div>
-
-                    {/* Subject Display */}
-                    <div className="settings-card" style={{ borderTop: subjectId ? '2px solid #06b6d4' : '2px solid #ef4444', padding: '12px 16px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <div>
-                                <label style={{ fontSize: '12px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Subject</label>
-                                <div style={{ fontSize: '16px', fontWeight: '600', marginTop: '4px', color: subjectId ? '#0f172a' : '#ef4444' }}>
-                                    {subjectId ? `✓ Subject ID: ${subjectId}` : '⚠️ No subject selected'}
-                                </div>
-                            </div>
-                            <div style={{ fontSize: '12px', color: '#64748b' }}>
-                                {subjectId ? 'Ready to save' : 'Required to save'}
-                            </div>
                         </div>
                     </div>
 
