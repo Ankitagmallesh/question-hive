@@ -160,7 +160,7 @@ export function QuestionGenerator({ onQuestionsGenerated, difficultyLevel, subje
     if (currentSessionId === sessionId) {
       const remainingSessions = sessions.filter((s) => s.id !== sessionId)
       if (remainingSessions.length > 0) {
-        const nextSession = remainingSessions[0]!
+        const nextSession = remainingSessions[0]
         setCurrentSessionId(nextSession.id)
         setMessages(nextSession.messages)
       } else {
@@ -345,7 +345,7 @@ export function QuestionGenerator({ onQuestionsGenerated, difficultyLevel, subje
     let questionCounter = 0
 
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i]?.trim() ?? ''
+      const line = lines[i].trim()
 
       if (line.match(/^(\d+\.|Q\d+|Question \d+|Q\d+\.)/i)) {
         if (currentQuestion.text) {

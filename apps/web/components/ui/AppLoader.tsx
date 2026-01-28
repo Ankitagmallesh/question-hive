@@ -12,9 +12,7 @@ export default function AppLoader({ text = "Loading..." }: AppLoaderProps) {
                 <div className="absolute inset-0 bg-blue-500 rounded-xl animate-ping opacity-20"></div>
                 
                 {/* Logo Container */}
-                <div className="relative w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                    <GraduationCap className="w-8 h-8 text-white" />
-                </div>
+                <img src="/logo-new.png" alt="Loading..." className="relative w-16 h-16 rounded-xl shadow-lg shadow-blue-500/20 object-contain" />
             </div>
             
             {/* Loading Grid/Dots Animation (Optional but adds flair) */}

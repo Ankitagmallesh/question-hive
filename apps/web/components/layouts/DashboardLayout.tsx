@@ -42,9 +42,7 @@ export default function DashboardLayout({ children, fullScreen = false }: { chil
         <div className={`flex items-center h-20 px-4 transition-all duration-300 ${menuOpen ? 'justify-between' : 'justify-center border-b border-transparent'}`}>
             {/* Logo Section - Visible only when Open */}
             <div className={`flex items-center gap-3 font-bold text-xl text-indigo-600 transition-all duration-200 overflow-hidden whitespace-nowrap ${menuOpen ? 'opacity-100 w-auto' : 'opacity-0 w-0 hidden'}`}>
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md shrink-0">
-                    <GraduationCap className="w-5 h-5 text-white" />
-                </div>
+                <img src="/logo-new.png" alt="Logo" className="w-8 h-8 rounded-lg shadow-md shrink-0" />
                 <span>Question Hive</span>
             </div>
 
