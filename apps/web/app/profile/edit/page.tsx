@@ -105,9 +105,7 @@ export default function EditProfilePage() {
                 <div className="max-w-5xl mx-auto px-2 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center py-4 sm:py-3">
                         <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                                <span className="text-white font-bold text-sm">QH</span>
-                            </div>
+                                <img src="/logo-new.png" alt="Logo" className="w-8 h-8 rounded-lg" />
                             <h1 className="text-2xl font-bold text-gray-900">Question Hive</h1>
                         </div>
                         <ProfileMenu user={user} onLogout={handleLogout} />

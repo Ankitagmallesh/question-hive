@@ -39,8 +39,10 @@ import {
   PieChart,
   Sliders,
   GraduationCap,
-  Landmark
+  Landmark,
+  Mail
 } from "lucide-react";
+import { AnnouncementBar } from "../components/AnnouncementBar";
 
 // --- Components ---
 
@@ -123,13 +125,13 @@ export default function LandingPage() {
   return (
     <div className="text-slate-900 bg-white overflow-x-hidden selection:bg-blue-100 selection:text-blue-900">
       
-      {/* Navbar */}
-      <nav className={`fixed top-0 left-0 right-0 h-[70px] z-50 flex items-center transition-all duration-300 ${isScrolled ? 'bg-white/85 backdrop-blur-md border-b border-slate-200' : 'bg-white/0'}`}>
+      {/* Navbar & Announcement */}
+      <div className="fixed top-0 left-0 right-0 z-50 flex flex-col">
+        <AnnouncementBar />
+        <nav className={`w-full h-[70px] flex items-center transition-all duration-300 ${isScrolled ? 'bg-white/85 backdrop-blur-md border-b border-slate-200' : 'bg-white/0'}`}>
         <div className="w-full max-w-[1200px] mx-auto px-6 flex justify-between items-center relative z-50">
             <Link href="/" className="flex items-center gap-2.5 font-extrabold text-xl tracking-tight text-slate-900">
-                <div className="w-8 h-8 bg-blue-600 text-white rounded-lg grid place-items-center shadow-lg shadow-blue-200">
-                    <Layers size={18} strokeWidth={2.5} />
-                </div>
+                <img src="/logo-new.png" alt="Logo" className="w-8 h-8 rounded-lg shadow-sm" />
                 Question Hive
             </Link>
 
@@ -172,7 +174,8 @@ export default function LandingPage() {
                 </motion.div>
             )}
         </AnimatePresence>
-      </nav>
+        </nav>
+      </div>
 
       {/* Hero Section */}
       <section className="pt-32 pb-16 text-center relative overflow-hidden bg-white">
@@ -311,12 +314,64 @@ export default function LandingPage() {
                     viewport={{ once: true }}
                     className="md:row-span-2 bg-blue-600 rounded-3xl p-8 text-white flex flex-col relative overflow-hidden group hover:shadow-xl transition-all"
                 >
-                    <div className="relative z-10">
-                        <div className="w-12 h-12 bg-white/20 rounded-xl grid place-items-center mb-6">
-                            <Wand2 className="text-white" />
+                    <div className="relative z-10 flex flex-col h-full">
+                        <div className="mb-4">
+                            <div className="w-12 h-12 bg-white/20 rounded-xl grid place-items-center mb-6">
+                                <Wand2 className="text-white" />
+                            </div>
+                            <h3 className="text-2xl font-bold mb-3">AI Auto-Gen</h3>
+                            <p className="text-blue-100 leading-relaxed">Select your topic, difficulty, and marks. Our AI builds a balanced paper in 3 seconds flat.</p>
                         </div>
-                        <h3 className="text-2xl font-bold mb-3">AI Auto-Gen</h3>
-                        <p className="text-blue-100 leading-relaxed">Select your topic, difficulty, and marks. Our AI builds a balanced paper in 3 seconds flat.</p>
+                        
+                        {/* Logos Area */}
+                        <div className="flex-1 w-full bg-blue-700/30 rounded-2xl border border-blue-500/30 flex flex-col items-center justify-center gap-6 mt-4 p-6 relative overflow-hidden">
+                             {/* Background Glow */}
+                             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-transparent pointer-events-none" />
+                             
+                             {/* Floating Elements Background */}
+                             <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                                {/* Top Right Gemini */}
+                                <svg className="absolute top-4 right-4 w-12 h-12 opacity-40 rotate-12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M21.8726 10.932C17.3888 10.932 13.9317 7.42591 13.9317 3.0137C13.9317 2.44962 13.4821 2 12.918 2C12.3539 2 11.9043 2.44962 11.9043 3.0137C11.9043 7.42591 8.44725 10.932 3.96342 10.932C3.39934 10.932 2.94971 11.3816 2.94971 11.9457C2.94971 12.5098 3.39934 12.9594 3.96342 12.9594C8.44725 12.9594 11.9043 16.4655 11.9043 20.8777C11.9043 21.4418 12.3539 21.8914 12.918 21.8914C13.4821 21.8914 13.9317 21.4418 13.9317 20.8777C13.9317 16.4655 17.3888 12.9594 21.8726 12.9594C22.4367 12.9594 22.8863 12.5098 22.8863 11.9457C22.8863 11.3816 22.4367 10.932 21.8726 10.932Z" fill="white" />
+                                </svg>
+
+                                {/* Bottom Left Gemini */}
+                                <svg className="absolute bottom-6 left-6 w-16 h-16 opacity-30 -rotate-12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M21.8726 10.932C17.3888 10.932 13.9317 7.42591 13.9317 3.0137C13.9317 2.44962 13.4821 2 12.918 2C12.3539 2 11.9043 2.44962 11.9043 3.0137C11.9043 7.42591 8.44725 10.932 3.96342 10.932C3.39934 10.932 2.94971 11.3816 2.94971 11.9457C2.94971 12.5098 3.39934 12.9594 3.96342 12.9594C8.44725 12.9594 11.9043 16.4655 11.9043 20.8777C11.9043 21.4418 12.3539 21.8914 12.918 21.8914C13.4821 21.8914 13.9317 21.4418 13.9317 20.8777C13.9317 16.4655 17.3888 12.9594 21.8726 12.9594C22.4367 12.9594 22.8863 12.5098 22.8863 11.9457C22.8863 11.3816 22.4367 10.932 21.8726 10.932Z" fill="white" />
+                                </svg>
+                                
+                                {/* Top Left Sparkle */}
+                                <Sparkles className="absolute top-10 left-8 w-6 h-6 text-amber-300 opacity-60 animate-pulse" />
+                                
+                                {/* Bottom Right Sparkle */}
+                                <Sparkles className="absolute bottom-12 right-10 w-8 h-8 text-amber-300 opacity-50" />
+
+                                {/* Middle Right Small Gemini */}
+                                <svg className="absolute top-1/2 right-4 w-8 h-8 opacity-25" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M21.8726 10.932C17.3888 10.932 13.9317 7.42591 13.9317 3.0137C13.9317 2.44962 13.4821 2 12.918 2C12.3539 2 11.9043 2.44962 11.9043 3.0137C11.9043 7.42591 8.44725 10.932 3.96342 10.932C3.39934 10.932 2.94971 11.3816 2.94971 11.9457C2.94971 12.5098 3.39934 12.9594 3.96342 12.9594C8.44725 12.9594 11.9043 16.4655 11.9043 20.8777C11.9043 21.4418 12.3539 21.8914 12.918 21.8914C13.4821 21.8914 13.9317 21.4418 13.9317 20.8777C13.9317 16.4655 17.3888 12.9594 21.8726 12.9594C22.4367 12.9594 22.8863 12.5098 22.8863 11.9457C22.8863 11.3816 22.4367 10.932 21.8726 10.932Z" fill="white" />
+                                </svg>
+                             </div>
+
+                            {/* Center Main Gemini Logo */}
+                            <div className="flex flex-col items-center gap-6 relative z-10">
+                                <div className="relative">
+                                    {/* Enhanced Glow Effect */}
+                                    <div className="absolute inset-0 bg-white/20 blur-3xl rounded-full scale-150" />
+                                    
+                                    <svg className="w-40 h-40 relative z-10 drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M21.8726 10.932C17.3888 10.932 13.9317 7.42591 13.9317 3.0137C13.9317 2.44962 13.4821 2 12.918 2C12.3539 2 11.9043 2.44962 11.9043 3.0137C11.9043 7.42591 8.44725 10.932 3.96342 10.932C3.39934 10.932 2.94971 11.3816 2.94971 11.9457C2.94971 12.5098 3.39934 12.9594 3.96342 12.9594C8.44725 12.9594 11.9043 16.4655 11.9043 20.8777C11.9043 21.4418 12.3539 21.8914 12.918 21.8914C13.4821 21.8914 13.9317 21.4418 13.9317 20.8777C13.9317 16.4655 17.3888 12.9594 21.8726 12.9594C22.4367 12.9594 22.8863 12.5098 22.8863 11.9457C22.8863 11.3816 22.4367 10.932 21.8726 10.932Z" fill="url(#gemini-gradient)" />
+                                        <defs>
+                                            <linearGradient id="gemini-gradient" x1="2.94971" y1="2" x2="22.8863" y2="21.8914" gradientUnits="userSpaceOnUse">
+                                                <stop stopColor="#4E8CF7" />
+                                                <stop offset="0.5" stopColor="#E2546D" />
+                                                <stop offset="1" stopColor="#F5D060" />
+                                            </linearGradient>
+                                        </defs>
+                                    </svg>
+                                </div>
+                                <span className="text-xl font-bold text-white tracking-wide drop-shadow-md">Powered by Gemini</span>
+                            </div>
+                        </div>
                     </div>
                 </motion.div>
 
@@ -494,10 +549,10 @@ export default function LandingPage() {
       <section className="py-24 bg-white relative overflow-hidden" id="about">
         <div className="absolute inset-0 h-full w-full bg-[radial-gradient(#94a3b8_1px,transparent_0.1px)] [background-size:16px_16px] opacity-40 pointer-events-none" />
         <div className="container max-w-[1200px] mx-auto px-6 relative z-10">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+            <div className="max-w-3xl mx-auto text-center">
                  <motion.div 
-                    initial={{ opacity: 0, x: -30 }}
-                    whileInView={{ opacity: 1, x: 0 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                  >
                     <span className="text-blue-600 font-bold tracking-widest text-sm uppercase mb-2 block">Our Mission</span>
@@ -509,7 +564,7 @@ export default function LandingPage() {
                         Our goal is to give back 10 hours every week to every educator by automating the tedious parts of assessment creation.
                     </p>
 
-                    <div className="flex gap-12 pt-8 border-t border-slate-100">
+                    <div className="flex justify-center gap-12 pt-8 border-t border-slate-100">
                         <div>
                             <h4 className="text-4xl font-extrabold text-blue-600 mb-1"><AnimatedCountUp to={500} />+</h4>
                             <p className="font-bold text-slate-500 text-sm">Schools Partnered</p>
@@ -519,19 +574,6 @@ export default function LandingPage() {
                             <p className="font-bold text-slate-500 text-sm">Questions Banked</p>
                         </div>
                     </div>
-                </motion.div>
-                
-                <motion.div 
-                    initial={{ opacity: 0, x: 30 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    className="relative rounded-3xl overflow-hidden aspect-[4/5] bg-slate-100"
-                >
-                    <div className="absolute inset-0 bg-blue-500/10" />
-                     {/* Placeholder for About Image */}
-                     <div className="absolute inset-0 grid place-items-center text-slate-300">
-                        <Users size={64} />
-                     </div>
                 </motion.div>
             </div>
         </div>
@@ -633,7 +675,7 @@ export default function LandingPage() {
                     transition={{ delay: 0.2 }}
                     className="bg-[#0B1120] text-white rounded-[20px] p-8 flex flex-col hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 relative group h-full xl:scale-110 z-10 border border-slate-800"
                 >
-                    <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">Most Popular</div>
+                    <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl rounded-tr-[20px] uppercase tracking-wider">Most Popular</div>
                     
                     <div className="mb-6">
                         <div className="w-12 h-12 bg-blue-600/20 rounded-xl grid place-items-center mb-4 text-blue-400">
@@ -744,6 +786,100 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Contact Us Section */}
+      <section className="py-24 bg-white relative overflow-hidden" id="contact">
+          <div className="absolute inset-0 h-full w-full bg-[radial-gradient(#94a3b8_1px,transparent_0.1px)] [background-size:16px_16px] opacity-40 pointer-events-none" />
+          <div className="container max-w-[1200px] mx-auto px-6 relative z-10">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                  
+                  {/* Left Content */}
+                  <div>
+                      <span className="inline-block px-4 py-1.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wider mb-4">Contact Us</span>
+                      <h2 className="text-4xl font-extrabold text-slate-900 mb-6">Let's Transform Your Institution Together</h2>
+                      <p className="text-lg text-slate-500 mb-8 leading-relaxed">
+                          Whether you're looking to modernize your assessments, save faculty time, or improve student outcomes, we're here to help.
+                      </p>
+                      
+                      <div className="space-y-6">
+                          <div className="flex items-start gap-4">
+                              <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 grid place-items-center shrink-0">
+                                  <Mail size={24} />
+                              </div>
+                              <div>
+                                  <h4 className="text-lg font-bold text-slate-900 mb-1">Email Us</h4>
+                                  <p className="text-slate-500">support@questionhive.in</p>
+                              </div>
+                          </div>
+                          
+                          <div className="flex items-start gap-4">
+                              <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 grid place-items-center shrink-0">
+                                  <Users size={24} />
+                              </div>
+                              <div>
+                                  <h4 className="text-lg font-bold text-slate-900 mb-1">Sales Team</h4>
+                                  <p className="text-slate-500">sales@questionhive.in</p>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+
+                  {/* Right Form */}
+                  <div className="bg-white rounded-[24px] p-8 shadow-2xl shadow-slate-200 border border-slate-100">
+                      <h3 className="text-2xl font-bold text-slate-900 mb-6">Get in Touch</h3>
+                      <form className="space-y-4">
+                          <div className="space-y-1.5">
+                              <label htmlFor="name" className="text-sm font-semibold text-slate-700">Full Name</label>
+                              <input 
+                                  type="text" 
+                                  id="name"
+                                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
+                                  placeholder="John Doe"
+                              />
+                          </div>
+                          
+                          <div className="space-y-1.5">
+                              <label htmlFor="phone" className="text-sm font-semibold text-slate-700">Phone Number</label>
+                              <input 
+                                  type="tel" 
+                                  id="phone"
+                                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
+                                  placeholder="+91 98765 43210"
+                              />
+                          </div>
+
+                          <div className="space-y-1.5">
+                              <label htmlFor="email" className="text-sm font-semibold text-slate-700">Email Address</label>
+                              <input 
+                                  type="email" 
+                                  id="email"
+                                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
+                                  placeholder="john@school.edu"
+                              />
+                          </div>
+
+                          <div className="space-y-1.5">
+                              <label htmlFor="institute" className="text-sm font-semibold text-slate-700">Institute Name</label>
+                              <input 
+                                  type="text" 
+                                  id="institute"
+                                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
+                                  placeholder="St. Xavier's High School"
+                              />
+                          </div>
+
+                          <button 
+                              type="submit" 
+                              className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors shadow-lg shadow-blue-200 mt-2"
+                          >
+                              Send Message
+                          </button>
+                      </form>
+                  </div>
+
+              </div>
+          </div>
+      </section>
+
       {/* Footer */}
       <footer className="bg-[#0C4A6E] text-sky-200 pt-20 pb-8 relative overflow-hidden">
         <div className="absolute top-[-50%] left-[-10%] w-[50%] h-[100%] bg-[radial-gradient(circle,rgba(37,99,235,0.2)_0%,transparent_60%)] pointer-events-none animate-pulse" />
@@ -752,9 +888,7 @@ export default function LandingPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-16">
                 <div className="lg:col-span-2">
                     <Link href="/" className="flex items-center gap-2.5 font-bold text-xl text-white mb-6">
-                        <div className="w-8 h-8 bg-blue-500 rounded-lg grid place-items-center text-white shadow-lg">
-                            <Layers size={18} strokeWidth={2.5} />
-                        </div>
+                        <img src="/logo.jpg" alt="Logo" className="w-8 h-8 rounded-lg shadow-lg" />
                         Question Hive
                     </Link>
                     <p className="text-sky-100/80 leading-relaxed max-w-sm text-sm">
@@ -796,9 +930,10 @@ export default function LandingPage() {
                 <p className="text-sm text-sky-200/60">&copy; 2026 Question Hive Inc. All rights reserved.</p>
                 <div className="flex gap-4">
                     <a href="#" className="w-10 h-10 rounded-full bg-white/5 hover:bg-blue-600 hover:text-white transition-all grid place-items-center"><Twitter size={18} /></a>
-                    <a href="#" className="w-10 h-10 rounded-full bg-white/5 hover:bg-blue-600 hover:text-white transition-all grid place-items-center"><Linkedin size={18} /></a>
+                    <a href="https://www.linkedin.com/company/question-hive/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 hover:bg-blue-600 hover:text-white transition-all grid place-items-center"><Linkedin size={18} /></a>
                     <a href="#" className="w-10 h-10 rounded-full bg-white/5 hover:bg-blue-600 hover:text-white transition-all grid place-items-center"><Github size={18} /></a>
-                    <a href="#" className="w-10 h-10 rounded-full bg-white/5 hover:bg-blue-600 hover:text-white transition-all grid place-items-center"><Instagram size={18} /></a>
+                    <a href="https://www.instagram.com/questionhive.in/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 hover:bg-blue-600 hover:text-white transition-all grid place-items-center"><Instagram size={18} /></a>
+                    <a href="mailto:support@questionhive.in" className="w-10 h-10 rounded-full bg-white/5 hover:bg-blue-600 hover:text-white transition-all grid place-items-center"><Mail size={18} /></a>
                 </div>
             </div>
         </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence, type Variants } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
     GraduationCap, 
     BookOpen, 
@@ -24,7 +24,7 @@ import AppLoader from '../../components/ui/AppLoader';
 import LoadingOverlay from '../../components/LoadingOverlay';
 
 // Animation variants
-const containerVariants: Variants = {
+const containerVariants = {
     hidden: { opacity: 0 },
     visible: { 
         opacity: 1,
@@ -34,7 +34,7 @@ const containerVariants: Variants = {
     }
 };
 
-const itemVariants: Variants = {
+const itemVariants = {
     hidden: { opacity: 0, y: 15 },
     visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
 };
@@ -159,7 +159,7 @@ export default function SelectModules() {
     const isAllSelected = chapters.length > 0 && chapters.every(c => selectedChapters.includes(c.id));
 
     const handleGenerate = () => {
-        if (!selectedExamId || selectedChapters.length === 0 || !selectedSubjectId) return;
+        if (!selectedExamId || selectedChapters.length === 0) return;
         
         const examName = exams.find(e => e.id === selectedExamId)?.name || '';
         // Find all subjects involved in the selection (in case we support multi-subject later, though UI is single view)
@@ -178,8 +178,7 @@ export default function SelectModules() {
         const params = new URLSearchParams({
             exam: examName,
             subjects: selectedSubjectNames.join(','),
-            chapters: chapterNames.join(','),
-            subjectId: selectedSubjectId.toString()
+            chapters: chapterNames.join(',')
         });
         router.push(`/question-papers/create?${params.toString()}`);
     };
