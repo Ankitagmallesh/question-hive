@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { ContactForm } from "../components/landing/ContactForm";
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from "framer-motion";
 import { 
   ArrowRight, 
@@ -43,6 +44,7 @@ import {
   Mail
 } from "lucide-react";
 import { AnnouncementBar } from "../components/AnnouncementBar";
+import { HeroInterface } from "../components/landing/HeroInterface";
 
 // --- Components ---
 
@@ -219,25 +221,7 @@ export default function LandingPage() {
                 transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
                 className="mt-16 max-w-[1000px] mx-auto bg-white rounded-xl border border-slate-200 shadow-[0_25px_50px_-12px_rgba(37,99,235,0.25)] overflow-hidden relative group perspective-[1000px]"
             >
-                <div className="h-10 bg-slate-50 border-b border-slate-200 flex items-center px-4 gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-rose-400" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                </div>
-                <div className="relative">
-                    {/* Placeholder Image */}
-                    {/* Video Placeholder */}
-                    {/* Video Placeholder */}
-                    <div className="bg-slate-50 relative flex items-center justify-center overflow-hidden">
-                        <img 
-                            src="/placeholder.png" 
-                            alt="App Dashboard" 
-                            className="w-full h-auto"
-                        />
-                        {/* Glint Effect */}
-                        <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.1)_50%,transparent_75%)] opacity-0 group-hover:opacity-100 transition-opacity duration-700 bg-[length:250%_250%,100%_100%] bg-[position:0_0,0_0] group-hover:bg-[position:100%_100%,0_0] pointer-events-none" />
-                    </div>
-                </div>
+                <HeroInterface />
             </motion.div>
         </div>
       </section>
@@ -566,11 +550,7 @@ export default function LandingPage() {
 
                     <div className="flex justify-center gap-12 pt-8 border-t border-slate-100">
                         <div>
-                            <h4 className="text-4xl font-extrabold text-blue-600 mb-1"><AnimatedCountUp to={500} />+</h4>
-                            <p className="font-bold text-slate-500 text-sm">Schools Partnered</p>
-                        </div>
-                        <div>
-                            <h4 className="text-4xl font-extrabold text-blue-600 mb-1"><AnimatedCountUp to={1.2} decimals={1} />M</h4>
+                            <h4 className="text-4xl font-extrabold text-blue-600 mb-1"><AnimatedCountUp to={50} />K+</h4>
                             <p className="font-bold text-slate-500 text-sm">Questions Banked</p>
                         </div>
                     </div>
@@ -660,6 +640,18 @@ export default function LandingPage() {
                             <Check size={16} className="text-slate-900 mt-0.5 shrink-0" />
                             Basic Analytics
                         </li>
+                        <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                             <Check size={16} className="text-slate-900 mt-0.5 shrink-0" />
+                             Question Sharing
+                        </li>
+                        <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                             <Check size={16} className="text-slate-900 mt-0.5 shrink-0" />
+                             Collaborative Editing
+                        </li>
+                        <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                             <Check size={16} className="text-slate-900 mt-0.5 shrink-0" />
+                             PDF & Word Export
+                        </li>
                     </ul>
 
                      <Link href="/auth/register?plan=teams" className="w-full py-3 rounded-xl border-2 border-slate-200 text-slate-700 font-bold hover:border-slate-300 hover:bg-slate-50 transition-colors text-center">
@@ -706,6 +698,22 @@ export default function LandingPage() {
                             <Check size={16} className="text-blue-400 mt-0.5 shrink-0" />
                             Priority Support
                         </li>
+                        <li className="flex items-start gap-3 text-sm font-medium text-slate-300">
+                             <Check size={16} className="text-blue-400 mt-0.5 shrink-0" />
+                             Department-level Controls
+                        </li>
+                        <li className="flex items-start gap-3 text-sm font-medium text-slate-300">
+                             <Check size={16} className="text-blue-400 mt-0.5 shrink-0" />
+                             Bulk Student Upload
+                        </li>
+                        <li className="flex items-start gap-3 text-sm font-medium text-slate-300">
+                             <Check size={16} className="text-blue-400 mt-0.5 shrink-0" />
+                             Advanced Performance Analytics
+                        </li>
+                        <li className="flex items-start gap-3 text-sm font-medium text-slate-300">
+                             <Check size={16} className="text-blue-400 mt-0.5 shrink-0" />
+                             Audit Logs
+                        </li>
                     </ul>
 
                      <Link href="/auth/register?plan=institution" className="w-full py-4 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors text-center shadow-lg shadow-blue-900/40">
@@ -749,6 +757,22 @@ export default function LandingPage() {
                             <Check size={16} className="text-slate-900 mt-0.5 shrink-0" />
                              Custom Contracts
                         </li>
+                         <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                             <Check size={16} className="text-slate-900 mt-0.5 shrink-0" />
+                             Dedicated Success Manager
+                         </li>
+                         <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                             <Check size={16} className="text-slate-900 mt-0.5 shrink-0" />
+                             Custom Integrations (LMS/SIS)
+                         </li>
+                         <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                             <Check size={16} className="text-slate-900 mt-0.5 shrink-0" />
+                             Enterprise SLA (99.9% Uptime)
+                         </li>
+                         <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                             <Check size={16} className="text-slate-900 mt-0.5 shrink-0" />
+                             On-Premise / Private Cloud
+                         </li>
                     </ul>
 
                      <Link href="/contact" className="w-full py-3 rounded-xl border-2 border-slate-200 text-slate-700 font-bold hover:border-slate-300 hover:bg-slate-50 transition-colors text-center">
@@ -811,70 +835,12 @@ export default function LandingPage() {
                               </div>
                           </div>
                           
-                          <div className="flex items-start gap-4">
-                              <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 grid place-items-center shrink-0">
-                                  <Users size={24} />
-                              </div>
-                              <div>
-                                  <h4 className="text-lg font-bold text-slate-900 mb-1">Sales Team</h4>
-                                  <p className="text-slate-500">sales@questionhive.in</p>
-                              </div>
-                          </div>
+
                       </div>
                   </div>
 
                   {/* Right Form */}
-                  <div className="bg-white rounded-[24px] p-8 shadow-2xl shadow-slate-200 border border-slate-100">
-                      <h3 className="text-2xl font-bold text-slate-900 mb-6">Get in Touch</h3>
-                      <form className="space-y-4">
-                          <div className="space-y-1.5">
-                              <label htmlFor="name" className="text-sm font-semibold text-slate-700">Full Name</label>
-                              <input 
-                                  type="text" 
-                                  id="name"
-                                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
-                                  placeholder="John Doe"
-                              />
-                          </div>
-                          
-                          <div className="space-y-1.5">
-                              <label htmlFor="phone" className="text-sm font-semibold text-slate-700">Phone Number</label>
-                              <input 
-                                  type="tel" 
-                                  id="phone"
-                                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
-                                  placeholder="+91 98765 43210"
-                              />
-                          </div>
-
-                          <div className="space-y-1.5">
-                              <label htmlFor="email" className="text-sm font-semibold text-slate-700">Email Address</label>
-                              <input 
-                                  type="email" 
-                                  id="email"
-                                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
-                                  placeholder="john@school.edu"
-                              />
-                          </div>
-
-                          <div className="space-y-1.5">
-                              <label htmlFor="institute" className="text-sm font-semibold text-slate-700">Institute Name</label>
-                              <input 
-                                  type="text" 
-                                  id="institute"
-                                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
-                                  placeholder="St. Xavier's High School"
-                              />
-                          </div>
-
-                          <button 
-                              type="submit" 
-                              className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors shadow-lg shadow-blue-200 mt-2"
-                          >
-                              Send Message
-                          </button>
-                      </form>
-                  </div>
+                  <ContactForm />
 
               </div>
           </div>
