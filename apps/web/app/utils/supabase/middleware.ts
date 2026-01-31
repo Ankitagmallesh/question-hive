@@ -66,8 +66,8 @@ export async function updateSession(request: NextRequest) {
       path === '/terms' ||
       path === '/legal' ||
       // Explicitly allow auth routes
-      path === '/auth/login' ||
-      path === '/auth/register';
+      path === '/auth/register' ||
+      path.startsWith('/api/contact');
 
   // If NO user and trying to access protected route -> Redirect to Register
   if (
