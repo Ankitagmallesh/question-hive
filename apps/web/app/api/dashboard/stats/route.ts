@@ -17,7 +17,16 @@ export async function GET(req: Request) {
         const userRes = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
         
         if (userRes.length === 0) {
-            return NextResponse.json({ success: true, data: { stats: {}, recentPapers: [] } });
+            return NextResponse.json({ 
+                success: true, 
+                stats: {
+                    totalQuestions: 0,
+                    totalPapers: 0,
+                    typeBreakdown: [],
+                    difficultyBreakdown: []
+                }, 
+                recentPapers: [] 
+            });
         }
 
         const userId = userRes[0]!.id;

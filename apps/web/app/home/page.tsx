@@ -106,15 +106,17 @@ export default function DashboardPage() {
   }, []);
 
   const getCountByType = (typeName: string) => {
-    const type = stats.typeBreakdown.find(t => t.type.toLowerCase().includes(typeName.toLowerCase()));
+    if (!stats.typeBreakdown) return 0;
+    const type = stats.typeBreakdown.find(t => t.type?.toLowerCase().includes(typeName.toLowerCase()));
     return type ? type.count : 0;
   };
 
   const getDifficultyPercent = (levelName: string) => {
-      const totalDBQuestions = stats.difficultyBreakdown.reduce((acc, curr) => acc + curr.count, 0);
+      if (!stats.difficultyBreakdown || stats.difficultyBreakdown.length === 0) return 0;
+      const totalDBQuestions = stats.difficultyBreakdown.reduce((acc, curr) => acc + (curr.count || 0), 0);
       if (totalDBQuestions === 0) return 0;
       
-      const level = stats.difficultyBreakdown.find(d => d.difficulty.toLowerCase().includes(levelName.toLowerCase()));
+      const level = stats.difficultyBreakdown.find(d => d.difficulty?.toLowerCase().includes(levelName.toLowerCase()));
       return level ? Math.round((level.count / totalDBQuestions) * 100) : 0;
   };
 
