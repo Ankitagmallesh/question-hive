@@ -101,7 +101,7 @@ export default function PaperDesigner() {
     const [searchQuery, setSearchQuery] = useState('');
     const [showPreviewModal, setShowPreviewModal] = useState(false);
     const [priorityChapter, setPriorityChapter] = useState<string | null>(null);
-    const [zoomLevel, setZoomLevel] = useState(100);
+    const [zoomLevel, setZoomLevel] = useState(85);
 
     const [paperQuestions, setPaperQuestions] = useState<Question[]>([]);
     const [sourceQuestions, setSourceQuestions] = useState<Question[]>([]);
@@ -709,6 +709,41 @@ export default function PaperDesigner() {
         if (paperQuestions.length === 0) return;
 
         try {
+            // First, trigger a save to ensure the DB record matches the export
+            toast.info('Saving changes before export...', { duration: 2000 });
+            
+            const savedId = searchParams.get('savedId');
+            const safeSettings = {
+                ...settings,
+                duration: parseInt(settings.duration || '0') || 0,
+                totalMarks: parseInt(settings.totalMarks || '0') || 0,
+            };
+
+            const savePayload = {
+                id: savedId, 
+                settings: safeSettings,
+                paperQuestions,
+                status: 'Saved', 
+                email: user?.email 
+            };
+
+            const saveRes = await fetch('/api/question-papers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(savePayload)
+            });
+
+            if (!saveRes.ok) {
+                console.warn("Pre-export save failed, continuing with export anyway.");
+            } else {
+                const saveResult = await saveRes.json();
+                if (saveResult.paperId && (!savedId || savedId !== String(saveResult.paperId))) {
+                    const newParams = new URLSearchParams(searchParams.toString());
+                    newParams.set('savedId', String(saveResult.paperId));
+                    router.replace(`?${newParams.toString()}`, { scroll: false });
+                }
+            }
+
             toast.info('Generating PDF...', {
                 description: 'This may take a few seconds.'
             });
@@ -832,9 +867,13 @@ export default function PaperDesigner() {
 
     return (
         <DashboardLayout fullScreen={true}>
-            <div className="main-container" ref={containerRef}>
+            <div className={`main-container ${mobileTab === 'editor' ? 'editor-full' : 'preview-full'}`} ref={containerRef}>
                 
-                <div className={`editor-panel ${mobileTab === 'editor' ? 'block' : 'hidden'} lg:block`} style={{ width: `${leftPanelWidth}%` }} data-lenis-prevent>
+                <div 
+                    className={`editor-panel ${mobileTab === 'editor' ? 'block' : 'hidden'} lg:block`} 
+                    style={{ width: mobileTab === 'editor' ? '100%' : `${leftPanelWidth}%` }} 
+                    data-lenis-prevent
+                >
                     <div className="editor-header sticky top-0 z-20 bg-white -mt-4 -mx-4 pt-1 px-4 lg:-mt-8 lg:-mx-8 lg:pt-1 lg:px-8 pb-4 border-b border-slate-100/80 backdrop-blur-sm shadow-sm transition-all duration-200">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
@@ -846,7 +885,21 @@ export default function PaperDesigner() {
                             <div className="breadcrumbs">Home / {settings.chapters.join(', ')} / {settings.title}</div>
                         </div>
                         <div className="header-actions">
-                            <button className="btn-action hidden lg:flex" onClick={() => setShowPreviewModal(true)}><i className="ri-eye-line"></i> Preview</button>
+                            <div className="hidden lg:flex items-center bg-slate-100 p-1 rounded-xl mr-2">
+                                <button 
+                                    onClick={() => setMobileTab('editor')}
+                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${mobileTab === 'editor' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                >
+                                    Editor
+                                </button>
+                                <button 
+                                    onClick={() => setMobileTab('preview')}
+                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${mobileTab === 'preview' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                >
+                                    Preview
+                                </button>
+                            </div>
+                            <button className="btn-action hidden lg:flex" onClick={() => setShowPreviewModal(true)}><i className="ri-eye-line"></i> Popout</button>
                             <div className="flex items-center gap-1 bg-slate-100 rounded-lg px-2 py-1">
                                 <button className="p-1 hover:bg-slate-200 rounded text-slate-600 transition-colors" onClick={handleZoomOut} title="Zoom Out">
                                     <i className="ri-subtract-line"></i>
@@ -922,7 +975,7 @@ export default function PaperDesigner() {
 
                 </div>
 
-                <div className="resizer hidden lg:block" onMouseDown={handleResizeMouseDown}></div>
+                <div className={`resizer hidden ${mobileTab === 'preview' ? 'lg:flex' : ''}`} onMouseDown={handleResizeMouseDown}></div>
 
                 <PreviewPanel 
                     mobileTab={mobileTab}

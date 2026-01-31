@@ -148,13 +148,13 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-        <header className="flex justify-between items-center mb-10">
+        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-10">
             <div>
                 <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Welcome back, <span className="text-indigo-600">{userName || 'User'}!</span></h1>
                 <p className="text-slate-500 font-medium italic">{currentDate}</p>
             </div>
             
-            <div className="flex flex-col gap-2 bg-white px-4 py-3 rounded-2xl shadow-sm border border-slate-100 min-w-[240px]">
+            <div className="flex flex-col gap-2 bg-white px-4 py-3 rounded-2xl shadow-sm border border-slate-100 w-full sm:min-w-[240px] sm:w-auto">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
                          <div className="w-6 h-6 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600">
@@ -225,7 +225,7 @@ export default function DashboardPage() {
                             router.push('/question-papers');
                         }
                     }}
-                    className="hidden sm:block bg-slate-900 text-white px-8 py-3 rounded-xl font-bold text-sm hover:bg-indigo-600 transition-colors cursor-pointer"
+                    className="bg-slate-900 text-white px-6 sm:px-8 py-3 rounded-xl font-bold text-sm hover:bg-indigo-600 transition-colors cursor-pointer whitespace-nowrap"
                 >
                     Generate
                 </button>

@@ -145,41 +145,47 @@ export default function QuestionsPage() {
                         questions.map((question) => (
                             <Card key={question.id} className="hover:shadow-md transition-shadow">
                                 <CardContent className="p-6">
-                                    <div className="flex flex-col-reverse sm:flex-row justify-between items-start mb-4 gap-4">
+                                    <div className="flex flex-col lg:flex-row justify-between items-start mb-4 gap-4">
                                         <div className="flex-1 w-full">
-                                            <p className="text-lg font-medium text-gray-900 mb-2 break-words">
+                                            <p className="text-lg font-medium text-slate-900 mb-2 break-words leading-relaxed">
                                                 {question.text}
                                             </p>
-                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-600">
-                                                <span><strong>Subject:</strong> {question.subject}</span>
-                                                <span><strong>Chapter:</strong> {question.chapter}</span>
-                                                <span><strong>Marks:</strong> {question.marks}</span>
+                                            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-500 font-medium">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-slate-400">Subject:</span> {question.subject}
+                                                </div>
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-slate-400">Chapter:</span> {question.chapter}
+                                                </div>
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-slate-400">Marks:</span> <span className="text-slate-900 font-bold">{question.marks}</span>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="flex flex-row sm:flex-col gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 sm:ml-4">
-                                            <Badge className={`whitespace-nowrap ${getTypeColor(question.type)}`}>
+                                        <div className="flex flex-row lg:flex-col gap-2 w-full lg:w-auto overflow-x-auto pb-1 lg:pb-0 lg:ml-4 shrink-0">
+                                            <Badge className={`whitespace-nowrap rounded-lg px-3 py-1 border-none font-bold ${getTypeColor(question.type)}`}>
                                                 {question.type.toUpperCase()}
                                             </Badge>
-                                            <Badge className={`whitespace-nowrap ${getDifficultyColor(question.difficulty)}`}>
-                                                {question.difficulty}
+                                            <Badge className={`whitespace-nowrap rounded-lg px-3 py-1 border-none font-bold ${getDifficultyColor(question.difficulty)}`}>
+                                                {question.difficulty.toUpperCase()}
                                             </Badge>
                                         </div>
                                     </div>
 
                                     <Separator className="my-4" />
 
-                                    <div className="flex justify-between items-center">
-                                        <div className="text-sm text-gray-500">
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                        <div className="text-sm text-slate-400 font-medium">
                                             Created: {new Date(question.createdAt).toLocaleDateString()}
                                         </div>
-                                        <div className="flex space-x-2">
-                                            <Button variant="outline" size="sm">
+                                        <div className="flex w-full sm:w-auto gap-2">
+                                            <Button variant="outline" size="sm" className="flex-1 sm:flex-none rounded-xl">
                                                 Edit
                                             </Button>
-                                            <Button variant="outline" size="sm">
+                                            <Button variant="outline" size="sm" className="flex-1 sm:flex-none rounded-xl">
                                                 View
                                             </Button>
-                                            <Button variant="destructive" size="sm">
+                                            <Button variant="destructive" size="sm" className="flex-1 sm:flex-none rounded-xl">
                                                 Delete
                                             </Button>
                                         </div>

@@ -214,7 +214,6 @@ export default function SelectModules() {
             {/* Full Bleed Container - uses negative margins to counteract DashboardLayout padding */}
             <div className="
                 flex flex-col lg:flex-row bg-white
-                -mx-6 -mb-6 -mt-20 
                 lg:-mx-10 lg:-mb-10 lg:-mt-12
                 min-h-screen
                 relative z-0
