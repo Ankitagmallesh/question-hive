@@ -38,9 +38,7 @@ export const HeroInterface: React.FC = () => {
         <div className="flex items-center gap-2 md:gap-4 overflow-hidden">
           <div className="flex items-center gap-1.5 md:gap-2 cursor-pointer transition-colors min-w-0">
             {/* Logo placeholder if needed, or just text */}
-            <div className="relative w-7 h-7 md:w-8 md:h-8 flex-shrink-0 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xs">
-               QH
-            </div>
+            <img src="/logo-new.png" alt="Question Hive" className="w-7 h-7 md:w-8 md:h-8 flex-shrink-0 rounded-lg" />
             <div className="flex flex-col min-w-0">
                 <span className="text-xs md:text-sm font-semibold text-slate-900 font-serif truncate">Paper Designer</span>
                 <span className="text-[9px] md:text-[10px] text-slate-400 font-sans truncate hidden sm:block">Home / Physics / {paperTitle}</span>
