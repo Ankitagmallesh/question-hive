@@ -103,6 +103,12 @@ export default function PaperDesigner() {
     const [priorityChapter, setPriorityChapter] = useState<string | null>(null);
     const [zoomLevel, setZoomLevel] = useState(85);
 
+    useEffect(() => {
+        if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+            setZoomLevel(60);
+        }
+    }, []);
+
     const [paperQuestions, setPaperQuestions] = useState<Question[]>([]);
     const [sourceQuestions, setSourceQuestions] = useState<Question[]>([]);
     const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
@@ -874,15 +880,15 @@ export default function PaperDesigner() {
                     style={{ width: mobileTab === 'editor' ? '100%' : `${leftPanelWidth}%` }} 
                     data-lenis-prevent
                 >
-                    <div className="editor-header sticky top-0 z-20 bg-white -mt-4 -mx-4 pt-1 px-4 lg:-mt-8 lg:-mx-8 lg:pt-1 lg:px-8 pb-4 border-b border-slate-100/80 backdrop-blur-sm shadow-sm transition-all duration-200">
+                    <div className="editor-header sticky top-0 z-20 bg-white -mt-4 -mx-4 pt-1 px-4 lg:-mt-8 lg:-mx-8 lg:pt-1 lg:px-8 pb-3 border-b border-slate-100/80 backdrop-blur-sm shadow-sm transition-all duration-200">
                         <div>
-                            <div className="flex items-center gap-2 mb-1">
+                            <div className="flex items-center gap-1.5 mb-0.5">
                                 <button onClick={() => router.back()} className="p-1 hover:bg-slate-100 rounded-full">
-                                    <i className="ri-arrow-left-line text-slate-500" style={{fontSize: '18px'}}></i>
+                                    <i className="ri-arrow-left-line text-slate-500" style={{fontSize: '16px'}}></i>
                                 </button>
-                                <h1>Paper Designer</h1>
+                                <h1 className="text-xl lg:text-2xl">Paper Designer</h1>
                             </div>
-                            <div className="breadcrumbs">Home / {settings.chapters.join(', ')} / {settings.title}</div>
+                            <div className="breadcrumbs hidden lg:block">Home / {settings.chapters.join(', ')} / {settings.title}</div>
                         </div>
                         <div className="header-actions">
                             <div className="hidden lg:flex items-center bg-slate-100 p-1 rounded-xl mr-2">
