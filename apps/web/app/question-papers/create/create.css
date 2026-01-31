@@ -100,7 +100,16 @@ button { cursor: pointer; }
 
 .editor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
 .editor-header h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+
+@media (max-width: 1024px) {
+    .editor-header h1 { font-size: 20px; }
+}
+
 .breadcrumbs { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-top: 4px; }
+
+@media (max-width: 1024px) {
+    .breadcrumbs { display: none; }
+}
 
 .header-actions { display: flex; gap: 10px; }
 .btn-action {
@@ -237,6 +246,13 @@ label {
     transform-origin: top center;
     transform: scale(0.7);
     margin-bottom: -80mm; /* Compensate for empty space (297mm * 0.3 = ~89mm). -80mm leaves ~9mm gap */
+}
+
+@media (max-width: 1024px) {
+    .paper-sheet {
+        transform: scale(0.6);
+        margin-bottom: -118mm; /* Compensate for 297mm * 0.4 = ~118.8mm */
+    }
 }
 
 .paper-sheet:last-child {
@@ -656,24 +672,24 @@ label {
     }
 
     .ep-header-section {
-        padding: 20px 20px 10px 20px;
+        padding: 15px 15px 8px 15px;
     }
 
     .ep-settings-section {
-        padding: 0 20px;
+        padding: 0 15px;
     }
 
     .preview-panel {
         width: 100%;
-        padding: 20px 20px 120px 20px; /* Space for bottom nav & FAB */
+        padding: 10px 10px 120px 10px; /* Space for bottom nav & FAB */
     }
 
     .fab-export {
-        bottom: 90px; /* Above the bottom navigation pills */
-        right: 20px;
-        padding: 12px 20px;
+        bottom: 100px; /* Higher above the bottom navigation pills */
+        right: 16px;
+        padding: 12px 18px;
         font-size: 13px;
-        z-index: 40; /* Ensure it's above content but below modals/nav if needed */
+        z-index: 40;
     }
 
     /* Adjust checkbox grid for smaller screens */
