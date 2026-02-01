@@ -101,8 +101,8 @@ export default function DashboardLayout({ children, fullScreen = false }: { chil
         
         {/* Mobile Toggle (Floating) - Only visible on Mobile when closed, to reopen */}
         {!menuOpen && (
-            <div className="absolute top-6 left-6 z-10 lg:hidden">
-                 <button onClick={toggleMenu} className="p-2 bg-white rounded-lg shadow-sm text-slate-600">
+            <div className="fixed top-6 left-6 z-40 lg:hidden">
+                 <button onClick={toggleMenu} className="p-2 bg-white rounded-lg shadow-sm text-slate-600 border border-slate-100">
                     <Menu className="w-6 h-6" />
                  </button>
             </div>

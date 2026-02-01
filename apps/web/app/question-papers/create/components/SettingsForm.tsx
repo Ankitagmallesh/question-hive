@@ -265,7 +265,7 @@ export const SettingsForm = ({
                             <input 
                                 type="text" 
                                 className="input-box disabled-input" 
-                                value="Question Hive" 
+                                value={"Question Hive" as string} 
                                 disabled 
                                 readOnly
                                 style={{ backgroundColor: '#f1f5f9', color: '#64748b', cursor: 'not-allowed' }}

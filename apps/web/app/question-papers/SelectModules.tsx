@@ -53,7 +53,8 @@ export default function SelectModules() {
     const [selectedExamId, setSelectedExamId] = useState<number | null>(null);
     const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(null);
     const [selectedChapters, setSelectedChapters] = useState<number[]>([]);
-    
+    const [mobileStep, setMobileStep] = useState(1);
+
     // Auth Check
     useEffect(() => {
         if (authLoading) return;
@@ -72,8 +73,6 @@ export default function SelectModules() {
                 const json = await res.json();
                 if (json.success) {
                     setExams(json.data);
-                    // Auto-select first exam if available and none selected? 
-                    // Better to let user choose.
                 }
             } catch (e) {
                 console.error('Failed to load exams', e);
@@ -95,8 +94,8 @@ export default function SelectModules() {
                 const json = await res.json();
                 if (json.success) {
                     setSubjects(json.data);
-                    // Auto-select first subject to show something
-                    if (json.data.length > 0) {
+                    // On desktop, auto-select first subject to show something
+                    if (window.innerWidth >= 1024 && json.data.length > 0) {
                         setSelectedSubjectId(json.data[0].id);
                     }
                 }
@@ -118,11 +117,9 @@ export default function SelectModules() {
                 const res = await fetch(`/api/chapters?subjectId=${selectedSubjectId}`);
                 const json = await res.json();
                 if (json.success) {
-                    // Start with empty chapters then populate
-                    // Map generic qCount if not present (assuming API might not return it yet)
                     const data = json.data.map((c: any) => ({
                         ...c,
-                        qCount: c.qCount || Math.floor(Math.random() * 50) + 10 // Mock count if missing
+                        qCount: c.qCount || Math.floor(Math.random() * 50) + 10 
                     }));
                     setChapters(data);
                 }
@@ -134,6 +131,20 @@ export default function SelectModules() {
     }, [selectedSubjectId]);
 
     // Handlers
+    const handleExamSelect = (id: number) => {
+        setSelectedExamId(id);
+        setMobileStep(2);
+    };
+
+    const handleSubjectSelect = (id: number) => {
+        setSelectedSubjectId(id);
+        setMobileStep(3);
+    };
+
+    const handleMobileBack = () => {
+        if (mobileStep > 1) setMobileStep(prev => prev - 1);
+    };
+
     const toggleChapter = (id: number) => {
         setSelectedChapters(prev => 
             prev.includes(id) 
@@ -147,10 +158,8 @@ export default function SelectModules() {
         const allSelected = currentChapterIds.every(id => selectedChapters.includes(id));
         
         if (allSelected) {
-            // Deselect all visible chapters
             setSelectedChapters(prev => prev.filter(id => !currentChapterIds.includes(id)));
         } else {
-            // Select all visible chapters (merge with existing)
             const newSelection = new Set([...selectedChapters, ...currentChapterIds]);
             setSelectedChapters(Array.from(newSelection));
         }
@@ -162,13 +171,8 @@ export default function SelectModules() {
         if (!selectedExamId || selectedChapters.length === 0) return;
         
         const examName = exams.find(e => e.id === selectedExamId)?.name || '';
-        // Find all subjects involved in the selection (in case we support multi-subject later, though UI is single view)
-        // For now, simple logic:
         const selectedSubjectNames = subjects
-            .filter(s => s.id === selectedSubjectId) // Limit to current view? Or should we check all?
-            // If we allow cross-subject selection, we need to map back from chapters. 
-            // Since we don't have chapter->subject map easily available in client state without iterating everything, 
-            // let's assume single subject for now or just pass the current one.
+            .filter(s => s.id === selectedSubjectId)
             .map(s => s.name);
 
         const chapterNames = chapters
@@ -220,31 +224,47 @@ export default function SelectModules() {
             ">
                 
                 {/* LEFT SIDEBAR (Configuration) */}
-                <aside className="w-full lg:w-[320px] bg-slate-50 border-r border-slate-200 flex flex-col shrink-0 pt-20 lg:pt-0 lg:sticky lg:top-0 lg:h-screen overflow-y-auto">
+                <aside className={`
+                    w-full lg:w-[320px] bg-slate-50 border-r border-slate-200 flex-col shrink-0 pt-6 lg:pt-0 lg:sticky lg:top-0 lg:h-screen overflow-y-auto
+                    ${mobileStep < 3 ? 'flex' : 'hidden lg:flex'}
+                `}>
                     <div className="p-6">
                         {/* Branding space or removal */}
                         <div className="mt-4 lg:mt-8"></div>
+                        
+                        {/* Mobile Back Button */}
+                        {mobileStep === 2 && (
+                            <button onClick={handleMobileBack} className="lg:hidden mb-6 flex items-center gap-2 text-slate-500 font-bold text-sm">
+                                <i className="ri-arrow-left-line"></i> Back to Exams
+                            </button>
+                        )}
 
                         {/* 1. Target Exam */}
-                        <div className="mb-8">
+                        <div className={`mb-8 ${mobileStep === 1 ? 'block' : 'hidden lg:block'}`}>
                             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Target Examination</h3>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-col lg:flex-row lg:flex-wrap gap-3 lg:gap-2">
                                 {exams.map((exam) => {
                                     const isSelected = selectedExamId === exam.id;
                                     return (
                                         <button
                                             key={exam.id}
-                                            onClick={() => setSelectedExamId(exam.id)}
+                                            onClick={() => handleExamSelect(exam.id)}
                                             className={`
-                                                flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 border
+                                                flex items-center gap-3 lg:gap-2 px-4 py-4 lg:py-2 lg:px-3 rounded-xl lg:rounded-lg text-base lg:text-sm font-semibold transition-all duration-200 border w-full lg:w-auto
+                                                ${/neet/i.test(exam.name) ? 'order-first lg:order-none' : ''}
                                                 ${isSelected 
-                                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-md transform -translate-y-0.5' 
-                                                    : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-700 hover:-translate-y-0.5 hover:shadow-sm'
+                                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-600/20 lg:shadow-md transform -translate-y-0.5' 
+                                                    : 'bg-white text-slate-700 lg:text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-900 lg:hover:text-slate-700 hover:-translate-y-0.5 hover:shadow-sm'
                                                 }
                                             `}
                                         >
-                                            {getExamIcon(exam.name)}
+                                            <span className={`p-2 rounded-lg ${isSelected ? 'bg-white/20' : 'bg-slate-100'} lg:p-0 lg:bg-transparent`}>
+                                                {getExamIcon(exam.name)}
+                                            </span>
                                             {exam.name}
+                                            <span className="lg:hidden ml-auto">
+                                                <i className="ri-arrow-right-s-line text-lg opacity-50"></i>
+                                            </span>
                                         </button>
                                     );
                                 })}
@@ -252,7 +272,7 @@ export default function SelectModules() {
                         </div>
 
                         {/* 2. Discipline / Subject */}
-                        <div>
+                        <div className={`${mobileStep === 2 ? 'block' : 'hidden lg:block'}`}>
                             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Discipline</h3>
                             <div className="flex flex-col gap-3">
                                 {subjects.length === 0 && (
@@ -263,28 +283,31 @@ export default function SelectModules() {
                                     return (
                                         <button
                                             key={subject.id}
-                                            onClick={() => setSelectedSubjectId(subject.id)}
+                                            onClick={() => handleSubjectSelect(subject.id)}
                                             className={`
-                                                w-full flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 group text-left
+                                                w-full flex items-center gap-4 lg:gap-3 p-4 lg:p-3 rounded-xl border transition-all duration-200 group text-left
                                                 ${isSelected 
-                                                    ? 'bg-indigo-50 border-indigo-600 shadow-sm' 
+                                                    ? 'bg-indigo-50 border-indigo-600 shadow-md lg:shadow-sm ring-1 ring-indigo-600/10 lg:ring-0' 
                                                     : 'bg-white border-transparent hover:bg-white hover:shadow-md border-slate-100'
                                                 }
                                             `}
                                         >
                                             <div className={`
-                                                w-10 h-10 rounded-lg flex items-center justify-center transition-colors duration-200
-                                                ${isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-400 group-hover:text-slate-600'}
+                                                w-12 h-12 lg:w-10 lg:h-10 rounded-xl lg:rounded-lg flex items-center justify-center transition-colors duration-200
+                                                ${isSelected ? 'bg-indigo-600 text-white shadow-lg lg:shadow-none shadow-indigo-200' : 'bg-slate-100 text-slate-400 group-hover:text-slate-600'}
                                             `}>
                                                 {getSubjectIcon(subject.name)}
                                             </div>
                                             <div className="flex-1">
-                                                <div className={`font-bold text-sm ${isSelected ? 'text-indigo-900' : 'text-slate-700'}`}>
+                                                <div className={`font-bold text-base lg:text-sm ${isSelected ? 'text-indigo-900' : 'text-slate-700'}`}>
                                                     {subject.name}
                                                 </div>
-                                                <div className="text-[10px] text-slate-400 font-medium">
+                                                <div className="text-xs lg:text-[10px] text-slate-400 font-medium mt-0.5">
                                                     Select to view chapters
                                                 </div>
+                                            </div>
+                                            <div className="lg:hidden text-slate-300">
+                                                <i className="ri-arrow-right-s-line text-xl"></i>
                                             </div>
                                         </button>
                                     );
@@ -295,10 +318,14 @@ export default function SelectModules() {
                 </aside>
 
                 {/* RIGHT WORKSPACE (Main) */}
-                <main className="flex-1 flex flex-col relative bg-white pt-20 lg:pt-0">
+                <main className={`flex-1 flex-col relative bg-white pt-6 lg:pt-0 ${mobileStep === 3 ? 'flex' : 'hidden lg:flex'}`}>
                     {/* Header */}
-                    <div className="px-8 py-5 border-b border-slate-100 flex justify-between items-center z-10 shrink-0 bg-white mt-4 lg:mt-8 pr-24 relative">
+                    <div className="px-6 lg:px-8 py-5 border-b border-slate-100 flex justify-between items-center z-10 shrink-0 bg-white mt-4 lg:mt-8 pr-4 lg:pr-24 relative">
                         <div>
+                            {/* Mobile Back Button for Step 3 */}
+                            <button onClick={handleMobileBack} className="lg:hidden mb-3 flex items-center gap-2 text-slate-500 font-bold text-xs uppercase tracking-wider">
+                                <i className="ri-arrow-left-line"></i> Back to Subjects
+                            </button>
                             <h1 className="text-xl font-bold text-slate-900">Select Modules</h1>
                             <p className="text-sm text-slate-500 font-medium">Customize the syllabus coverage for this paper.</p>
                         </div>
@@ -309,7 +336,7 @@ export default function SelectModules() {
                             disabled={chapters.length === 0}
                             className={`flex items-center gap-3 cursor-pointer group ${chapters.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                            <span className="text-sm font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">Select All</span>
+                            <span className="text-sm font-bold text-slate-700 group-hover:text-indigo-600 transition-colors hidden sm:block">Select All</span>
                             <div className={`
                                 w-11 h-6 rounded-full p-1 transition-colors duration-300
                                 ${isAllSelected ? 'bg-indigo-600' : 'bg-slate-200'}

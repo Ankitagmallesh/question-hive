@@ -74,7 +74,26 @@ export default function RootLayout({
         <LenisProvider>
           {children}
           <Toaster />
-          <SonnerToaster />
+          <SonnerToaster 
+            position="top-right" 
+            theme="light"
+            richColors 
+            closeButton
+            toastOptions={{
+              style: {
+                background: 'white',
+                color: '#1e293b',
+                border: '1px solid #e2e8f0',
+                fontSize: '14px',
+                padding: '16px',
+                minWidth: '300px'
+              },
+              classNames: {
+                title: 'text-base font-bold text-slate-900',
+                description: 'text-sm font-medium text-slate-600',
+              }
+            }}
+          />
         </LenisProvider>
       </body>
     </html>

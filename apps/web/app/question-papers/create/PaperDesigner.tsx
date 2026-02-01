@@ -76,7 +76,7 @@ export default function PaperDesigner() {
         answerSpace: 'none',
         separator: 'none',
         
-        date: new Date().toISOString().split('T')[0],
+        date: (new Date().toISOString().split('T')[0]) as string,
         instructions: '<ul><li>All questions are compulsory.</li><li>Calculators are not allowed.</li></ul>',
         watermark: 'Question Hive',
         
@@ -105,7 +105,7 @@ export default function PaperDesigner() {
 
     useEffect(() => {
         if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-            setZoomLevel(60);
+            setZoomLevel(80);
         }
     }, []);
 
@@ -136,7 +136,7 @@ export default function PaperDesigner() {
                 setChatMessages(prev => {
                     const newHistory = [...prev];
                     const lastMsg = newHistory[newHistory.length - 1];
-                    if (lastMsg.role === 'assistant') {
+                    if (lastMsg && lastMsg.role === 'assistant') {
                         lastMsg.content = `I've generated ${object.questions?.length} questions for you. Click on any question to add it to your paper.`;
                         lastMsg.questions = object.questions as Question[];
                     }
@@ -873,56 +873,55 @@ export default function PaperDesigner() {
 
     return (
         <DashboardLayout fullScreen={true}>
-            <div className={`main-container ${mobileTab === 'editor' ? 'editor-full' : 'preview-full'}`} ref={containerRef}>
+            <div className={`main-container ${mobileTab === 'editor' ? 'editor-full' : 'preview-full'}`} ref={containerRef as React.RefObject<HTMLDivElement>}>
                 
                 <div 
                     className={`editor-panel ${mobileTab === 'editor' ? 'block' : 'hidden'} lg:block`} 
-                    style={{ width: mobileTab === 'editor' ? '100%' : `${leftPanelWidth}%` }} 
+                    style={{ '--left-width': `${leftPanelWidth}%` } as React.CSSProperties} 
                     data-lenis-prevent
                 >
-                    <div className="editor-header sticky top-0 z-20 bg-white -mt-4 -mx-4 pt-1 px-4 lg:-mt-8 lg:-mx-8 lg:pt-1 lg:px-8 pb-3 border-b border-slate-100/80 backdrop-blur-sm shadow-sm transition-all duration-200">
-                        <div>
-                            <div className="flex items-center gap-1.5 mb-0.5">
-                                <button onClick={() => router.back()} className="p-1 hover:bg-slate-100 rounded-full">
-                                    <i className="ri-arrow-left-line text-slate-500" style={{fontSize: '16px'}}></i>
+                    <div className="editor-header sticky top-0 z-20 bg-white/80 -mt-4 -mx-4 pt-4 px-4 lg:-mt-8 lg:-mx-8 lg:pt-4 lg:px-8 pb-3 border-b border-slate-100/80 backdrop-blur-md shadow-sm transition-all duration-200">
+                        <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center gap-2 overflow-hidden">
+                                <button onClick={() => router.back()} className="p-2 hover:bg-slate-100 rounded-xl transition-colors shrink-0">
+                                    <i className="ri-arrow-left-line text-slate-700" style={{fontSize: '20px'}}></i>
                                 </button>
-                                <h1 className="text-xl lg:text-2xl">Paper Designer</h1>
+                                <div className="min-w-0">
+                                    <h1 className="text-lg lg:text-2xl font-bold truncate">{settings.title || 'Paper Designer'}</h1>
+                                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate">
+                                        <span className="flex items-center gap-1"><i className="ri-folder-open-line"></i> {settings.chapters.length} Chapters</span>
+                                        <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                                        <span className="flex items-center gap-1"><i className="ri-question-line"></i> {paperQuestions.length} Qs</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="breadcrumbs hidden lg:block">Home / {settings.chapters.join(', ')} / {settings.title}</div>
-                        </div>
-                        <div className="header-actions">
-                            <div className="hidden lg:flex items-center bg-slate-100 p-1 rounded-xl mr-2">
-                                <button 
-                                    onClick={() => setMobileTab('editor')}
-                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${mobileTab === 'editor' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                                >
-                                    Editor
+                            
+                            <div className="flex items-center gap-2 shrink-0">
+
+                                
+                                <button className="p-2.5 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-100 lg:hidden" onClick={handleSavePaper} disabled={isSaving}>
+                                    {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <i className="ri-save-line text-lg"></i>}
                                 </button>
-                                <button 
-                                    onClick={() => setMobileTab('preview')}
-                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${mobileTab === 'preview' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                                >
-                                    Preview
+                                
+                                <button className="btn-action hidden lg:flex" onClick={handleSavePaper} disabled={isSaving}>
+                                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <i className="ri-save-line"></i>}
+                                    {isSaving ? 'Saving...' : 'Save'}
                                 </button>
+                                
+                                <div className="hidden lg:flex items-center gap-1 bg-slate-100 rounded-lg px-2 py-1">
+                                    <button className="p-1 hover:bg-slate-200 rounded text-slate-600 transition-colors" onClick={handleZoomOut} title="Zoom Out">
+                                        <i className="ri-subtract-line"></i>
+                                    </button>
+                                    <span className="text-xs font-bold w-10 text-center text-slate-700">{zoomLevel}%</span>
+                                    <button className="p-1 hover:bg-slate-200 rounded text-slate-600 transition-colors" onClick={handleZoomIn} title="Zoom In">
+                                        <i className="ri-add-line"></i>
+                                    </button>
+                                    <div className="w-px h-3 bg-slate-300 mx-1"></div>
+                                    <button className="p-1.5 hover:bg-slate-200 rounded text-slate-600 text-[10px] font-semibold transition-colors uppercase tracking-wider" onClick={handleZoomReset}>
+                                        Reset
+                                    </button>
+                                </div>
                             </div>
-                            <button className="btn-action hidden lg:flex" onClick={() => setShowPreviewModal(true)}><i className="ri-eye-line"></i> Popout</button>
-                            <div className="flex items-center gap-1 bg-slate-100 rounded-lg px-2 py-1">
-                                <button className="p-1 hover:bg-slate-200 rounded text-slate-600 transition-colors" onClick={handleZoomOut} title="Zoom Out">
-                                    <i className="ri-subtract-line"></i>
-                                </button>
-                                <span className="text-xs font-bold w-10 text-center text-slate-700">{zoomLevel}%</span>
-                                <button className="p-1 hover:bg-slate-200 rounded text-slate-600 transition-colors" onClick={handleZoomIn} title="Zoom In">
-                                    <i className="ri-add-line"></i>
-                                </button>
-                                <div className="w-px h-3 bg-slate-300 mx-1"></div>
-                                <button className="p-1.5 hover:bg-slate-200 rounded text-slate-600 text-[10px] font-semibold transition-colors uppercase tracking-wider" onClick={handleZoomReset}>
-                                    Reset
-                                </button>
-                            </div>
-                            <button className="btn-action" onClick={handleSavePaper} disabled={isSaving}>
-                                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <i className="ri-save-line"></i>}
-                                {isSaving ? 'Saving...' : 'Save'}
-                            </button>
                         </div>
                     </div>
 
@@ -981,7 +980,7 @@ export default function PaperDesigner() {
 
                 </div>
 
-                <div className={`resizer hidden ${mobileTab === 'preview' ? 'lg:flex' : ''}`} onMouseDown={handleResizeMouseDown}></div>
+                <div className={`resizer hidden lg:flex`} onMouseDown={handleResizeMouseDown}></div>
 
                 <PreviewPanel 
                     mobileTab={mobileTab}
