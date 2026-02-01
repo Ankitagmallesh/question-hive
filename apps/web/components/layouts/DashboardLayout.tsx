@@ -2,15 +2,15 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { GraduationCap, Menu, X, Home, BookOpen, FileText, BarChart2, Bookmark, User } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { GraduationCap, Menu, X, Home, BookOpen, FileText, BarChart2, Bookmark, User, ArrowLeft } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import { useSupabaseAuth } from '../../app/hooks/useSupabaseAuth';
 import { signOut } from '../../app/lib/google-auth';
 
 const navItems = [
     { name: 'Dashboard', path: '/home', icon: Home },
     { name: 'Question Bank', path: '/questions', icon: BookOpen },
-    { name: 'My Papers', path: '/question-papers', icon: FileText },
+    { name: 'Exams', path: '/question-papers', icon: FileText },
     { name: 'Analytics', path: '/analytics', icon: BarChart2 },
     { name: 'Saved', path: '/saved', icon: Bookmark },
     { name: 'Profile', path: '/profile', icon: User }
@@ -19,7 +19,9 @@ const navItems = [
 export default function DashboardLayout({ children, fullScreen = false }: { children: React.ReactNode, fullScreen?: boolean }) {
   const [menuOpen, setMenuOpen] = useState(false); 
   const pathname = usePathname();
+  const router = useRouter();
   const { user, loading } = useSupabaseAuth();
+  const isDashboard = pathname === '/home';
 
   const isActive = (path: string) => pathname === path || pathname?.startsWith(path + "/");
 
@@ -81,6 +83,16 @@ export default function DashboardLayout({ children, fullScreen = false }: { chil
       <main className={`flex-1 w-full min-h-screen transition-all duration-300 relative lg:ml-20 ${menuOpen ? 'lg:ml-64' : ''}`}>
         
         <div className={`${fullScreen ? "pt-6 lg:pt-0" : "p-6 lg:p-10 pt-6 lg:pt-12"} pb-24 lg:pb-10`}>
+            {/* Back Button - Show on all pages except Dashboard */}
+            {!isDashboard && (
+              <button 
+                onClick={() => router.back()}
+                className="mb-4 flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors font-semibold"
+              >
+                <ArrowLeft size={20} />
+                <span>Back</span>
+              </button>
+            )}
             {children}
         </div>
       </main>
