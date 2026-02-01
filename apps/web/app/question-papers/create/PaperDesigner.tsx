@@ -811,6 +811,18 @@ export default function PaperDesigner() {
 
             if (!response.ok) {
                 const errData = await response.json().catch(() => ({}));
+                
+                // Special handling for insufficient credits
+                if (response.status === 403) {
+                    toast.info(errData.error || 'Thank you for using the beta version', {
+                        description: errData.requiredCredits 
+                            ? `Required: ${errData.requiredCredits} credits | Available: ${errData.availableCredits} credits`
+                            : undefined,
+                        duration: 5000
+                    });
+                    return; // Don't throw error, just show message
+                }
+                
                 throw new Error(errData.error || 'Failed to generate PDF');
             }
             

@@ -406,7 +406,9 @@ export async function POST(req: Request) {
             return new NextResponse('Unauthorized', { status: 401 });
         }
 
-        const cost = data.questions.length;
+        // Count only MCQs (questions with options) - 1 MCQ = 1 credit
+        const mcqCount = data.questions.filter(q => q.options && q.options.length > 0).length;
+        const cost = mcqCount;
 
         // 1. Check if user has enough credits (Read-Only first)
         const [userRecord] = await db
@@ -420,7 +422,11 @@ export async function POST(req: Request) {
         }
 
         if (userRecord.credits < cost) {
-            return new NextResponse(JSON.stringify({ error: `Insufficient credits. You need ${cost} credits.` }), { 
+            return new NextResponse(JSON.stringify({ 
+                error: 'Thank you for using the beta version',
+                requiredCredits: cost,
+                availableCredits: userRecord.credits
+            }), { 
                 status: 403,
                 headers: { 'Content-Type': 'application/json' }
             });
