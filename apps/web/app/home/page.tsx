@@ -197,51 +197,64 @@ export default function DashboardPage() {
         {/* Stats Grid - 2 Col on Mobile, 3 on Desktop */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 mb-8 md:mb-8">
              {/* Card 1 */}
-            <div className="col-span-1 bg-white p-5 rounded-[1.5rem] border border-slate-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all duration-300">
-                <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                     <svg className="w-16 h-16 text-indigo-600" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+            <div className="col-span-1 bg-gradient-to-br from-white to-slate-50 p-5 rounded-[1.5rem] border border-slate-100 shadow-sm relative overflow-hidden group hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <div className="absolute -right-4 -top-4 p-4 opacity-[0.15] group-hover:opacity-25 transition-opacity rotate-12">
+                     <svg className="w-24 h-24 text-indigo-600" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
                 </div>
-                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2">Questions</p>
-                <div className="flex items-baseline gap-1">
-                    <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
-                       <CountUp to={stats.totalQuestions} />
-                    </h2>
-                    <span className="text-[10px] font-bold text-slate-400">Total</span>
+                <div className="relative z-10 flex flex-col h-full justify-between">
+                    <div>
+                        <p className="text-slate-400 text-[10px] uppercase font-bold tracking-widest mb-1">Total Questions</p>
+                        <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-none">
+                        <CountUp to={stats.totalQuestions} />
+                        </h2>
+                    </div>
+                    <div className="mt-3 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Available</span>
+                    </div>
                 </div>
             </div>
 
             {/* Card 2 */}
-            <div className="col-span-1 bg-white p-5 rounded-[1.5rem] border border-slate-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all duration-300">
-                <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                     <svg className="w-16 h-16 text-emerald-600" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+            <div className="col-span-1 bg-gradient-to-br from-white to-slate-50 p-5 rounded-[1.5rem] border border-slate-100 shadow-sm relative overflow-hidden group hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <div className="absolute -right-4 -top-4 p-4 opacity-[0.15] group-hover:opacity-25 transition-opacity rotate-12">
+                     <svg className="w-24 h-24 text-emerald-600" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
                 </div>
-                 <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2">Papers</p>
-                <div className="flex items-baseline gap-1">
-                    <h2 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
-                       <CountUp to={stats.totalPapers} />
-                    </h2>
-                    <span className="text-[10px] font-bold text-slate-400">Created</span>
+                <div className="relative z-10 flex flex-col h-full justify-between">
+                    <div>
+                        <p className="text-slate-400 text-[10px] uppercase font-bold tracking-widest mb-1">Exam Papers</p>
+                        <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-none">
+                        <CountUp to={stats.totalPapers} />
+                        </h2>
+                    </div>
+                    <div className="mt-3 flex items-center gap-1.5">
+                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Created</span>
+                    </div>
                 </div>
             </div>
 
-             {/* Card 3 - Full Width on Mobile */}
-            <Link href="/question-papers" className="col-span-2 md:col-span-1 relative overflow-hidden rounded-[1.5rem] p-6 flex flex-row md:flex-col items-center justify-between shadow-xl shadow-indigo-200 group hover:-translate-y-1 transition-transform duration-300 cursor-pointer">
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-800"></div>
+             {/* Card 3 - Full Width on Mobile, but unified style */}
+            <Link href="/question-papers" className="col-span-2 md:col-span-1 relative overflow-hidden rounded-[1.5rem] p-6 flex flex-col justify-between shadow-xl shadow-indigo-200 group hover:-translate-y-1 transition-transform duration-300 cursor-pointer min-h-[140px]">
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600"></div>
                 
-                {/* Decorative circles */}
-                <div className="absolute top-0 right-0 -mr-8 -mt-8 w-24 h-24 rounded-full bg-white/10 blur-xl"></div>
-                <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-32 h-32 rounded-full bg-white/10 blur-xl"></div>
+                {/* Decorative elements */}
+                <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-white/10 blur-2xl animate-pulse"></div>
+                <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-32 h-32 rounded-full bg-white/10 blur-2xl"></div>
 
-                <div className="relative z-10 text-left">
-                    <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold text-white mb-2 border border-white/10">
+                <div className="relative z-10 flex justify-between items-start">
+                    <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold text-white border border-white/10 shadow-sm">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
                         NEW
                     </div>
-                    <p className="text-white text-xl md:text-2xl font-black leading-tight">AI Generator</p>
-                    <p className="text-indigo-100 text-xs font-medium mt-1">Instant Papers</p>
+                    <div className="bg-white/20 p-2 rounded-xl backdrop-blur-sm border border-white/10 group-hover:scale-110 transition-transform shadow-sm">
+                         <span className="text-2xl">✨</span>
+                    </div>
                 </div>
-                <div className="relative z-10 bg-white/10 p-3 rounded-2xl backdrop-blur-sm border border-white/10 group-hover:bg-white/20 transition-colors">
-                     <span className="text-3xl">✨</span>
+
+                <div className="relative z-10 mt-4">
+                    <p className="text-white text-2xl font-black leading-tight tracking-tight">AI Generator</p>
+                    <p className="text-indigo-100/80 text-xs font-semibold mt-1">Instant Question Papers</p>
                 </div>
             </Link>
         </div>
