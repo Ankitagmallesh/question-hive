@@ -51,8 +51,6 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
                     />
                 </div>
             </div>
-            
-            <button className="fab-export" onClick={handleExportClick}><i className="ri-file-pdf-line"></i> Export PDF</button>
         </div>
     );
 };

@@ -1045,6 +1045,15 @@ export default function PaperDesigner() {
 
             </div>
 
+             {/* Export PDF Button (Mobile - Above Toggle) */}
+            <button 
+                onClick={handleExportClick}
+                className="lg:hidden fixed bottom-36 left-1/2 -translate-x-1/2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-full shadow-2xl z-50 flex items-center gap-2 font-bold transition-all"
+            >
+                <i className="ri-file-pdf-line text-lg"></i>
+                Export PDF
+            </button>
+
              {/* Mobile View Toggle (Fixed Above Bottom Nav) */}
             <div className="lg:hidden fixed bottom-20 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white backdrop-blur-md px-1 p-1 rounded-full shadow-2xl z-50 flex items-center gap-1 border border-slate-700/50">
                 <button 
