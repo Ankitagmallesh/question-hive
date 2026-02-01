@@ -163,13 +163,22 @@ export default function LandingPage() {
                     exit={{ opacity: 0, y: -20 }}
                     className="fixed inset-0 bg-white z-40 pt-24 px-6 md:hidden flex flex-col gap-6"
                 >
-                    <div className="flex flex-col gap-6 text-2xl font-bold text-slate-900">
-                        <a href="#features" onClick={() => setMobileMenuOpen(false)}>Features</a>
-                        <a href="#schools" onClick={() => setMobileMenuOpen(false)}>For Schools</a>
-                        <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
+                    <div className="flex flex-col gap-2">
+                        <a href="#features" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-between py-4 border-b border-slate-100 text-xl font-bold text-slate-900 group">
+                            Features 
+                            <ChevronRight className="text-slate-300 group-hover:text-blue-600 transition-colors" />
+                        </a>
+                        <a href="#schools" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-between py-4 border-b border-slate-100 text-xl font-bold text-slate-900 group">
+                            For Schools
+                            <ChevronRight className="text-slate-300 group-hover:text-blue-600 transition-colors" />
+                        </a>
+                        <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-between py-4 border-b border-slate-100 text-xl font-bold text-slate-900 group">
+                            Pricing
+                            <ChevronRight className="text-slate-300 group-hover:text-blue-600 transition-colors" />
+                        </a>
                     </div>
                     
-                    <div className="mt-8 border-t border-slate-100 pt-8 flex flex-col gap-4">
+                    <div className="mt-auto pb-10 flex flex-col gap-4">
                         <Link href="/auth/login" className="w-full py-4 rounded-xl border-2 border-slate-200 text-center font-bold text-slate-700">Log In</Link>
                         <Link href="/auth/register" className="w-full py-4 rounded-xl bg-blue-600 text-white text-center font-bold shadow-xl shadow-blue-200">Start Free</Link>
                     </div>
@@ -365,7 +374,7 @@ export default function LandingPage() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: 0.1 }}
-                    className="md:col-span-2 bg-white rounded-3xl border border-slate-200 p-8 flex flex-col md:flex-row justify-between relative overflow-hidden hover:border-blue-200 hover:shadow-lg transition-all"
+                    className="md:col-span-2 bg-white rounded-3xl border border-slate-200 p-8 flex flex-col md:flex-row justify-between relative overflow-hidden hover:border-blue-200 hover:shadow-lg transition-all gap-6 md:gap-0"
                 >
                      <div className="max-w-xs z-10 relative">
                         <div className="w-12 h-12 bg-blue-50 rounded-xl grid place-items-center mb-6 text-blue-600">
@@ -378,7 +387,7 @@ export default function LandingPage() {
                     <img 
                         src="/image1.png" 
                         alt="PDF Formatting Preview" 
-                        className="absolute -bottom-4 -right-4 w-48 rounded-tl-xl border-l border-t border-slate-200 shadow-sm md:absolute md:top-10 md:right-10 md:w-64 md:rounded-tl-2xl md:translate-y-4 md:translate-x-4" 
+                        className="relative mt-auto -mb-8 -mr-8 w-full max-w-[240px] self-end rounded-tl-xl border-l border-t border-slate-200 shadow-sm md:absolute md:top-10 md:right-10 md:w-64 md:rounded-tl-2xl md:translate-y-4 md:translate-x-4 md:m-0" 
                     />
                 </motion.div>
 
