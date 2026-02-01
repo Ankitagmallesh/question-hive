@@ -136,21 +136,28 @@ export const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
                 )}
                 <form 
                     onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
-                    className="flex gap-2"
+                    className="flex gap-2 items-end"
                 >
-                    <input
-                        type="text"
+                    <textarea
                         value={chatInput}
                         onChange={(e) => setChatInput(e.target.value)}
-                        placeholder="Type a command e.g., 'Create 5 hard physics questions'"
-                        className="flex-1 input-box m-0"
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSendMessage();
+                            }
+                        }}
+                        placeholder="Describe your paper (e.g., 'Class 12 Physics - 5 hard questions on Thermodynamics')"
+                        className="flex-1 input-box m-0 resize-none min-h-[60px] py-3"
+                        rows={2}
                         disabled={isStreaming}
                     />
                     <button 
                         type="submit" 
                         disabled={isStreaming || !chatInput.trim()}
-                        className="bg-indigo-600 text-white rounded-lg px-4 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="bg-indigo-600 text-white rounded-lg px-5 py-3 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold flex items-center gap-2"
                     >
+                        <span className="hidden sm:inline">Generate</span>
                         <i className="ri-send-plane-fill"></i>
                     </button>
                 </form>
