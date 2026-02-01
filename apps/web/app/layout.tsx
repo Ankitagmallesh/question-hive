@@ -10,10 +10,8 @@ const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800"],
   display: "swap",
+  variable: "--font-jakarta",
 });
-
-// We are adding these links to support the new Question Paper Designer UI
-// strictly following the user's "as it is" request for imports.
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://questionhive.in'), // Replace with actual domain
@@ -70,7 +68,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap" rel="stylesheet" />
         <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet" />
       </head>
-      <body className={jakarta.className}>
+      <body className={`${jakarta.className} ${jakarta.variable}`}>
         <LenisProvider>
           {children}
           <Toaster />

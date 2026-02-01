@@ -72,7 +72,13 @@ export default function SelectModules() {
                 const res = await fetch('/api/exams');
                 const json = await res.json();
                 if (json.success) {
-                    setExams(json.data);
+                    const neetExams = json.data.filter((e: any) => /neet/i.test(e.name));
+                    setExams(neetExams); 
+                    // Auto-select NEET if available
+                    if (neetExams.length > 0) {
+                        setSelectedExamId(neetExams[0].id);
+                        setMobileStep(2); // Skip exam selection step on mobile
+                    }
                 }
             } catch (e) {
                 console.error('Failed to load exams', e);

@@ -29,7 +29,7 @@ export default function DashboardLayout({ children, fullScreen = false }: { chil
   };
 
   return (
-    <div className="min-h-screen flex bg-[#f8fafc] text-slate-800 font-sans">
+    <div className="min-h-screen flex bg-[#f8fafc] text-slate-800">
       
       {/* Sidebar Navigation - Desktop Only */}
       <aside 
@@ -87,7 +87,7 @@ export default function DashboardLayout({ children, fullScreen = false }: { chil
 
       {/* Mobile Bottom Navigation */}
       <div className="lg:hidden fixed bottom-6 left-4 right-4 bg-white/90 backdrop-blur-lg border border-white/20 shadow-2xl rounded-2xl z-50 px-2 py-3 flex justify-between items-center ring-1 ring-slate-900/5">
-        {navItems.map((item) => {
+        {navItems.filter(item => item.name !== 'Question Bank').map((item) => {
             const active = isActive(item.path);
             return (
                 <Link 
