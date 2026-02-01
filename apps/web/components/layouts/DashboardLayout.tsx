@@ -86,7 +86,7 @@ export default function DashboardLayout({ children, fullScreen = false }: { chil
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <div className="lg:hidden fixed bottom-6 left-4 right-4 bg-white/90 backdrop-blur-lg border border-white/20 shadow-2xl rounded-2xl z-50 px-2 py-3 flex justify-between items-center ring-1 ring-slate-900/5">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-white/20 shadow-2xl rounded-t-2xl z-50 px-2 py-3 flex justify-between items-center ring-1 ring-slate-900/5">
         {navItems.filter(item => item.name !== 'Question Bank').map((item) => {
             const active = isActive(item.path);
             return (
