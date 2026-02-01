@@ -1046,31 +1046,20 @@ export default function PaperDesigner() {
             </div>
 
 
-             {/* Export PDF Button (Mobile - Above Toggle, Preview Only) */}
-            {mobileTab === 'preview' && (
-                <button 
-                    onClick={handleExportClick}
-                    className="lg:hidden fixed bottom-36 left-1/2 -translate-x-1/2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-full shadow-2xl z-50 flex items-center gap-2 font-bold transition-all"
-                >
-                    <i className="ri-file-pdf-line text-lg"></i>
-                    Export PDF
-                </button>
-            )}
-
              {/* Mobile View Toggle (Fixed Above Bottom Nav) */}
-            <div className="lg:hidden fixed bottom-20 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white backdrop-blur-md px-1 p-1 rounded-full shadow-2xl z-50 flex items-center gap-1 border border-slate-700/50">
+            <div className="lg:hidden fixed bottom-20 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white backdrop-blur-md px-1 py-1 rounded-full shadow-xl z-50 flex items-center gap-0.5 border border-slate-700/50">
                 <button 
                     onClick={() => setMobileTab('editor')}
-                    className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${mobileTab === 'editor' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${mobileTab === 'editor' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
                 >
-                    <LayoutTemplate size={16} />
+                    <LayoutTemplate size={14} />
                     Editor
                 </button>
                 <button 
                     onClick={() => setMobileTab('preview')}
-                    className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${mobileTab === 'preview' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${mobileTab === 'preview' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
                 >
-                    <Eye size={16} />
+                    <Eye size={14} />
                     Preview
                 </button>
             </div>
