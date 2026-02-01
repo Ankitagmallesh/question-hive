@@ -26,7 +26,7 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
 }) => {
     return (
         <div 
-            className={`preview-panel ${mobileTab === 'preview' ? 'flex' : 'hidden'}`} 
+            className={`preview-panel ${mobileTab === 'preview' ? 'flex' : 'hidden'} lg:flex`} 
             data-lenis-prevent 
             style={{ 
                 overflow: 'hidden', 

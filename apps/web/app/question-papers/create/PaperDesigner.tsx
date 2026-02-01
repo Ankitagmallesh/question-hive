@@ -264,6 +264,7 @@ export default function PaperDesigner() {
     useEffect(() => {
         if (typeof window !== 'undefined' && window.innerWidth < 1024) {
             setZoomLevel(70);
+            setZoomLevel(80);
         }
     }, []);
 
@@ -295,6 +296,7 @@ export default function PaperDesigner() {
                 setChatMessages(prev => {
                     const newHistory = [...prev];
                     const lastMsg = newHistory[newHistory.length - 1];
+                    if (lastMsg && lastMsg.role === 'assistant') {
                     if (lastMsg && lastMsg.role === 'assistant') {
                     if (lastMsg && lastMsg.role === 'assistant') {
                         lastMsg.content = `I've generated ${object.questions?.length} questions for you. Click on any question to add it to your paper.`;
@@ -1138,10 +1140,11 @@ export default function PaperDesigner() {
                 className={`main-container ${mobileTab === 'editor' ? 'editor-full' : 'preview-full'}`} 
                 ref={containerRef as React.RefObject<HTMLDivElement>}
             >
+            <div className={`main-container ${mobileTab === 'editor' ? 'editor-full' : 'preview-full'}`} ref={containerRef as React.RefObject<HTMLDivElement>}>
                 
                 <div 
                     className={`editor-panel ${mobileTab === 'editor' ? 'block' : 'hidden'} lg:block`} 
-                    style={{ width: mobileTab === 'editor' ? '100%' : `${leftPanelWidth}%` }} 
+                    style={{ '--left-width': `${leftPanelWidth}%` } as React.CSSProperties} 
                     data-lenis-prevent
                 >
                     <div className="editor-header sticky top-0 z-20 bg-white -mt-4 -mx-4 pt-1 px-4 lg:-mt-8 lg:-mx-8 lg:pt-1 lg:px-8 pb-4 border-b border-slate-100/80 backdrop-blur-sm shadow-sm transition-all duration-200">
@@ -1149,6 +1152,11 @@ export default function PaperDesigner() {
                             <div className="flex items-center gap-2 mb-1">
                                 <button onClick={() => router.back()} className="p-1 hover:bg-slate-100 rounded-full">
                                     <i className="ri-arrow-left-line text-slate-500" style={{fontSize: '18px'}}></i>
+                    <div className="editor-header sticky top-0 z-20 bg-white/80 -mt-4 -mx-4 pt-4 px-4 lg:-mt-8 lg:-mx-8 lg:pt-4 lg:px-8 pb-3 border-b border-slate-100/80 backdrop-blur-md shadow-sm transition-all duration-200">
+                        <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center gap-2 overflow-hidden">
+                                <button onClick={() => router.back()} className="p-2 hover:bg-slate-100 rounded-xl transition-colors shrink-0">
+                                    <i className="ri-arrow-left-line text-slate-700" style={{fontSize: '20px'}}></i>
                                 </button>
                                 <h1>Paper Designer</h1>
                             </div>
@@ -1161,12 +1169,26 @@ export default function PaperDesigner() {
                                     className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${mobileTab === 'editor' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                                 >
                                     Editor
+                                <div className="min-w-0">
+                                    <h1 className="text-lg lg:text-2xl font-bold truncate">{settings.title || 'Paper Designer'}</h1>
+                                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate">
+                                        <span className="flex items-center gap-1"><i className="ri-folder-open-line"></i> {settings.chapters.length} Chapters</span>
+                                        <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                                        <span className="flex items-center gap-1"><i className="ri-question-line"></i> {paperQuestions.length} Qs</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-2 shrink-0">
+
+                                
+                                <button className="p-2.5 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-100 lg:hidden" onClick={handleSavePaper} disabled={isSaving}>
+                                    {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <i className="ri-save-line text-lg"></i>}
                                 </button>
-                                <button 
-                                    onClick={() => setMobileTab('preview')}
-                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${mobileTab === 'preview' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                                >
-                                    Preview
+                                
+                                <button className="btn-action hidden lg:flex" onClick={handleSavePaper} disabled={isSaving}>
+                                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <i className="ri-save-line"></i>}
+                                    {isSaving ? 'Saving...' : 'Save'}
                                 </button>
                             </div>
                             <button className="btn-action hidden lg:flex" onClick={() => setShowPreviewModal(true)}><i className="ri-eye-line"></i> Popout</button>
@@ -1291,6 +1313,34 @@ export default function PaperDesigner() {
                     onRemoveQuestion={removeFromPaper}
                     handleExportClick={handleExportClick}
                 />
+                <div className={`resizer hidden lg:flex`} onMouseDown={handleResizeMouseDown}></div>
+
+                <div
+                    className="preview-panel"
+                    data-lenis-prevent
+                    style={{
+                        overflow: 'auto',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: zoomLevel <= 100 ? 'flex-start' : 'center'
+                    }}
+                >
+
+                    <div className={`flex-1 bg-slate-50/50 p-8 flex overflow-auto ${zoomLevel <= 100 ? 'justify-start' : 'justify-center'}`}>
+                        <div
+                            style={{
+                                transform: `scale(${zoomLevel / 100})`,
+                                transformOrigin: 'top left',
+                                transition: 'transform 0.2s cubic-bezier(0.2, 0, 0, 1)',
+                                minHeight: '100%'
+                            }}
+                        >
+                            <PaperContent />
+                        </div>
+                    </div>
+                    
+                    <button className="fab-export" onClick={handleExportClick}><i className="ri-file-pdf-line"></i> Export PDF</button>
+                </div>
 
                 <AlertDialog open={isExportAlertOpen} onOpenChange={setIsExportAlertOpen}>
                     <AlertDialogContent>
