@@ -915,6 +915,11 @@ export default function PaperDesigner() {
                                     {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <i className="ri-save-line text-lg"></i>}
                                 </button>
                                 
+                                <button className="btn-action hidden lg:flex" onClick={handleExportClick}>
+                                    <i className="ri-file-pdf-line"></i>
+                                    Export PDF
+                                </button>
+
                                 <button className="btn-action hidden lg:flex" onClick={handleSavePaper} disabled={isSaving}>
                                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <i className="ri-save-line"></i>}
                                     {isSaving ? 'Saving...' : 'Save'}
