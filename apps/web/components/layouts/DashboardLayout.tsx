@@ -83,8 +83,8 @@ export default function DashboardLayout({ children, fullScreen = false }: { chil
       <main className={`flex-1 w-full min-h-screen bg-white transition-all duration-300 relative lg:ml-20 ${menuOpen ? 'lg:ml-64' : ''}`}>
         
         <div className={`${fullScreen ? "pt-6 lg:pt-0" : "p-6 lg:p-10 pt-6 lg:pt-12"} pb-24 lg:pb-10`}>
-            {/* Back Button - Show on all pages except Dashboard */}
-            {!isDashboard && (
+            {/* Back Button - Show on all pages except Dashboard and fullScreen pages */}
+            {!isDashboard && !fullScreen && (
               <button 
                 onClick={() => router.back()}
                 className="mb-4 flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors font-semibold"
