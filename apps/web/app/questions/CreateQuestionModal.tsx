@@ -329,7 +329,7 @@ export default function CreateQuestionModal({ isOpen, onClose, onSuccess, userId
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                 onClick={onClose}
             />
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col mx-auto">
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col mx-auto" data-lenis-prevent>
                 {/* Header - Fixed at top */}
                 <div className="shrink-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-2xl p-5 flex justify-between items-center z-10">
                     <div>
