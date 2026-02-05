@@ -260,6 +260,7 @@ export default function PaperDesigner() {
     const [showPreviewModal, setShowPreviewModal] = useState(false);
     const [priorityChapter, setPriorityChapter] = useState<string | null>(null);
     const [zoomLevel, setZoomLevel] = useState(75);
+    const [zoomLevel, setZoomLevel] = useState(75);
 
     useEffect(() => {
         if (typeof window !== 'undefined' && window.innerWidth < 1024) {
@@ -804,9 +805,18 @@ export default function PaperDesigner() {
             // Set default layout and border when first question is added
             const isFirstQuestion = paperQuestions.length === 0;
             
+            // Set default layout and border when first question is added
+            const isFirstQuestion = paperQuestions.length === 0;
+            
             setSettings({
                 ...settings,
                 totalMarks: String(currentMarks + 4),
+                duration: String(currentDuration + 1),
+                // Apply defaults on first question add
+                ...(isFirstQuestion && {
+                    layout: '2-col',
+                    pageBorder: 'simple'
+                })
                 duration: String(currentDuration + 1),
                 // Apply defaults on first question add
                 ...(isFirstQuestion && {
@@ -1060,7 +1070,29 @@ export default function PaperDesigner() {
                  // But let's simplify the existing block to be more robust.
             }
             
+
             if (!response.ok) {
+                let errorMessage = 'Failed to generate PDF';
+                try {
+                    const errData = await response.json();
+                    errorMessage = errData.error || errorMessage;
+                } catch (e) {
+                    errorMessage = response.statusText || errorMessage;
+                }
+                
+                // Special handling for insufficient credits
+                if (response.status === 403) {
+                     // logic handled above if it was JSON, but let's re-parse or trust the error message?
+                     // Actually, if 403, we might have already parsed it.
+                     // optimizing...
+                }
+                 // If it was 403 and we got JSON, we already have the info. 
+                 // But let's simplify the existing block to be more robust.
+            }
+            
+            if (!response.ok) {
+                 const errData = await response.json().catch(() => ({}));
+                 
                  const errData = await response.json().catch(() => ({}));
                  
                 // Special handling for insufficient credits
@@ -1073,6 +1105,8 @@ export default function PaperDesigner() {
                     });
                     return; // Don't throw error, just show message
                 }
+
+                throw new Error(errData.error || response.statusText || 'Failed to generate PDF');
 
                 throw new Error(errData.error || response.statusText || 'Failed to generate PDF');
             }
@@ -1413,6 +1447,19 @@ export default function PaperDesigner() {
                 <span className="font-semibold">Export PDF</span>
             </button>
 
+
+            {/* Floating Export Button for Mobile & Desktop - Fixed at Bottom */}
+            <button 
+                onClick={handleExportClick}
+                className="fixed bottom-6 right-6 bg-indigo-600 text-white px-5 py-3 rounded-full shadow-xl z-40 hover:bg-indigo-700 transition-all active:scale-95 flex items-center gap-2"
+                title="Export PDF"
+            >
+                <i className="ri-file-pdf-line text-xl"></i>
+                <span className="font-semibold">Export PDF</span>
+            </button>
+
+            {/* Mobile View Toggle (Fixed Above Bottom Nav) */}
+            <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white backdrop-blur-md px-1 py-1 rounded-full shadow-xl z-50 flex items-center gap-0.5 border border-slate-700/50">
             {/* Mobile View Toggle (Fixed Above Bottom Nav) */}
             <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white backdrop-blur-md px-1 py-1 rounded-full shadow-xl z-50 flex items-center gap-0.5 border border-slate-700/50">
                 <button 
