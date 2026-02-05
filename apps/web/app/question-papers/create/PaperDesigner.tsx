@@ -53,9 +53,7 @@ export default function PaperDesigner() {
     const [leftPanelWidth, setLeftPanelWidth] = useState(50); // percentage
     const [mobileTab, setMobileTab] = useState<'editor' | 'preview'>('editor');
     
-    // Touch swipe detection for mobile
-    const [touchStart, setTouchStart] = useState<number | null>(null);
-    const [touchEnd, setTouchEnd] = useState<number | null>(null);
+    // Touch swipe detection for mobile - REMOVED
     
     const containerRef = useRef<HTMLDivElement>(null);
     const [chaptersList, setChaptersList] = useState<{id: string, name: string}[]>([]);
@@ -700,34 +698,8 @@ export default function PaperDesigner() {
         }
     };
 
-    // --- Touch Swipe Handlers for Mobile Navigation ---
-    const minSwipeDistance = 50; // Minimum swipe distance in pixels
+    // --- Touch Swipe Handlers for Mobile Navigation - REMOVED ---
 
-    const onTouchStart = (e: React.TouchEvent) => {
-        setTouchEnd(null);
-        setTouchStart(e.targetTouches[0].clientX);
-    };
-
-    const onTouchMove = (e: React.TouchEvent) => {
-        setTouchEnd(e.targetTouches[0].clientX);
-    };
-
-    const onTouchEnd = () => {
-        if (!touchStart || !touchEnd) return;
-        
-        const distance = touchStart - touchEnd;
-        const isLeftSwipe = distance > minSwipeDistance;
-        const isRightSwipe = distance < -minSwipeDistance;
-        
-        // Right swipe: editor -> preview
-        if (isRightSwipe && mobileTab === 'editor') {
-            setMobileTab('preview');
-        }
-        // Left swipe: preview -> editor
-        if (isLeftSwipe && mobileTab === 'preview') {
-            setMobileTab('editor');
-        }
-    };
 
     // --- PDF Export Function using Puppeteer API ---
     // --- PDF Export Function using Puppeteer API ---
@@ -949,9 +921,6 @@ export default function PaperDesigner() {
             <div 
                 className={`main-container ${mobileTab === 'editor' ? 'editor-full' : 'preview-full'}`} 
                 ref={containerRef as React.RefObject<HTMLDivElement>}
-                onTouchStart={onTouchStart}
-                onTouchMove={onTouchMove}
-                onTouchEnd={onTouchEnd}
             >
                 
                 <div 
@@ -1058,15 +1027,17 @@ export default function PaperDesigner() {
 
                 </div>
 
-                {/* Swipe Indicator for Mobile - Only show when on editor tab */}
-                {mobileTab === 'editor' && (
-                    <div className="lg:hidden fixed bottom-28 right-6 z-30 animate-bounce pointer-events-none">
-                        <div className="bg-indigo-600 text-white px-4 py-2 rounded-full shadow-xl flex items-center gap-2 text-sm font-semibold">
-                            <span>Swipe right for preview</span>
-                            <i className="ri-arrow-right-line text-xl"></i>
-                        </div>
-                    </div>
-                )}
+                {/* Mobile View Toggle Button */}
+                <button 
+                    className="lg:hidden fixed bottom-20 right-6 bg-white text-indigo-600 border border-indigo-200 px-4 py-2.5 rounded-full shadow-lg z-30 flex items-center gap-2 font-semibold active:scale-95 transition-all"
+                    onClick={() => setMobileTab(mobileTab === 'editor' ? 'preview' : 'editor')}
+                >
+                    {mobileTab === 'editor' ? (
+                        <><i className="ri-eye-line text-lg"></i> Preview</>
+                    ) : (
+                        <><i className="ri-edit-line text-lg"></i> Editor</>
+                    )}
+                </button>
 
                 <div className={`resizer hidden lg:flex`} onMouseDown={handleResizeMouseDown}></div>
 
