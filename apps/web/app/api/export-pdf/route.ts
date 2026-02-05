@@ -450,7 +450,8 @@ export async function POST(req: Request) {
             }
 
             const page = await browser.newPage();
-            await page.setContent(html, { waitUntil: 'networkidle0' });
+            // Use 'domcontentloaded' instead of 'networkidle0' to avoid timeout when external resources can't load
+            await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 10000 });
 
             const getMarginMM = (m: string) => {
                 switch(m) {
@@ -595,10 +596,10 @@ export async function POST(req: Request) {
             if (browser) await browser.close();
             return new NextResponse('Failed to generate PDF', { status: 500 });
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error('PDF generation error:', error);
         return NextResponse.json(
-            { error: 'Failed to generate PDF' },
+            { error: error.message || 'Failed to generate PDF' },
             { status: 500 }
         );
     }
