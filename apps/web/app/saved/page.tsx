@@ -9,6 +9,8 @@ import AppLoader from '../../components/ui/AppLoader';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 interface SavedPaper {
     id: string;
@@ -21,6 +23,7 @@ export default function SavedPapersPage() {
     const { user, loading } = useSupabaseAuth();
     const [savedPapers, setSavedPapers] = useState<SavedPaper[]>([]);
     const router = useRouter();
+    const [exportingPaperId, setExportingPaperId] = useState<string | null>(null);
     const [exportingPaperId, setExportingPaperId] = useState<string | null>(null);
 
     const [loadingPapers, setLoadingPapers] = useState(true);
@@ -252,7 +255,15 @@ export default function SavedPapersPage() {
                                         onClick={(e) => handleExportPdf(paper, e)}
                                         disabled={exportingPaperId === paper.id}
                                         className="flex-1 md:flex-none h-9 md:h-10 px-4 md:px-5 bg-indigo-600 text-white rounded-xl font-bold text-xs md:text-sm hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 disabled:opacity-70 disabled:cursor-not-allowed"
+                                        onClick={(e) => handleExportPdf(paper, e)}
+                                        disabled={exportingPaperId === paper.id}
+                                        className="flex-1 md:flex-none h-9 md:h-10 px-4 md:px-5 bg-indigo-600 text-white rounded-xl font-bold text-xs md:text-sm hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 disabled:opacity-70 disabled:cursor-not-allowed"
                                     >
+                                        {exportingPaperId === paper.id ? (
+                                            <><Loader2 className="w-4 h-4 animate-spin" /> Exporting...</>
+                                        ) : (
+                                            <><i className="ri-file-pdf-line"></i> PDF</>
+                                        )}
                                         {exportingPaperId === paper.id ? (
                                             <><Loader2 className="w-4 h-4 animate-spin" /> Exporting...</>
                                         ) : (
