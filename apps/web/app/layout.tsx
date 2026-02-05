@@ -11,6 +11,8 @@ const jakarta = Plus_Jakarta_Sans({
   weight: ["300", "400", "500", "600", "700", "800"],
   display: "swap",
   variable: "--font-jakarta",
+  fallback: ["system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+  adjustFontFallback: false, // Prevents additional network requests when Google Fonts fail
 });
 
 export const metadata: Metadata = {
