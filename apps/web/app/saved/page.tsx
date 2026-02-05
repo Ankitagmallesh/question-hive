@@ -57,7 +57,12 @@ export default function SavedPapersPage() {
         setSavedPapers(prev => prev.filter(p => p.id !== id));
 
         try {
-            const res = await fetch(`/api/question-papers/${id}`, {
+            if (!user?.email) {
+                // Should not happen if button rendered, but safety check
+                throw new Error('User email not found');
+            }
+
+            const res = await fetch(`/api/question-papers/${id}?email=${encodeURIComponent(user.email)}`, {
                 method: 'DELETE'
             });
             const data = await res.json();
