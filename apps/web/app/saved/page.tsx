@@ -6,11 +6,14 @@ import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
 import AppLoader from '../../components/ui/AppLoader';
 import Link from 'next/link';
+import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 export default function SavedPapersPage() {
     const { user, loading } = useSupabaseAuth();
     const [savedPapers, setSavedPapers] = useState<any[]>([]);
     const router = useRouter();
+    const [exportingPaperId, setExportingPaperId] = useState<string | null>(null);
 
     const [loadingPapers, setLoadingPapers] = useState(true);
 
@@ -70,6 +73,65 @@ export default function SavedPapersPage() {
         }
     };
 
+    const handleExportPdf = async (paper: any, e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (exportingPaperId) return; // Prevent multiple exports
+        
+        setExportingPaperId(paper.id);
+        toast.info('Generating PDF...', { duration: 2000 });
+
+        try {
+            const response = await fetch('/api/export-pdf', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    settings: paper.settings,
+                    questions: paper.paperQuestions.map((q: any, idx: number) => ({
+                        ...q,
+                        number: idx + 1
+                    }))
+                })
+            });
+
+            if (!response.ok) {
+                let errorMessage = 'Failed to generate PDF';
+                try {
+                    const errData = await response.json();
+                    errorMessage = errData.error || errorMessage;
+                } catch {
+                    errorMessage = response.statusText || errorMessage;
+                }
+                throw new Error(errorMessage);
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            
+            // Check if it's a zip or single PDF
+            const contentType = response.headers.get('content-type');
+            const filename = contentType?.includes('zip') 
+                ? `${paper.settings.title || 'Question_Paper'}.zip`
+                : `${paper.settings.title || 'Question_Paper'}.pdf`;
+            
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+            
+            toast.success('PDF downloaded successfully!');
+        } catch (error: any) {
+            console.error('Export error:', error);
+            toast.error(error.message || 'Failed to export PDF');
+        } finally {
+            setExportingPaperId(null);
+        }
+    };
+
     if (loadingPapers) {
         return (
             <DashboardLayout>
@@ -125,12 +187,15 @@ export default function SavedPapersPage() {
                                         <i className="ri-edit-line"></i> Edit
                                     </Link>
                                     <button 
-                                        onClick={() => {
-                                             window.open(`/question-papers/create?savedId=${paper.id}&print=true`, '_blank');
-                                        }}
-                                        className="flex-1 md:flex-none h-9 md:h-10 px-4 md:px-5 bg-indigo-600 text-white rounded-xl font-bold text-xs md:text-sm hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-200"
+                                        onClick={(e) => handleExportPdf(paper, e)}
+                                        disabled={exportingPaperId === paper.id}
+                                        className="flex-1 md:flex-none h-9 md:h-10 px-4 md:px-5 bg-indigo-600 text-white rounded-xl font-bold text-xs md:text-sm hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-200 disabled:opacity-70 disabled:cursor-not-allowed"
                                     >
-                                        <i className="ri-printer-line"></i> PDF
+                                        {exportingPaperId === paper.id ? (
+                                            <><Loader2 className="w-4 h-4 animate-spin" /> Exporting...</>
+                                        ) : (
+                                            <><i className="ri-file-pdf-line"></i> PDF</>
+                                        )}
                                     </button>
                                      <button 
                                         onClick={(e) => handleDelete(paper.id, e)}
