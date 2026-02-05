@@ -52,6 +52,11 @@ export default function PaperDesigner() {
     // --- State ---
     const [leftPanelWidth, setLeftPanelWidth] = useState(50); // percentage
     const [mobileTab, setMobileTab] = useState<'editor' | 'preview'>('editor');
+    
+    // Touch swipe detection for mobile
+    const [touchStart, setTouchStart] = useState<number | null>(null);
+    const [touchEnd, setTouchEnd] = useState<number | null>(null);
+    
     const containerRef = useRef<HTMLDivElement>(null);
     const [chaptersList, setChaptersList] = useState<{id: string, name: string}[]>([]);
 
@@ -101,11 +106,11 @@ export default function PaperDesigner() {
     const [searchQuery, setSearchQuery] = useState('');
     const [showPreviewModal, setShowPreviewModal] = useState(false);
     const [priorityChapter, setPriorityChapter] = useState<string | null>(null);
-    const [zoomLevel, setZoomLevel] = useState(85);
+    const [zoomLevel, setZoomLevel] = useState(75);
 
     useEffect(() => {
         if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-            setZoomLevel(80);
+            setZoomLevel(70);
         }
     }, []);
 
@@ -617,10 +622,18 @@ export default function PaperDesigner() {
             const currentMarks = parseInt(settings.totalMarks) || 0;
             const currentDuration = parseInt(settings.duration) || 0;
             
+            // Set default layout and border when first question is added
+            const isFirstQuestion = paperQuestions.length === 0;
+            
             setSettings({
                 ...settings,
                 totalMarks: String(currentMarks + 4),
-                duration: String(currentDuration + 1)
+                duration: String(currentDuration + 1),
+                // Apply defaults on first question add
+                ...(isFirstQuestion && {
+                    layout: '2-col',
+                    pageBorder: 'simple'
+                })
             });
         }
     };
@@ -684,6 +697,35 @@ export default function PaperDesigner() {
                 setSettings(s => ({...s, logo: reader.result as string}));
             };
             reader.readAsDataURL(file);
+        }
+    };
+
+    // --- Touch Swipe Handlers for Mobile Navigation ---
+    const minSwipeDistance = 50; // Minimum swipe distance in pixels
+
+    const onTouchStart = (e: React.TouchEvent) => {
+        setTouchEnd(null);
+        setTouchStart(e.targetTouches[0].clientX);
+    };
+
+    const onTouchMove = (e: React.TouchEvent) => {
+        setTouchEnd(e.targetTouches[0].clientX);
+    };
+
+    const onTouchEnd = () => {
+        if (!touchStart || !touchEnd) return;
+        
+        const distance = touchStart - touchEnd;
+        const isLeftSwipe = distance > minSwipeDistance;
+        const isRightSwipe = distance < -minSwipeDistance;
+        
+        // Right swipe: editor -> preview
+        if (isRightSwipe && mobileTab === 'editor') {
+            setMobileTab('preview');
+        }
+        // Left swipe: preview -> editor
+        if (isLeftSwipe && mobileTab === 'preview') {
+            setMobileTab('editor');
         }
     };
 
@@ -810,8 +852,27 @@ export default function PaperDesigner() {
             });
 
             if (!response.ok) {
-                const errData = await response.json().catch(() => ({}));
+                let errorMessage = 'Failed to generate PDF';
+                try {
+                    const errData = await response.json();
+                    errorMessage = errData.error || errorMessage;
+                } catch (e) {
+                    errorMessage = response.statusText || errorMessage;
+                }
                 
+                // Special handling for insufficient credits
+                if (response.status === 403) {
+                     // logic handled above if it was JSON, but let's re-parse or trust the error message?
+                     // Actually, if 403, we might have already parsed it.
+                     // optimizing...
+                }
+                 // If it was 403 and we got JSON, we already have the info. 
+                 // But let's simplify the existing block to be more robust.
+            }
+            
+            if (!response.ok) {
+                 const errData = await response.json().catch(() => ({}));
+                 
                 // Special handling for insufficient credits
                 if (response.status === 403) {
                     toast.info(errData.error || 'Thank you for using the beta version', {
@@ -822,8 +883,8 @@ export default function PaperDesigner() {
                     });
                     return; // Don't throw error, just show message
                 }
-                
-                throw new Error(errData.error || 'Failed to generate PDF');
+
+                throw new Error(errData.error || response.statusText || 'Failed to generate PDF');
             }
             
             // Check for credit update header
@@ -885,19 +946,22 @@ export default function PaperDesigner() {
 
     return (
         <DashboardLayout fullScreen={true}>
-            <div className={`main-container ${mobileTab === 'editor' ? 'editor-full' : 'preview-full'}`} ref={containerRef as React.RefObject<HTMLDivElement>}>
+            <div 
+                className={`main-container ${mobileTab === 'editor' ? 'editor-full' : 'preview-full'}`} 
+                ref={containerRef as React.RefObject<HTMLDivElement>}
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+            >
                 
                 <div 
                     className={`editor-panel ${mobileTab === 'editor' ? 'block' : 'hidden'} lg:block`} 
                     style={{ '--left-width': `${leftPanelWidth}%` } as React.CSSProperties} 
                     data-lenis-prevent
                 >
-                    <div className="editor-header sticky top-0 z-20 bg-white/80 -mt-4 -mx-4 pt-4 px-4 lg:-mt-8 lg:-mx-8 lg:pt-4 lg:px-8 pb-3 border-b border-slate-100/80 backdrop-blur-md shadow-sm transition-all duration-200">
+                    <div className="editor-header sticky top-0 z-20 bg-white/80 px-4 lg:px-8 py-3 border-b border-slate-100/80 backdrop-blur-md shadow-sm transition-all duration-200">
                         <div className="flex items-center justify-between w-full">
                             <div className="flex items-center gap-2 overflow-hidden">
-                                <button onClick={() => router.back()} className="p-2 hover:bg-slate-100 rounded-xl transition-colors shrink-0">
-                                    <i className="ri-arrow-left-line text-slate-700" style={{fontSize: '20px'}}></i>
-                                </button>
                                 <div className="min-w-0">
                                     <h1 className="text-lg lg:text-2xl font-bold truncate">{settings.title || 'Paper Designer'}</h1>
                                     <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate">
@@ -915,10 +979,7 @@ export default function PaperDesigner() {
                                     {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <i className="ri-save-line text-lg"></i>}
                                 </button>
                                 
-                                <button className="btn-action hidden lg:flex" onClick={handleExportClick}>
-                                    <i className="ri-file-pdf-line"></i>
-                                    Export PDF
-                                </button>
+
 
                                 <button className="btn-action hidden lg:flex" onClick={handleSavePaper} disabled={isSaving}>
                                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <i className="ri-save-line"></i>}
@@ -997,6 +1058,16 @@ export default function PaperDesigner() {
 
                 </div>
 
+                {/* Swipe Indicator for Mobile - Only show when on editor tab */}
+                {mobileTab === 'editor' && (
+                    <div className="lg:hidden fixed bottom-28 right-6 z-30 animate-bounce pointer-events-none">
+                        <div className="bg-indigo-600 text-white px-4 py-2 rounded-full shadow-xl flex items-center gap-2 text-sm font-semibold">
+                            <span>Swipe right for preview</span>
+                            <i className="ri-arrow-right-line text-xl"></i>
+                        </div>
+                    </div>
+                )}
+
                 <div className={`resizer hidden lg:flex`} onMouseDown={handleResizeMouseDown}></div>
 
                 <PreviewPanel 
@@ -1063,8 +1134,19 @@ export default function PaperDesigner() {
             </div>
 
 
-             {/* Mobile View Toggle (Fixed Above Bottom Nav) */}
-            <div className="lg:hidden fixed bottom-20 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white backdrop-blur-md px-1 py-1 rounded-full shadow-xl z-50 flex items-center gap-0.5 border border-slate-700/50">
+
+            {/* Floating Export Button for Mobile & Desktop - Fixed at Bottom */}
+            <button 
+                onClick={handleExportClick}
+                className="fixed bottom-6 right-6 bg-indigo-600 text-white px-5 py-3 rounded-full shadow-xl z-40 hover:bg-indigo-700 transition-all active:scale-95 flex items-center gap-2"
+                title="Export PDF"
+            >
+                <i className="ri-file-pdf-line text-xl"></i>
+                <span className="font-semibold">Export PDF</span>
+            </button>
+
+            {/* Mobile View Toggle (Fixed Above Bottom Nav) */}
+            <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white backdrop-blur-md px-1 py-1 rounded-full shadow-xl z-50 flex items-center gap-0.5 border border-slate-700/50">
                 <button 
                     onClick={() => setMobileTab('editor')}
                     className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 ${mobileTab === 'editor' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
