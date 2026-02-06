@@ -92,10 +92,48 @@ export default function SavedPapersPage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    settings: paper.settings,
-                    questions: paper.paperQuestions.map((q: any, idx: number) => ({
-                        ...q,
-                        number: idx + 1
+                    title: paper.settings.title,
+                    institution: paper.settings.institution,
+                    duration: paper.settings.duration,
+                    totalMarks: paper.settings.totalMarks,
+                    template: paper.settings.template,
+                    font: paper.settings.font,
+                    fontSize: paper.settings.fontSize,
+                    margin: paper.settings.margin,
+                    
+                    // Branding & Layout
+                    logo: paper.settings.logo,
+                    logoPosition: paper.settings.logoPosition,
+                    layout: paper.settings.layout,
+                    lineHeight: paper.settings.lineHeight,
+                    answerSpace: paper.settings.answerSpace,
+                    separator: paper.settings.separator,
+                    pageBorder: paper.settings.pageBorder,
+                    metaFontSize: paper.settings.metaFontSize,
+                    
+                    date: paper.settings.date,
+                    instructions: paper.settings.instructions,
+                    contentAlignment: paper.settings.contentAlignment,
+                    watermark: paper.settings.watermark,
+                    studentName: paper.settings.studentName,
+                    rollNumber: paper.settings.rollNumber,
+                    classSection: paper.settings.classSection,
+                    dateField: paper.settings.dateField,
+                    invigilatorSign: paper.settings.invigilatorSign,
+                    studentDetailsGap: paper.settings.studentDetailsGap,
+                    footerText: paper.settings.footerText,
+                    roughWorkArea: paper.settings.roughWorkArea,
+                    pageNumbering: paper.settings.pageNumbering,
+                    withAnswerKey: paper.settings.withAnswerKey,
+
+                    questions: paper.paperQuestions.map((q: any) => ({
+                        id: q.id,
+                        text: q.text,
+                        marks: q.marks,
+                        options: q.options?.map((opt: any) => ({
+                            id: opt.id,
+                            text: opt.text
+                        }))
                     }))
                 })
             });
