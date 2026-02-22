@@ -5,6 +5,7 @@ export interface User {
     name: string;
     role: 'admin' | 'professor';
     isActive: boolean;
+    credits: number;
     lastLoginAt?: string;
     institutionId?: number;
     institution?: Institution;

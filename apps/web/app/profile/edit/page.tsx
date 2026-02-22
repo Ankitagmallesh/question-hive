@@ -4,12 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '../../lib/api';
 import type { User } from '@repo/types';
-import { Button } from "../../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
-import { Badge } from "../../components/ui/badge";
+import { Button } from "../../../components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
+import { Badge } from "../../../components/ui/badge";
 import ProfileMenu from '../../../components/ProfileMenu';
+import AppLoader from "../../../components/ui/AppLoader";
 
 export default function EditProfilePage() {
     const router = useRouter();
@@ -92,12 +93,7 @@ export default function EditProfilePage() {
     if (loading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-                <Card className="w-96">
-                    <CardContent className="flex flex-col items-center justify-center py-8">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-                        <p className="text-gray-600">Loading your profile...</p>
-                    </CardContent>
-                </Card>
+                <AppLoader text="Loading your profile..." />
             </div>
         );
     }
@@ -109,9 +105,7 @@ export default function EditProfilePage() {
                 <div className="max-w-5xl mx-auto px-2 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center py-4 sm:py-3">
                         <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                                <span className="text-white font-bold text-sm">QH</span>
-                            </div>
+                                <img src="/logo-new.png" alt="Logo" className="w-8 h-8 rounded-lg" />
                             <h1 className="text-2xl font-bold text-gray-900">Question Hive</h1>
                         </div>
                         <ProfileMenu user={user} onLogout={handleLogout} />

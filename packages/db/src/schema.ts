@@ -1,4 +1,4 @@
-import { pgTable, bigint, text, boolean, timestamp, integer, numeric, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, bigint, text, boolean, timestamp, integer, numeric, uniqueIndex, bigserial, index } from 'drizzle-orm/pg-core';
 
 // Lookup / reference tables
 export const difficultyLevels = pgTable('difficulty_levels', {
@@ -98,6 +98,7 @@ export const users = pgTable('users', {
   passwordHash: text('password_hash').notNull(),
   userRoleId: bigint('user_role_id', { mode: 'number' }).notNull().references(() => userRoles.id),
   institutionId: bigint('institution_id', { mode: 'number' }).references(() => institutions.id),
+  credits: integer('credits').default(150).notNull(),
   isActive: boolean('is_active').default(true).notNull(),
   lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
 }, (t) => ({
@@ -152,7 +153,7 @@ export const chapterWeightages = pgTable('chapter_weightages', {
 });
 
 export const questions = pgTable('questions', {
-  id: bigint('id', { mode: 'number' }).primaryKey().notNull(),
+  id: bigserial('id', { mode: 'number' }).primaryKey().notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
@@ -167,19 +168,26 @@ export const questions = pgTable('questions', {
   isActive: boolean('is_active').default(true).notNull(),
   isAiGenerated: boolean('is_ai_generated').default(false).notNull(),
   correctAnswer: text('correct_answer').notNull(),
-});
+}, (t) => ({
+  questionsChapterIdIdx: index('questions_chapter_id_idx').on(t.chapterId),
+  questionsSubjectIdIdx: index('questions_subject_id_idx').on(t.subjectId),
+  questionsTypeIdIdx: index('questions_type_id_idx').on(t.questionTypeId),
+  questionsDifficultyIdIdx: index('questions_difficulty_id_idx').on(t.difficultyLevelId),
+}));
 
 export const questionOptions = pgTable('question_options', {
-  id: bigint('id', { mode: 'number' }).primaryKey().notNull(),
+  id: bigserial('id', { mode: 'number' }).primaryKey().notNull(),
   questionId: bigint('question_id', { mode: 'number' }).notNull().references(() => questions.id),
   optionText: text('option_text').notNull(),
   optionOrder: integer('option_order').notNull(),
   isCorrect: boolean('is_correct').default(false).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-});
+}, (t) => ({
+  questionOptionsQuestionIdIdx: index('question_options_question_id_idx').on(t.questionId),
+}));
 
 export const questionPapers = pgTable('question_papers', {
-  id: bigint('id', { mode: 'number' }).primaryKey().notNull(),
+  id: bigserial('id', { mode: 'number' }).primaryKey().notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
@@ -193,10 +201,13 @@ export const questionPapers = pgTable('question_papers', {
   createdBy: bigint('created_by', { mode: 'number' }).notNull().references(() => users.id),
   statusId: bigint('status_id', { mode: 'number' }).notNull().references(() => questionPaperStatuses.id),
   isActive: boolean('is_active').default(true).notNull(),
-});
+}, (t) => ({
+  questionPapersCreatedByIdx: index('question_papers_created_by_idx').on(t.createdBy),
+  questionPapersUpdatedAtIdx: index('question_papers_updated_at_idx').on(t.updatedAt),
+}));
 
 export const questionPaperItems = pgTable('question_paper_items', {
-  id: bigint('id', { mode: 'number' }).primaryKey().notNull(),
+  id: bigserial('id', { mode: 'number' }).primaryKey().notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
@@ -204,7 +215,9 @@ export const questionPaperItems = pgTable('question_paper_items', {
   questionId: bigint('question_id', { mode: 'number' }).notNull().references(() => questions.id),
   orderIndex: integer('order_index').notNull(),
   marks: bigint('marks', { mode: 'number' }).notNull(),
-});
+}, (t) => ({
+  questionPaperItemsPaperIdIdx: index('question_paper_items_paper_id_idx').on(t.questionPaperId),
+}));
 
 export const questionUsageLog = pgTable('question_usage_log', {
   id: bigint('id', { mode: 'number' }).primaryKey().notNull(),
@@ -236,4 +249,3 @@ export const profiles = pgTable('profiles', {
 }, (t) => ({
   profilesUserIdUnique: uniqueIndex('profiles_user_id_key').on(t.userId),
 }));
-

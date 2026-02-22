@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User } from '@repo/types';
-import { Button } from '../app/components/ui/button';
+import { Button } from './ui/button';
 
 interface ProfileMenuProps {
   user: User | null;
@@ -33,7 +33,7 @@ export default function ProfileMenu({ user, onLogout }: ProfileMenuProps) {
       return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     }
     if (email) {
-      return email.split('@')[0].slice(0, 2).toUpperCase();
+      return (email.split('@')[0] ?? '').slice(0, 2).toUpperCase();
     }
     return 'U';
   };
@@ -90,6 +90,10 @@ export default function ProfileMenu({ user, onLogout }: ProfileMenuProps) {
 
           {/* Menu Items */}
           <div className="py-1">
+            <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-100 flex justify-between items-center">
+                <span className="font-medium">Credits</span>
+                <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">{user.credits || 0}</span>
+            </div>
             <button
               onClick={handleViewProfile}
               className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"

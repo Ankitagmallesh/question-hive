@@ -24,17 +24,101 @@ button { cursor: pointer; }
     width: 6px; background: transparent; cursor: col-resize; z-index: 10;
     display: flex; align-items: center; justify-content: center; margin: 0 -3px;
 }
+@media (max-width: 1023px) {
+    .resizer.hidden { display: none !important; }
+}
 .resizer:hover { background: var(--primary-light); }
 
 /* --- Left: Editor Panel --- */
 .editor-panel {
-    min-width: 420px; width: 50%; padding: 32px; overflow-y: auto; background: var(--surface);
+    min-width: 420px; width: 100%; height: 100%; overflow-y: auto; background: var(--surface);
     border-right: 1px solid var(--border);
+    padding: 0 32px 32px 32px; /* Zero top padding for flush header */
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
+}
+
+@media (min-width: 1024px) {
+    .editor-panel {
+        width: var(--left-width, 50%) !important;
+    }
+}
+
+@media (max-width: 1024px) {
+    .editor-panel {
+        min-width: 100%;
+        width: 100% !important;
+        padding: 0 16px 16px 16px; /* Zero top padding */
+        border-right: none;
+    }
+}
+
+.ep-header-section {
+    padding: 32px 32px 20px 32px;
+    flex: 0 0 auto;
+}
+
+.ep-settings-section {
+    padding: 0 32px;
+    flex: 0 0 auto;
+    max-height: 45%; 
+    overflow-y: auto;
+    margin-bottom: 0; /* Handled by padding/gap */
+}
+
+/* Ensure Settings Card looks good inside the scroll area */
+.settings-card {
+    margin-bottom: 24px;
+}
+
+.ep-questions-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border-top: 1px solid var(--border);
+    background: #ffffff;
+}
+
+.ep-content-area {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Adjust Tab Group for the new section */
+.tab-group {
+    margin: 0;
+    padding: 16px 32px 0;
+    background: var(--surface);
+    flex: 0 0 auto;
+}
+
+/* Select Mode Specifics */
+.select-mode-header {
+    padding: 16px 32px 0;
+    flex: 0 0 auto;
+    background: white;
+}
+.select-mode-list {
+    padding: 16px 32px 32px;
+    flex: 1;
+    overflow-y: auto;
 }
 
 .editor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
 .editor-header h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+
+@media (max-width: 1024px) {
+    .editor-header h1 { font-size: 20px; }
+}
+
 .breadcrumbs { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-top: 4px; }
+
+@media (max-width: 1024px) {
+    .breadcrumbs { display: none; }
+}
 
 .header-actions { display: flex; gap: 10px; }
 .btn-action {
@@ -157,6 +241,9 @@ label {
     align-items: center; 
     position: relative;
 }
+@media (max-width: 1023px) {
+    .preview-panel.hidden { display: none !important; }
+}
 
 .paper-sheet {
     background: white; 
@@ -171,6 +258,13 @@ label {
     transition: padding 0.3s;
     transform-origin: top left;
     margin-bottom: -80mm; /* Compensate for empty space (297mm * 0.3 = ~89mm). -80mm leaves ~9mm gap */
+}
+
+@media (max-width: 1024px) {
+    .paper-sheet {
+        transform: scale(0.6);
+        margin-bottom: -118mm; /* Compensate for 297mm * 0.4 = ~118.8mm */
+    }
 }
 
 .paper-sheet:last-child {
@@ -571,4 +665,110 @@ label {
     cursor: pointer; background: white; transition: all 0.2s;
 }
 .file-upload-box:hover { border-color: #6366f1; background: #f8fafc; }
-.file-upload-box .file-icon { color: #64748b; font-size: 18px; }
+
+/* --- Mobile Responsive Styles --- */
+@media (max-width: 1024px) {
+    .row {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .col {
+        width: 100%;
+    }
+
+    .editor-panel {
+        width: 100%;
+        min-width: 0;
+        padding: 16px;
+        padding-top: 80px; /* Space for sticky header */
+        padding-bottom: 100px; /* Space for bottom nav */
+    }
+
+    .ep-header-section {
+        padding: 12px 12px 8px 12px;
+    }
+
+    .ep-settings-section {
+        padding: 0 12px;
+    }
+
+    .preview-panel {
+        width: 100%;
+        padding: 16px;
+        padding-top: 80px; /* Space for sticky header */
+        padding-bottom: 100px; /* Space for bottom nav & FAB */
+    }
+
+    .fab-export {
+        bottom: 90px;
+        right: 16px;
+        padding: 10px 20px;
+        font-size: 14px;
+        z-index: 45;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.4);
+        background: var(--primary);
+    }
+
+    /* Adjust checkbox grid for smaller screens */
+    .checkbox-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    /* Template grid adjustments */
+    .template-grid {
+        gap: 8px;
+    }
+    
+    .template-option {
+        padding: 8px;
+        font-size: 11px;
+    }
+    
+    /* Settings card on mobile */
+    .settings-card {
+        padding: 16px;
+        margin-bottom: 16px;
+        border-radius: 12px;
+    }
+
+    /* Tabs on mobile */
+    .tab-group {
+        padding: 12px 16px 0;
+        gap: 16px;
+    }
+    
+    .tab {
+        padding-bottom: 8px;
+        font-size: 13px;
+    }
+
+    /* Visual Select adjustments */
+    .visual-select {
+        gap: 8px;
+    }
+    
+    .visual-option {
+        padding: 8px;
+    }
+
+    .visual-option i {
+        font-size: 16px;
+    }
+
+    /* Header styling for mobile */
+    .editor-header {
+        position: fixed !important;
+        top: 0;
+        left: 0;
+        right: 0;
+        margin: 0 !important;
+        padding: 10px 16px !important;
+        height: 72px;
+        display: flex;
+        align-items: center;
+        z-index: 50;
+    }
+}

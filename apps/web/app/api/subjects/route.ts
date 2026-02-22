@@ -3,11 +3,13 @@ import { db } from '../../lib/db';
 import { subjects, eq } from '@repo/db';
 
 type SubjectRow = { examId: number; [key: string]: unknown };
+import { getSubjects } from '../../server/db/queries/subjects';
 
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const examId = searchParams.get('examId');
+    const examIdNum = examId ? Number(examId) : undefined;
 
     let data: SubjectRow[];
     if (!examId) {
@@ -18,7 +20,11 @@ export async function GET(req: Request) {
   const all = await db.select().from(subjects).orderBy(subjects.name);
   data = all.filter((r: SubjectRow) => r.examId === examIdNum);
     }
+    const data = await getSubjects(examIdNum);
     return NextResponse.json({ success: true, data });
+  } catch (e: unknown) {
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   } catch (e: unknown) {
     const errorMessage = e instanceof Error ? e.message : String(e);
     return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });

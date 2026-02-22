@@ -9,6 +9,18 @@ import { Separator } from "../components/ui/separator";
 import { Input } from "../components/ui/input";
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { useDebounce } from '../hooks/useDebounce';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from "../components/ui/button";
+import { Card, CardContent } from "../components/ui/card";
+import { Card, CardContent } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
+import { Separator } from "../components/ui/separator";
+import { Input } from "../components/ui/input";
+import { Input } from "../components/ui/input";
+import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
+import { useDebounce } from '../hooks/useDebounce';
+import { useDebounce } from '../hooks/useDebounce';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
 import { Question } from '../lib/questions-data';
 import AppLoader from '../../components/ui/AppLoader';
@@ -41,6 +53,42 @@ export default function QuestionsPage() {
     const [search, _setSearch] = useState('');
     const [filterType, _setFilterType] = useState('');
     const [filterDifficulty, _setFilterDifficulty] = useState('');
+const DEBOUNCE_MS = 400;
+const LIMIT = 20;
+
+const TYPE_OPTIONS = [
+    { value: '', label: 'All types' },
+    { value: 'MCQ', label: 'MCQ' },
+    { value: 'Short', label: 'Short' },
+    { value: 'Long', label: 'Long' },
+    { value: 'Numerical', label: 'Numerical' },
+];
+
+const DIFFICULTY_OPTIONS = [
+    { value: '', label: 'All difficulties' },
+    { value: 'easy', label: 'Easy' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'hard', label: 'Hard' },
+];
+
+export default function QuestionsPage() {
+    const router = useRouter();
+    const { user, loading: authLoading } = useSupabaseAuth();
+    const { user, loading: authLoading } = useSupabaseAuth();
+    const [questions, setQuestions] = useState<Question[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const [search, setSearch] = useState('');
+    const [filterType, setFilterType] = useState('');
+    const [filterDifficulty, setFilterDifficulty] = useState('');
+    const debouncedSearch = useDebounce(search, DEBOUNCE_MS);
+    const debouncedType = useDebounce(filterType, DEBOUNCE_MS);
+    const debouncedDifficulty = useDebounce(filterDifficulty, DEBOUNCE_MS);
+
+
+    const [search, setSearch] = useState('');
+    const [filterType, setFilterType] = useState('');
+    const [filterDifficulty, setFilterDifficulty] = useState('');
     const debouncedSearch = useDebounce(search, DEBOUNCE_MS);
     const debouncedType = useDebounce(filterType, DEBOUNCE_MS);
     const debouncedDifficulty = useDebounce(filterDifficulty, DEBOUNCE_MS);
@@ -55,13 +103,31 @@ export default function QuestionsPage() {
     const prevFiltersRef = useRef({ search: '', type: '', difficulty: '' });
 
     const loadQuestions = useCallback(async (opts: { page: number; search: string; type: string; difficulty: string }) => {
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [refreshCounter, setRefreshCounter] = useState(0);
+
+    const abortRef = useRef<AbortController | null>(null);
+    const prevFiltersRef = useRef({ search: '', type: '', difficulty: '' });
+    const lastFetchRef = useRef<{ page: number; search: string; type: string; difficulty: string } | null>(null);
+
+    const loadQuestions = useCallback(async (opts: { page: number; search: string; type: string; difficulty: string }) => {
+        // Skip duplicate fetches (e.g., when setCurrentPage triggers re-render after filter change)
+        const fetchKey = `${opts.page}-${opts.search}-${opts.type}-${opts.difficulty}`;
+        const lastKey = lastFetchRef.current 
+            ? `${lastFetchRef.current.page}-${lastFetchRef.current.search}-${lastFetchRef.current.type}-${lastFetchRef.current.difficulty}`
+            : null;
+        if (fetchKey === lastKey) return;
+
         if (abortRef.current) abortRef.current.abort();
         abortRef.current = new AbortController();
         const { signal } = abortRef.current;
 
+        lastFetchRef.current = opts;
         setLoading(true);
         try {
             const params = new URLSearchParams({
+                page: String(opts.page),
+                limit: String(LIMIT),
                 page: String(opts.page),
                 limit: String(LIMIT),
             });
@@ -74,8 +140,22 @@ export default function QuestionsPage() {
 
             if (json.success) {
                 const mapped: Question[] = json.data.map((q: { id: string; content: string; questionType?: string; difficulty?: string; marks?: string | number; createdAt: string }) => ({
+            if (opts.search) params.set('search', opts.search);
+            if (opts.type) params.set('type', opts.type);
+            if (opts.difficulty) params.set('difficulty', opts.difficulty);
+
+            const res = await fetch(`/api/questions?${params.toString()}`, { signal });
+            const res = await fetch(`/api/questions?${params.toString()}`, { signal });
+            const json = await res.json();
+
+
+            if (json.success) {
+                const mapped: Question[] = json.data.map((q: { id: string; content: string; questionType?: string; difficulty?: string; marks?: string | number; createdAt: string }) => ({
+                const mapped: Question[] = json.data.map((q: { id: string; content: string; questionType?: string; difficulty?: string; marks?: string | number; createdAt: string }) => ({
                     id: q.id,
                     text: q.content,
+                    subject: '—',
+                    chapter: '—',
                     subject: '—',
                     chapter: '—',
                     type: (q.questionType || 'mcq').toLowerCase(),
@@ -96,6 +176,32 @@ export default function QuestionsPage() {
             setLoading(false);
             abortRef.current = null;
         }
+            lastFetchRef.current = null; // Reset on error so we can retry
+        } finally {
+            setLoading(false);
+            abortRef.current = null;
+            abortRef.current = null;
+        }
+    }, []);
+
+    useEffect(() => {
+        if (authLoading) return;
+        if (!user) {
+            router.push('/auth/login');
+            return;
+        }
+
+        const prev = prevFiltersRef.current;
+        const filtersChanged =
+            prev.search !== debouncedSearch || prev.type !== debouncedType || prev.difficulty !== debouncedDifficulty;
+        if (filtersChanged) {
+            setCurrentPage(1);
+            prevFiltersRef.current = { search: debouncedSearch, type: debouncedType, difficulty: debouncedDifficulty };
+        }
+        const pageToUse = filtersChanged ? 1 : currentPage;
+
+        loadQuestions({ page: pageToUse, search: debouncedSearch, type: debouncedType, difficulty: debouncedDifficulty });
+    }, [authLoading, user, router, currentPage, debouncedSearch, debouncedType, debouncedDifficulty, refreshCounter, loadQuestions]);
     }, []);
 
     useEffect(() => {
@@ -156,11 +262,14 @@ export default function QuestionsPage() {
                     {/* Page Header */}
                     <div className="mb-6">
                         <div className="flex justify-between items-center">
+                    <div className="mb-8">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <div>
                                 <h2 className="text-3xl font-bold text-gray-900">Questions</h2>
                                 <p className="mt-2 text-gray-600">Manage your question bank and create new questions</p>
                             </div>
                             <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleShowCreateModal}>
+                            <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700" onClick={() => setShowCreateModal(true)}>
                                 <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                                 </svg>
@@ -276,6 +385,51 @@ export default function QuestionsPage() {
                             <Card key={question.id} className="hover:shadow-md transition-shadow">
                                 <CardContent className="p-6">
                                     <QuestionCardContent question={question} />
+                                    <div className="flex flex-col lg:flex-row justify-between items-start mb-4 gap-4">
+                                        <div className="flex-1 w-full">
+                                            <p className="text-lg font-medium text-slate-900 mb-2 break-words leading-relaxed">
+                                                {question.text}
+                                            </p>
+                                            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-500 font-medium">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-slate-400">Subject:</span> {question.subject}
+                                                </div>
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-slate-400">Chapter:</span> {question.chapter}
+                                                </div>
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-slate-400">Marks:</span> <span className="text-slate-900 font-bold">{question.marks}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-row lg:flex-col gap-2 w-full lg:w-auto overflow-x-auto pb-1 lg:pb-0 lg:ml-4 shrink-0">
+                                            <Badge className={`whitespace-nowrap rounded-lg px-3 py-1 border-none font-bold ${getTypeColor(question.type)}`}>
+                                                {question.type.toUpperCase()}
+                                            </Badge>
+                                            <Badge className={`whitespace-nowrap rounded-lg px-3 py-1 border-none font-bold ${getDifficultyColor(question.difficulty)}`}>
+                                                {question.difficulty.toUpperCase()}
+                                            </Badge>
+                                        </div>
+                                    </div>
+
+                                    <Separator className="my-4" />
+
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                        <div className="text-sm text-slate-400 font-medium">
+                                            Created: {new Date(question.createdAt).toLocaleDateString()}
+                                        </div>
+                                        <div className="flex w-full sm:w-auto gap-2">
+                                            <Button variant="outline" size="sm" className="flex-1 sm:flex-none rounded-xl">
+                                                Edit
+                                            </Button>
+                                            <Button variant="outline" size="sm" className="flex-1 sm:flex-none rounded-xl">
+                                                View
+                                            </Button>
+                                            <Button variant="destructive" size="sm" className="flex-1 sm:flex-none rounded-xl">
+                                                Delete
+                                            </Button>
+                                        </div>
+                                    </div>
                                 </CardContent>
                             </Card>
                         ))
@@ -295,10 +449,9 @@ export default function QuestionsPage() {
                                 Previous
                             </Button>
                             
-                            {/* Simple Page Indicator for now */}
-                            <div className="flex items-center px-4 text-sm font-medium text-gray-700">
-                                Page {currentPage} of {totalPages}
-                            </div>
+                        const handleNextPage = React.useCallback(() => {
+                            setCurrentPage(p => Math.min(totalPages, p + 1));
+                        }, [totalPages]);
 
                             <Button 
                                 variant="outline" 
@@ -311,17 +464,44 @@ export default function QuestionsPage() {
                         </div>
                         <div className="text-xs text-slate-500">
                             Showing {(currentPage - 1) * LIMIT + 1} - {Math.min(currentPage * LIMIT, totalCount)} of {totalCount} questions
+                        const handleCloseCreateModal = React.useCallback(() => {
+                            setShowCreateModal(false);
+                        }, []);
+
+                        const handleCreateSuccess = React.useCallback(() => {
+                            setRefreshCounter(c => c + 1);
+                        }, []);
+
+                        {/* Simple Page Indicator for now */}
+                        <div className="flex items-center px-4 text-sm font-medium text-gray-700">
+                            Page {currentPage} of {totalPages}
                         </div>
+
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            disabled={currentPage === totalPages}
+                            onClick={handleNextPage}
+                        >
+                            Next
+                        </Button>
                     </div>
-                )}
-            </main>
-        </div>
+                    <div className="text-xs text-slate-500">
+                        Showing {(currentPage - 1) * LIMIT + 1} - {Math.min(currentPage * LIMIT, totalCount)} of {totalCount} questions
+                    </div>
+                </div>
+            )}
+        </main>
+    </div>
 
             <CreateQuestionModal 
                 isOpen={showCreateModal}
                 onClose={handleCloseCreateModal}
                 onSuccess={handleSuccessCreateModal}
                 userId={typeof user?.id === 'number' ? user.id : 1}
+                onClose={() => setShowCreateModal(false)}
+                onSuccess={loadQuestions}
+                userId={user?.id || 0}
             />
         </DashboardLayout>
     );

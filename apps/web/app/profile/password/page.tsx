@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '../../lib/api';
-import { Button } from "../../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
+import { Button } from "../../../components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
+import AppLoader from "../../../components/ui/AppLoader";
 
 export default function ChangePasswordPage() {
     const router = useRouter();
@@ -60,7 +61,7 @@ export default function ChangePasswordPage() {
     };
 
     const validateForm = () => {
-        const newErrors = {};
+        const newErrors: Record<string, string> = {};
 
         if (!formData.currentPassword) {
             newErrors.currentPassword = 'Current password is required';
@@ -96,7 +97,8 @@ export default function ChangePasswordPage() {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                <AppLoader text="Loading..." />
+                <AppLoader text="Loading..." />
             </div>
         );
     }

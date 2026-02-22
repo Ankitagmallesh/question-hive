@@ -1,52 +1,18 @@
 import { NextResponse } from 'next/server';
 import { db } from '../../lib/db';
-import { questionPapers, questionPaperItems, questionPaperStatuses, subjects, users, eq } from '@repo/db';
+import { users, eq } from '@repo/db';
+import { getQuestionPapers } from '../../server/db/queries/question-papers';
+import { saveQuestionPaperAction } from '../../server/actions/question-papers';
 
-export async function POST(req: Request) {
+export const dynamic = 'force-dynamic';
+
+export async function GET(req: Request) {
     try {
-        const body = await req.json();
-        const { 
-            id, // Optional: if updating existing
-            settings, 
-            paperQuestions,
-            status = 'Saved' // Default to Saved
-        } = body;
+        const { searchParams } = new URL(req.url);
+        const email = searchParams.get('email');
 
-        // 1. Get User (Hardcoded to 1 for now, similar to dashboard stats)
-        // In real auth, we'd extract from session
-        const userRes = await db.select({ id: users.id }).from(users).limit(1);
-        const userId = Number(userRes[0]?.id || 1);
-
-        // 2. Resolve Status ID (Auto-seed if missing)
-        let statusRes = await db.select().from(questionPaperStatuses).where(eq(questionPaperStatuses.name, status));
-        let statusId: number;
-
-        if (statusRes.length === 0) {
-            // Auto-create status with explicit ID since DB might not have auto-increment
-            // Map common statuses to fixed IDs to avoid collisions/nulls
-            const statusMap: Record<string, number> = {
-                'Saved': 1,
-                'Published': 2,
-                'Draft': 3
-            };
-            const newId = statusMap[status] || Math.floor(Math.random() * 10000) + 10;
-
-            // Check if ID exists to be safe
-            const idCheck = await db.select().from(questionPaperStatuses).where(eq(questionPaperStatuses.id, newId));
-            if (idCheck.length > 0) {
-                 // Fallback if ID taken (shouldn't happen on empty DB)
-                 statusId = idCheck[0].id;
-            } else {
-                await db.insert(questionPaperStatuses).values({
-                    id: newId,
-                    name: status,
-                    code: status.toUpperCase(),
-                    description: `Automatically created status for ${status}`
-                });
-                statusId = newId;
-            }
-        } else {
-            statusId = statusRes[0].id;
+        if (!email) {
+            return NextResponse.json({ success: false, error: 'Email is required' }, { status: 400 });
         }
 
         // 3. Resolve Subject ID (Assume first subject or map from settings if available)
@@ -65,50 +31,17 @@ export async function POST(req: Request) {
             const existing = await tx.select().from(questionPapers).where(eq(questionPapers.id, numericId));
             
             let paperId: number;
+        // 1. Get User ID (Cache this lookup ideally, but for now fast enough)
+        const userRes = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
+        
+        if (userRes.length === 0) {
+            return NextResponse.json({ success: true, data: [] }); // No user = No papers
+        }
 
-            if (existing.length > 0) {
-                paperId = existing[0].id;
-                await tx.update(questionPapers).set({
-                    title: settings.title,
-                    description: `Paper for ${settings.institution || 'School'}`,
-                    durationMinutes: parseInt(settings.duration) || 0,
-                    totalMarks: parseInt(settings.totalMarks) || 0,
-                    statusId: statusId,
-                    subjectId: subjectId,
-                    updatedAt: new Date(),
-                    instructions: JSON.stringify({
-                        font: settings.font,
-                        template: settings.template,
-                        margin: settings.margin,
-                        fontSize: settings.fontSize,
-                        institution: settings.institution
-                    })
-                }).where(eq(questionPapers.id, paperId));
+        const userId = userRes[0].id;
 
-                // Clear existing items to re-insert
-                await tx.delete(questionPaperItems).where(eq(questionPaperItems.questionPaperId, paperId));
-            } else {
-                // Insert New
-                const newPaperId = Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 10000); // Simple numeric ID generation
-                await tx.insert(questionPapers).values({
-                    id: newPaperId,
-                    title: settings.title,
-                    description: `Paper for ${settings.institution || 'School'}`,
-                    durationMinutes: parseInt(settings.duration) || 0,
-                    totalMarks: parseInt(settings.totalMarks) || 0,
-                    statusId: statusId,
-                    subjectId: subjectId,
-                    createdBy: userId,
-                    instructions: JSON.stringify({
-                        font: settings.font,
-                        template: settings.template,
-                        margin: settings.margin,
-                        fontSize: settings.fontSize,
-                        institution: settings.institution
-                    })
-                });
-                paperId = newPaperId;
-            }
+        // 2. Fetch Papers with details (Cached)
+        const transformed = await getQuestionPapers(userId);
 
             // B. Insert Items
             if (paperQuestions.length > 0) {
@@ -119,17 +52,29 @@ export async function POST(req: Request) {
                     orderIndex: index + 1,
                     marks: q.marks || 1 // Default marks if missing
                 }));
+        return NextResponse.json({ success: true, data: transformed });
 
-                await tx.insert(questionPaperItems).values(itemsToInsert);
-            }
-            
-            return paperId;
-        });
+    } catch (error: any) {
+        console.error('Fetch Papers Error:', error);
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+}
 
-        return NextResponse.json({ success: true, message: 'Paper saved successfully', paperId: resultId });
+export async function POST(req: Request) {
+    try {
+        const body = await req.json();
+        const result = await saveQuestionPaperAction(body);
+        
+        if (!result.success) {
+            return NextResponse.json({ success: false, error: result.error }, { status: 500 });
+        }
+
+        return NextResponse.json({ success: true, paperId: result.paperId });
 
     } catch (error: unknown) {
         console.error('Save Paper Error:', error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
         const errorMessage = error instanceof Error ? error.message : String(error);
         return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
     }

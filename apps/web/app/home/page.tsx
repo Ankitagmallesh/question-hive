@@ -3,8 +3,17 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, animate, useInView } from "framer-motion";
-import { GraduationCap, Landmark, Trash2 } from "lucide-react";
+import { GraduationCap, Landmark, Trash2, Coins } from "lucide-react";
+import { GraduationCap, Landmark, Trash2, Coins } from "lucide-react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
+import AppLoader from "../../components/ui/AppLoader";
+import { getSupabase } from "../lib/supabase-client";
+import { useSupabaseAuth } from "../hooks/useSupabaseAuth";
+import { Progress } from "../../components/ui/progress";
+import { Button } from "../../components/ui/button";
+import { useSupabaseAuth } from "../hooks/useSupabaseAuth";
+import { Progress } from "../../components/ui/progress";
+import { Button } from "../../components/ui/button";
 
 // CountUp Component
 // CountUp Component
@@ -43,8 +52,18 @@ const AnimatedProgressBar = ({ width, colorClass }: { width: string, colorClass:
   );
 };
 
+import { useRouter } from 'next/navigation';
+
+import { useRouter } from 'next/navigation';
+
 export default function DashboardPage() {
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState('');
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState('');
   const currentDate = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const { user } = useSupabaseAuth();
+  const { user } = useSupabaseAuth();
 
   const [stats, setStats] = useState<{
     totalQuestions: number;
@@ -59,38 +78,62 @@ export default function DashboardPage() {
     difficultyBreakdown: [],
     recentPapers: []
   });
+  const [userName, setUserName] = useState('');
+  const [userName, setUserName] = useState('');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-        try {
-            const res = await fetch('/api/dashboard/stats');
-            const data = await res.json();
-            if (data.success) {
-                setStats(data.stats);
+  const fetchStats = async () => {
+    try {
+        const supabase = getSupabase();
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+            const meta = session.user.user_metadata;
+            if (meta?.full_name) {
+                let displayName = meta.full_name;
+                 // Remove title if present to get just the name
+                if (meta.title && displayName.startsWith(meta.title)) {
+                    displayName = displayName.substring(meta.title.length).trim();
+                }
+                // Get first word as first name
+                setUserName(displayName.split(' ')[0]);
             }
-        } catch (error) {
-            console.error("Failed to fetch dashboard stats", error);
-        } finally {
-            setLoading(false);
         }
-    };
 
+        if (!session?.user?.email) return;
+
+        const res = await fetch(`/api/dashboard/stats?email=${session.user.email}`);
+        const data = await res.json();
+        if (data.success) {
+            setStats({
+                ...data.stats,
+                recentPapers: data.recentPapers || []
+            });
+        }
+    } catch (error) {
+        console.error("Failed to fetch dashboard stats", error);
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+  useEffect(() => {
     fetchStats();
-
-
   }, []);
 
   const getCountByType = (typeName: string) => {
-    const type = stats.typeBreakdown.find(t => t.type.toLowerCase().includes(typeName.toLowerCase()));
+    if (!stats.typeBreakdown) return 0;
+    const type = stats.typeBreakdown.find(t => t.type?.toLowerCase().includes(typeName.toLowerCase()));
     return type ? type.count : 0;
   };
 
   const getDifficultyPercent = (levelName: string) => {
-      const totalDBQuestions = stats.difficultyBreakdown.reduce((acc, curr) => acc + curr.count, 0);
+      if (!stats.difficultyBreakdown || stats.difficultyBreakdown.length === 0) return 0;
+      const totalDBQuestions = stats.difficultyBreakdown.reduce((acc, curr) => acc + (curr.count || 0), 0);
       if (totalDBQuestions === 0) return 0;
       
-      const level = stats.difficultyBreakdown.find(d => d.difficulty.toLowerCase().includes(levelName.toLowerCase()));
+      const level = stats.difficultyBreakdown.find(d => d.difficulty?.toLowerCase().includes(levelName.toLowerCase()));
       return level ? Math.round((level.count / totalDBQuestions) * 100) : 0;
   };
 
@@ -109,11 +152,8 @@ export default function DashboardPage() {
           const data = await res.json();
           
           if (data.success) {
-              setStats(prev => ({
-                  ...prev,
-                  recentPapers: prev.recentPapers.filter(p => p.id !== id),
-                  totalPapers: Math.max(0, prev.totalPapers - 1)
-              }));
+              await fetchStats(); 
+              await fetchStats(); 
           } else {
               alert('Failed to delete: ' + data.error);
           }
@@ -126,88 +166,289 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-        <header className="flex justify-between items-center mb-10">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 lg:mb-10">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 lg:mb-10">
             <div>
-                <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Welcome back, <span className="text-indigo-600">Sanjay!</span></h1>
-                <p className="text-slate-500 font-medium italic">{currentDate}</p>
+                <h1 className="text-3xl lg:text-3xl font-extrabold tracking-tight text-slate-900 leading-tight">
+                    Welcome back, <br className="lg:hidden" />
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">{userName || 'User'}!</span>
+                </h1>
+                <p className="text-sm text-slate-500 font-medium italic mt-1 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    {currentDate}
+                </p>
+                <h1 className="text-3xl lg:text-3xl font-extrabold tracking-tight text-slate-900 leading-tight">
+                    Welcome back, <br className="lg:hidden" />
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">{userName || 'User'}!</span>
+                </h1>
+                <p className="text-sm text-slate-500 font-medium italic mt-1 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    {currentDate}
+                </p>
+            </div>
+            
+            <div className="relative group w-full md:w-auto mt-4 md:mt-0">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-200 to-indigo-200 rounded-2xl blur opacity-30 group-hover:opacity-100 transition duration-1000"></div>
+                <div className="relative flex flex-col gap-2 bg-white px-5 py-4 rounded-2xl shadow-sm border border-slate-100 w-full md:min-w-[240px]">
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 shadow-sm border border-amber-100">
+                                <Coins className="w-4 h-4" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Credits</p>
+                                <p className="text-xs font-bold text-slate-900 leading-none">Available Balance</p>
+                            </div>
+            <div className="relative group w-full md:w-auto mt-4 md:mt-0">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-200 to-indigo-200 rounded-2xl blur opacity-30 group-hover:opacity-100 transition duration-1000"></div>
+                <div className="relative flex flex-col gap-2 bg-white px-5 py-4 rounded-2xl shadow-sm border border-slate-100 w-full md:min-w-[240px]">
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 shadow-sm border border-amber-100">
+                                <Coins className="w-4 h-4" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Credits</p>
+                                <p className="text-xs font-bold text-slate-900 leading-none">Available Balance</p>
+                            </div>
+                        </div>
+                        <span className={`text-sm font-black ${(user?.credits ?? 0) === 0 ? 'text-red-500' : 'text-slate-900'}`}>
+                            {user?.credits ?? 0}
+                            <span className="text-[10px] text-slate-400 font-bold ml-0.5">/ 150</span>
+                        </span>
+                    </div>
+                    
+                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden mt-1">
+                        <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${Math.min(((user?.credits ?? 0) / 150) * 100, 100)}%` }}
+                            transition={{ duration: 1, ease: "easeOut" }}
+                            className={`h-full rounded-full ${
+                                (user?.credits ?? 0) < 20 ? 'bg-red-500' : 
+                                (user?.credits ?? 0) < 50 ? 'bg-amber-500' : 'bg-gradient-to-r from-indigo-500 to-purple-500'
+                            }`}
+                        />
+                        <span className={`text-sm font-black ${(user?.credits ?? 0) === 0 ? 'text-red-500' : 'text-slate-900'}`}>
+                            {user?.credits ?? 0}
+                            <span className="text-[10px] text-slate-400 font-bold ml-0.5">/ 150</span>
+                        </span>
+                    </div>
+                    
+                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden mt-1">
+                        <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${Math.min(((user?.credits ?? 0) / 150) * 100, 100)}%` }}
+                            transition={{ duration: 1, ease: "easeOut" }}
+                            className={`h-full rounded-full ${
+                                (user?.credits ?? 0) < 20 ? 'bg-red-500' : 
+                                (user?.credits ?? 0) < 50 ? 'bg-amber-500' : 'bg-gradient-to-r from-indigo-500 to-purple-500'
+                            }`}
+                        />
+                    </div>
+                </div>
             </div>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="card-shadow p-6 rounded-3xl hover-lift">
-                <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Total Questions</p>
-                <div className="flex items-center justify-between">
-                    <h2 className="text-4xl font-black mt-1 text-slate-900">
-                       <CountUp to={stats.totalQuestions} />
-                    </h2>
-                    <div className="bg-green-100 text-green-700 px-2 py-1 rounded-lg text-xs font-bold">↑ 12%</div>
+        {/* Stats Grid - 2 Col on Mobile, 3 on Desktop */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 mb-8 md:mb-8">
+             {/* Card 1 */}
+            <div className="col-span-1 bg-gradient-to-br from-white to-slate-50 p-5 rounded-[1.5rem] border border-slate-100 shadow-sm relative overflow-hidden group hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <div className="absolute -right-4 -top-4 p-4 opacity-[0.15] group-hover:opacity-25 transition-opacity rotate-12">
+                     <svg className="w-24 h-24 text-indigo-600" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+                </div>
+                <div className="relative z-10 flex flex-col h-full justify-between">
+                    <div>
+                        <p className="text-slate-400 text-[10px] uppercase font-bold tracking-widest mb-1">Total Questions</p>
+                        <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-none">
+                        <CountUp to={stats.totalQuestions} />
+                        </h2>
+                    </div>
+                    <div className="mt-3 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Available</span>
+                    </div>
                 </div>
             </div>
-            <div className="card-shadow p-6 rounded-3xl hover-lift">
-                <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Exam Papers</p>
-                <div className="flex items-center justify-between">
-                    <h2 className="text-4xl font-black mt-1 text-slate-900">
-                       <CountUp to={stats.totalPapers} />
-                    </h2>
-                    <div className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-lg text-xs font-bold">+2 Today</div>
+
+            {/* Card 2 */}
+            <div className="col-span-1 bg-gradient-to-br from-white to-slate-50 p-5 rounded-[1.5rem] border border-slate-100 shadow-sm relative overflow-hidden group hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <div className="absolute -right-4 -top-4 p-4 opacity-[0.15] group-hover:opacity-25 transition-opacity rotate-12">
+                     <svg className="w-24 h-24 text-emerald-600" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                </div>
+                <div className="relative z-10 flex flex-col h-full justify-between">
+                    <div>
+                        <p className="text-slate-400 text-[10px] uppercase font-bold tracking-widest mb-1">Exam Papers</p>
+                        <h2 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-none">
+                        <CountUp to={stats.totalPapers} />
+                        </h2>
+                    </div>
+                    <div className="mt-3 flex items-center gap-1.5">
+                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Created</span>
+                    </div>
                 </div>
             </div>
-            <Link href="/question-papers" className="ai-gradient hover:opacity-90 transition-all rounded-3xl p-6 flex items-center justify-between shadow-lg shadow-indigo-200 group hover-lift w-full text-left cursor-pointer">
-                <div className="text-left text-white">
-                    <p className="text-white/80 text-xs font-bold uppercase tracking-wider">Instant Build</p>
-                    <p className="text-xl font-bold">AI Generator</p>
+
+             {/* Card 3 - Full Width on Mobile, but unified style */}
+            <Link href="/question-papers" className="col-span-2 md:col-span-1 relative overflow-hidden rounded-[1.5rem] p-6 flex flex-col justify-between shadow-xl shadow-indigo-200 group hover:-translate-y-1 transition-transform duration-300 cursor-pointer min-h-[140px]">
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600"></div>
+                
+                {/* Decorative elements */}
+                <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-white/10 blur-2xl animate-pulse"></div>
+                <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-32 h-32 rounded-full bg-white/10 blur-2xl"></div>
+
+                <div className="relative z-10 flex justify-between items-start">
+                    <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold text-white border border-white/10 shadow-sm">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                        NEW
+                    </div>
+                    <div className="bg-white/20 p-2 rounded-xl backdrop-blur-sm border border-white/10 group-hover:scale-110 transition-transform shadow-sm">
+                         <span className="text-2xl">✨</span>
+                    </div>
                 </div>
-                <span className="text-3xl group-hover:rotate-12 transition-transform">✨</span>
+
+                <div className="relative z-10 mt-4">
+                    <p className="text-white text-2xl font-black leading-tight tracking-tight">AI Generator</p>
+                    <p className="text-indigo-100/80 text-xs font-semibold mt-1">Instant Question Papers</p>
+                </div>
             </Link>
         </div>
 
-        <section className="mb-8">
-            <div className="bg-white border-2 border-indigo-50 p-1.5 rounded-2xl flex items-center shadow-sm focus-within:border-indigo-400 transition-all">
-                <div className="bg-indigo-600 w-12 h-12 rounded-xl flex items-center justify-center text-white mr-2 shadow-lg shadow-indigo-200 shrink-0">
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+        <section className="mb-8 relative z-20">
+            <div className="relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-3xl opacity-20 blur-lg"></div>
+                <div className="relative bg-white p-2 rounded-[1.5rem] shadow-xl shadow-indigo-100 border border-slate-100 flex flex-col sm:flex-row gap-2">
+                    <div className="flex-1 flex items-center bg-slate-50 rounded-2xl px-4 border border-transparent focus-within:border-indigo-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all duration-300">
+                        <svg className="w-5 h-5 text-slate-400 shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <input 
+                            type="text" 
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && searchQuery.trim()) {
+                                    router.push(`/question-papers/create?auto_query=${encodeURIComponent(searchQuery)}`);
+                                }
+                            }}
+                            placeholder="Describe your paper (e.g. 'Class 12 Physics Kinetics')..." 
+                            className="bg-transparent flex-1 py-4 focus:outline-none text-slate-800 font-semibold placeholder:text-slate-400 w-full text-sm" 
+                        />
+                    </div>
+                    <button 
+                        onClick={() => {
+                            if (searchQuery.trim()) {
+                                router.push(`/question-papers/create?auto_query=${encodeURIComponent(searchQuery)}`);
+                            } else {
+                                router.push('/question-papers');
+                            }
+                        }}
+                        className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold text-sm tracking-wide hover:bg-indigo-600 active:scale-95 transition-all duration-200 shadow-lg shadow-slate-900/20 w-full sm:w-auto flex items-center justify-center gap-2"
+                    >
+                        <span>Generate</span>
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                    </button>
                 </div>
-                <input type="text" placeholder="Create a 30-mark NEET Physics paper on Laws of Motion..." className="bg-transparent flex-1 p-3 focus:outline-none text-slate-700 font-medium w-full" />
-                <Link href="/question-papers" className="hidden sm:block bg-slate-900 text-white px-8 py-3 rounded-xl font-bold text-sm hover:bg-indigo-600 transition-colors cursor-pointer">Generate</Link>
+        <section className="mb-8 relative z-20">
+            <div className="relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-3xl opacity-20 blur-lg"></div>
+                <div className="relative bg-white p-2 rounded-[1.5rem] shadow-xl shadow-indigo-100 border border-slate-100 flex flex-col sm:flex-row gap-2">
+                    <div className="flex-1 flex items-center bg-slate-50 rounded-2xl px-4 border border-transparent focus-within:border-indigo-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all duration-300">
+                        <svg className="w-5 h-5 text-slate-400 shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <input 
+                            type="text" 
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && searchQuery.trim()) {
+                                    router.push(`/question-papers/create?auto_query=${encodeURIComponent(searchQuery)}`);
+                                }
+                            }}
+                            placeholder="Describe your paper (e.g. 'Class 12 Physics Kinetics')..." 
+                            className="bg-transparent flex-1 py-4 focus:outline-none text-slate-800 font-semibold placeholder:text-slate-400 w-full text-sm" 
+                        />
+                    </div>
+                    <button 
+                        onClick={() => {
+                            if (searchQuery.trim()) {
+                                router.push(`/question-papers/create?auto_query=${encodeURIComponent(searchQuery)}`);
+                            } else {
+                                router.push('/question-papers');
+                            }
+                        }}
+                        className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold text-sm tracking-wide hover:bg-indigo-600 active:scale-95 transition-all duration-200 shadow-lg shadow-slate-900/20 w-full sm:w-auto flex items-center justify-center gap-2"
+                    >
+                        <span>Generate</span>
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                    </button>
+                </div>
             </div>
         </section>
 
-        <section className="mb-8 card-shadow p-8 rounded-[2rem]">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <Link href="/question-papers" className="flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-2xl transition-all shadow-md shadow-blue-100 hover-lift text-center">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    Create Question Paper
+        <section className="mb-8 md:mb-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Link href="/question-papers" className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 rounded-[2rem] p-6 shadow-lg shadow-blue-200 hover:shadow-xl hover:scale-[1.02] transition-all duration-300">
+                     <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/20 rounded-full blur-2xl group-hover:bg-white/30 transition-colors"></div>
+                    <div className="relative z-10 flex items-center justify-between">
+                        <div>
+                            <p className="text-blue-100 text-[10px] font-bold uppercase tracking-widest mb-1">Manual Mode</p>
+                            <h3 className="text-white text-lg font-bold">Create Paper</h3>
+                        </div>
+                        <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm group-hover:bg-white group-hover:text-blue-600 text-white transition-all">
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/></svg>
+                        </div>
+                    </div>
+        <section className="mb-8 md:mb-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Link href="/question-papers" className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 rounded-[2rem] p-6 shadow-lg shadow-blue-200 hover:shadow-xl hover:scale-[1.02] transition-all duration-300">
+                     <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/20 rounded-full blur-2xl group-hover:bg-white/30 transition-colors"></div>
+                    <div className="relative z-10 flex items-center justify-between">
+                        <div>
+                            <p className="text-blue-100 text-[10px] font-bold uppercase tracking-widest mb-1">Manual Mode</p>
+                            <h3 className="text-white text-lg font-bold">Create Paper</h3>
+                        </div>
+                        <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm group-hover:bg-white group-hover:text-blue-600 text-white transition-all">
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/></svg>
+                        </div>
+                    </div>
                 </Link>
-                <Link href="/question-papers" className="flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-6 rounded-2xl transition-all shadow-md shadow-emerald-100 hover-lift">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                    View Examples
-                </Link>
-            </div>
 
-            <div className="bg-slate-50 border border-slate-200 rounded-3xl p-6">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <Link href="/questions" className="bg-white border border-slate-200 hover:border-indigo-400 hover:text-indigo-600 p-4 rounded-2xl flex flex-col items-center gap-2 transition-all group">
-                        <svg className="w-5 h-5 text-slate-400 group-hover:text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M12 4v16m8-8H4"/></svg>
-                        <span className="font-bold text-xs">Add Question</span>
+                <div className="grid grid-cols-2 gap-3">
+                    <Link href="/questions" className="bg-white p-4 rounded-[1.5rem] border border-slate-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:border-indigo-200 hover:shadow-md transition-all active:scale-95">
+                        <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                        </div>
+                        <span className="text-xs font-bold text-slate-700">Questions</span>
+
+                <div className="grid grid-cols-2 gap-3">
+                    <Link href="/questions" className="bg-white p-4 rounded-[1.5rem] border border-slate-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:border-indigo-200 hover:shadow-md transition-all active:scale-95">
+                        <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                        </div>
+                        <span className="text-xs font-bold text-slate-700">Questions</span>
                     </Link>
-                    <Link href="/questions" className="bg-white border border-slate-200 hover:border-indigo-400 hover:text-indigo-600 p-4 rounded-2xl flex flex-col items-center gap-2 transition-all group">
-                        <svg className="w-5 h-5 text-slate-400 group-hover:text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                        <span className="font-bold text-xs">Browse Questions</span>
-                    </Link>
-                    <Link href="/question-papers" className="bg-white border border-slate-200 hover:border-indigo-400 hover:text-indigo-600 p-4 rounded-2xl flex flex-col items-center gap-2 transition-all group">
-                        <svg className="w-5 h-5 text-slate-400 group-hover:text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18 18.247 18.477 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-                        <span className="font-bold text-xs">Templates</span>
+                    <Link href="/question-papers" className="bg-white p-4 rounded-[1.5rem] border border-slate-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:border-emerald-200 hover:shadow-md transition-all active:scale-95">
+                        <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        </div>
+                        <span className="text-xs font-bold text-slate-700">Examples</span>
+                    <Link href="/question-papers" className="bg-white p-4 rounded-[1.5rem] border border-slate-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:border-emerald-200 hover:shadow-md transition-all active:scale-95">
+                        <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        </div>
+                        <span className="text-xs font-bold text-slate-700">Examples</span>
                     </Link>
                 </div>
             </div>
         </section>
 
-
-
-        <section className="mb-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 card-shadow p-8 rounded-[2rem] relative overflow-hidden bg-white">
-                <div className="flex justify-between items-start mb-8 relative z-10">
+        <section className="mb-6 lg:mb-10 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+            <div className="lg:col-span-2 card-shadow p-5 lg:p-8 rounded-[2rem] relative overflow-hidden bg-white">
+                <div className="flex justify-between items-start mb-6 lg:mb-8 relative z-10">
+        <section className="mb-6 lg:mb-10 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+            <div className="lg:col-span-2 card-shadow p-5 lg:p-8 rounded-[2rem] relative overflow-hidden bg-white">
+                <div className="flex justify-between items-start mb-6 lg:mb-8 relative z-10">
                     <div>
-                        <h3 className="font-bold text-xl text-slate-900">Question Type Breakdown</h3>
+                        <h3 className="font-bold text-lg lg:text-xl text-slate-900">Question Type Breakdown</h3>
+                        <h3 className="font-bold text-lg lg:text-xl text-slate-900">Question Type Breakdown</h3>
                         <p className="text-xs text-slate-400 font-medium mt-1">Distribution by format across all subjects</p>
                     </div>
                 </div>
@@ -316,7 +557,8 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            <div className="card-shadow p-8 rounded-[2rem] flex flex-col justify-between relative overflow-hidden">
+            <div className="card-shadow p-5 lg:p-8 rounded-[2rem] flex flex-col justify-between relative overflow-hidden">
+            <div className="card-shadow p-5 lg:p-8 rounded-[2rem] flex flex-col justify-between relative overflow-hidden">
                 <div className="flex justify-between items-start mb-6 z-10">
                     <div>
                         <h3 className="font-bold text-lg text-slate-900">Question Bank</h3>
@@ -325,10 +567,13 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="flex items-center gap-6 z-10">
-                    <div className="relative w-32 h-32 rounded-full flex items-center justify-center hover:scale-105 transition-transform duration-500" 
+                    <div className="relative w-28 h-28 lg:w-32 lg:h-32 rounded-full flex items-center justify-center hover:scale-105 transition-transform duration-500" 
+                    <div className="relative w-28 h-28 lg:w-32 lg:h-32 rounded-full flex items-center justify-center hover:scale-105 transition-transform duration-500" 
                          style={{ background: `conic-gradient(#4f46e5 0% ${getDifficultyPercent('Hard')}%, #10b981 ${getDifficultyPercent('Hard')}% ${getDifficultyPercent('Hard') + getDifficultyPercent('Medium')}%, #f59e0b ${getDifficultyPercent('Hard') + getDifficultyPercent('Medium')}% 100%)` }}>
-                        <div className="w-24 h-24 bg-white rounded-full flex flex-col items-center justify-center shadow-inner">
-                            <span className="text-2xl font-black text-slate-800"><CountUp to={stats.difficultyBreakdown.reduce((acc, curr) => acc + curr.count, 0)} /></span>
+                        <div className="w-20 h-20 lg:w-24 lg:h-24 bg-white rounded-full flex flex-col items-center justify-center shadow-inner">
+                            <span className="text-xl lg:text-2xl font-black text-slate-800"><CountUp to={stats.difficultyBreakdown.reduce((acc, curr) => acc + curr.count, 0)} /></span>
+                        <div className="w-20 h-20 lg:w-24 lg:h-24 bg-white rounded-full flex flex-col items-center justify-center shadow-inner">
+                            <span className="text-xl lg:text-2xl font-black text-slate-800"><CountUp to={stats.difficultyBreakdown.reduce((acc, curr) => acc + curr.count, 0)} /></span>
                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total</span>
                         </div>
                     </div>
@@ -369,9 +614,11 @@ export default function DashboardPage() {
         </section>
 
         <div className="grid grid-cols-1 gap-8 pb-10">
-            <div className="w-full card-shadow p-8 rounded-3xl">
+            <div className="w-full card-shadow p-5 lg:p-8 rounded-3xl">
+            <div className="w-full card-shadow p-5 lg:p-8 rounded-3xl">
                 <div className="flex justify-between items-center mb-6">
-                    <h3 className="font-bold text-xl text-slate-900">Recent Assessments</h3>
+                    <h3 className="font-bold text-lg lg:text-xl text-slate-900">Recent Assessments</h3>
+                    <h3 className="font-bold text-lg lg:text-xl text-slate-900">Recent Assessments</h3>
                     <button className="text-indigo-600 font-bold text-sm hover:underline cursor-pointer">View All</button>
                 </div>
                 <div className="space-y-3">
@@ -380,19 +627,25 @@ export default function DashboardPage() {
                     ) : stats.recentPapers.length > 0 ? (
                         stats.recentPapers.map((paper: { id: string; title: string; updatedAt: string; status?: string }) => (
                             <Link href={`/question-papers/create?savedId=${paper.id}`} key={paper.id}>
-                                <div className="p-4 border border-slate-100 bg-slate-50/50 rounded-2xl flex items-center justify-between group cursor-pointer hover:bg-white transition-all shadow-sm mb-3">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-xl">
+                                <div className="p-4 border border-slate-100 bg-slate-50/50 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between group cursor-pointer hover:bg-white transition-all shadow-sm mb-3 gap-3 sm:gap-0">
+                                    <div className="flex items-center gap-4 w-full sm:w-auto">
+                                        <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-xl shrink-0">
+                                <div className="p-4 border border-slate-100 bg-slate-50/50 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between group cursor-pointer hover:bg-white transition-all shadow-sm mb-3 gap-3 sm:gap-0">
+                                    <div className="flex items-center gap-4 w-full sm:w-auto">
+                                        <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-xl shrink-0">
                                             {paper.title.toLowerCase().includes('math') ? '📐' : 
                                              paper.title.toLowerCase().includes('chem') ? '🧪' :
                                              paper.title.toLowerCase().includes('phy') ? '⚡' : '📝'}
                                         </div>
-                                        <div>
-                                            <p className="font-bold text-slate-900 text-sm">{paper.title}</p>
+                                        <div className="min-w-0">
+                                            <p className="font-bold text-slate-900 text-sm truncate">{paper.title}</p>
+                                        <div className="min-w-0">
+                                            <p className="font-bold text-slate-900 text-sm truncate">{paper.title}</p>
                                             <p className="text-[10px] text-slate-400">Edited {new Date(paper.updatedAt).toLocaleDateString()}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end pl-14 sm:pl-0">
+                                    <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end pl-14 sm:pl-0">
                                         <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded ${
                                             paper.status === 'Published' ? 'bg-green-100 text-green-700' : 
                                             paper.status === 'Saved' ? 'bg-indigo-100 text-indigo-700' : 
@@ -400,14 +653,26 @@ export default function DashboardPage() {
                                         }`}>
                                             {paper.status || 'Draft'}
                                         </span>
-                                        <svg className="w-5 h-5 text-slate-300 group-hover:text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                                        <button 
-                                            onClick={(e) => handleDelete(e, paper.id)}
-                                            className="p-2 -mr-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
-                                            title="Delete"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
+                                        <div className="flex items-center gap-4">
+                                            <svg className="w-5 h-5 text-slate-300 group-hover:text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                            <button 
+                                                onClick={(e) => handleDelete(e, paper.id)}
+                                                className="p-2 -mr-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+                                                title="Delete"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <svg className="w-5 h-5 text-slate-300 group-hover:text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                            <button 
+                                                onClick={(e) => handleDelete(e, paper.id)}
+                                                className="p-2 -mr-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+                                                title="Delete"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </Link>
@@ -419,9 +684,6 @@ export default function DashboardPage() {
                     )}
                 </div>
             </div>
-
-            
-
         </div>
     </DashboardLayout>
   );

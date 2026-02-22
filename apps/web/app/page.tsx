@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { ContactForm } from "../components/landing/ContactForm";
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from "framer-motion";
 import { 
   ArrowRight, 
@@ -39,8 +40,13 @@ import {
   PieChart,
   Sliders,
   GraduationCap,
-  Landmark
+  Landmark,
+  Mail
+  Landmark,
+  Mail
 } from "lucide-react";
+import { AnnouncementBar } from "../components/AnnouncementBar";
+import { HeroInterface } from "../components/landing/HeroInterface";
 
 // --- Components ---
 
@@ -123,13 +129,18 @@ export default function LandingPage() {
   return (
     <div className="text-slate-900 bg-white overflow-x-hidden selection:bg-blue-100 selection:text-blue-900">
       
-      {/* Navbar */}
-      <nav className={`fixed top-0 left-0 right-0 h-[70px] z-50 flex items-center transition-all duration-300 ${isScrolled ? 'bg-white/85 backdrop-blur-md border-b border-slate-200' : 'bg-white/0'}`}>
-        <div className="w-full max-w-[1200px] mx-auto px-6 flex justify-between items-center">
+      {/* Navbar & Announcement */}
+      <div className="fixed top-0 left-0 right-0 z-50 flex flex-col">
+        <AnnouncementBar />
+        <nav className={`w-full h-[70px] flex items-center transition-all duration-300 ${isScrolled ? 'bg-white/85 backdrop-blur-md border-b border-slate-200' : 'bg-white/0'}`}>
+      {/* Navbar & Announcement */}
+      <div className="fixed top-0 left-0 right-0 z-50 flex flex-col">
+        <AnnouncementBar />
+        <nav className={`w-full h-[70px] flex items-center transition-all duration-300 ${isScrolled ? 'bg-white/85 backdrop-blur-md border-b border-slate-200' : 'bg-white/0'}`}>
+        <div className="w-full max-w-[1200px] mx-auto px-6 flex justify-between items-center relative z-50">
             <Link href="/" className="flex items-center gap-2.5 font-extrabold text-xl tracking-tight text-slate-900">
-                <div className="w-8 h-8 bg-blue-600 text-white rounded-lg grid place-items-center shadow-lg shadow-blue-200">
-                    <Layers size={18} strokeWidth={2.5} />
-                </div>
+                <img src="/logo-new.png" alt="Logo" className="w-8 h-8 rounded-lg shadow-sm" />
+                <img src="/logo-new.png" alt="Logo" className="w-8 h-8 rounded-lg shadow-sm" />
                 Question Hive
             </Link>
 
@@ -145,20 +156,56 @@ export default function LandingPage() {
                 <Link href="/auth/register" className="text-sm font-bold bg-blue-600 text-white px-5 py-2.5 rounded-full shadow-[0_4px_6px_rgba(37,99,235,0.2)] hover:bg-blue-700 hover:-translate-y-0.5 hover:shadow-[0_8px_15px_rgba(37,99,235,0.25)] transition-all">Start Free</Link>
             </div>
 
-            <button className="md:hidden text-slate-700" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <button className="md:hidden text-slate-700 p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <button className="md:hidden text-slate-700 p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
                 {mobileMenuOpen ? <X /> : <Menu />}
             </button>
         </div>
-      </nav>
+
+        {/* Mobile Menu Overlay */}
+        <AnimatePresence>
+            {mobileMenuOpen && (
+                <motion.div 
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="fixed inset-0 bg-white z-40 pt-24 px-6 md:hidden flex flex-col gap-6"
+                >
+                    <div className="flex flex-col gap-2">
+                        <a href="#features" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-between py-4 border-b border-slate-100 text-xl font-bold text-slate-900 group">
+                            Features 
+                            <ChevronRight className="text-slate-300 group-hover:text-blue-600 transition-colors" />
+                        </a>
+                        <a href="#schools" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-between py-4 border-b border-slate-100 text-xl font-bold text-slate-900 group">
+                            For Schools
+                            <ChevronRight className="text-slate-300 group-hover:text-blue-600 transition-colors" />
+                        </a>
+                        <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-between py-4 border-b border-slate-100 text-xl font-bold text-slate-900 group">
+                            Pricing
+                            <ChevronRight className="text-slate-300 group-hover:text-blue-600 transition-colors" />
+                        </a>
+                    </div>
+                    
+                    <div className="mt-auto pb-10 flex flex-col gap-4">
+                        <Link href="/auth/login" className="w-full py-4 rounded-xl border-2 border-slate-200 text-center font-bold text-slate-700">Log In</Link>
+                        <Link href="/auth/register" className="w-full py-4 rounded-xl bg-blue-600 text-white text-center font-bold shadow-xl shadow-blue-200">Start Free</Link>
+                    </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+        </nav>
+      </div>
+        </nav>
+      </div>
 
       {/* Hero Section */}
       <section className="pt-32 pb-16 text-center relative overflow-hidden bg-white">
         {/* Dot Background - Maximized Visibility */}
-        <div className="absolute inset-0 h-full w-full bg-[radial-gradient(#475569_1px,transparent_1px)] [background-size:16px_16px] [mask-image:linear-gradient(to_bottom,white_40%,transparent_100%)] pointer-events-none" />
+        <div className="absolute inset-0 h-full w-full bg-[radial-gradient(#94a3b8_1px,transparent_0.1px)] [background-size:16px_16px] [mask-image:linear-gradient(to_bottom,white_40%,transparent_100%)] pointer-events-none" />
         {/* Bottom Glow */}
         <div className="absolute top-0 z-[-2] h-screen w-screen bg-[radial-gradient(100%_50%_at_50%_0%,rgba(0,163,255,0.13)_0,rgba(0,163,255,0)_50%,rgba(0,163,255,0)_100%)]" />
 
-        <div className="container max-w-[1200px] mx-auto px-6">
+        <div className="container max-w-[1200px] mx-auto px-6 relative z-10">
             <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -175,7 +222,7 @@ export default function LandingPage() {
                     Stop fighting with formatting. Question Hive helps teachers generate, format, and export professional question papers instantly using AI.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
-                    <Link href="/auth/register" className="inline-flex justify-center items-center px-8 py-4 bg-blue-600 text-white rounded-xl font-bold text-lg shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:bg-blue-700 transition-all hover:-translate-y-1">
+                    <Link href="/auth/register" className="w-full sm:w-auto inline-flex justify-center items-center px-8 py-4 bg-blue-600 text-white rounded-xl font-bold text-lg shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:bg-blue-700 transition-all hover:-translate-y-1">
                         Start Creating for Free
                     </Link>
                 </div>
@@ -191,27 +238,9 @@ export default function LandingPage() {
                 initial={{ opacity: 0, y: 40, rotateX: 10 }}
                 animate={{ opacity: 1, y: 0, rotateX: 0 }}
                 transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-                className="mt-16 max-w-[1000px] mx-auto bg-white rounded-2xl border border-slate-200 shadow-[0_25px_50px_-12px_rgba(37,99,235,0.25)] overflow-hidden relative group perspective-[1000px]"
+                className="mt-16 max-w-[1000px] mx-auto bg-white rounded-xl border border-slate-200 shadow-[0_25px_50px_-12px_rgba(37,99,235,0.25)] overflow-hidden relative group perspective-[1000px]"
             >
-                <div className="h-10 bg-slate-50 border-b border-slate-200 flex items-center px-4 gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-rose-400" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                </div>
-                <div className="relative">
-                    {/* Placeholder Image */}
-                    {/* Video Placeholder */}
-                    {/* Video Placeholder */}
-                    <div className="bg-slate-50 relative flex items-center justify-center overflow-hidden">
-                        <img 
-                            src="/placeholder.png" 
-                            alt="App Dashboard" 
-                            className="w-full h-auto"
-                        />
-                        {/* Glint Effect */}
-                        <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.1)_50%,transparent_75%)] opacity-0 group-hover:opacity-100 transition-opacity duration-700 bg-[length:250%_250%,100%_100%] bg-[position:0_0,0_0] group-hover:bg-[position:100%_100%,0_0] pointer-events-none" />
-                    </div>
-                </div>
+                <HeroInterface />
             </motion.div>
         </div>
       </section>
@@ -271,8 +300,9 @@ export default function LandingPage() {
       </section>
 
       {/* Features (Bento Grid) */}
-      <section className="py-24 bg-slate-50" id="features">
-        <div className="container max-w-[1200px] mx-auto px-6">
+      <section className="py-24 bg-slate-50 relative overflow-hidden" id="features">
+        <div className="absolute inset-0 h-full w-full bg-[radial-gradient(#94a3b8_1px,transparent_0.1px)] [background-size:16px_16px] opacity-40 pointer-events-none" />
+        <div className="container max-w-[1200px] mx-auto px-6 relative z-10">
             <div className="text-center max-w-2xl mx-auto mb-16">
                 <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">Everything you need to<br />run exams smoothly.</h2>
                 <p className="text-lg text-slate-500">We combine a massive question bank with smart design tools to give you the ultimate assessment platform.</p>
@@ -287,12 +317,122 @@ export default function LandingPage() {
                     viewport={{ once: true }}
                     className="md:row-span-2 bg-blue-600 rounded-3xl p-8 text-white flex flex-col relative overflow-hidden group hover:shadow-xl transition-all"
                 >
-                    <div className="relative z-10">
-                        <div className="w-12 h-12 bg-white/20 rounded-xl grid place-items-center mb-6">
-                            <Wand2 className="text-white" />
+                    <div className="relative z-10 flex flex-col h-full">
+                        <div className="mb-4">
+                            <div className="w-12 h-12 bg-white/20 rounded-xl grid place-items-center mb-6">
+                                <Wand2 className="text-white" />
+                            </div>
+                            <h3 className="text-2xl font-bold mb-3">AI Auto-Gen</h3>
+                            <p className="text-blue-100 leading-relaxed">Select your topic, difficulty, and marks. Our AI builds a balanced paper in 3 seconds flat.</p>
                         </div>
-                        <h3 className="text-2xl font-bold mb-3">AI Auto-Gen</h3>
-                        <p className="text-blue-100 leading-relaxed">Select your topic, difficulty, and marks. Our AI builds a balanced paper in 3 seconds flat.</p>
+                        
+                        {/* Logos Area */}
+                        <div className="flex-1 w-full bg-blue-700/30 rounded-2xl border border-blue-500/30 flex flex-col items-center justify-center gap-6 mt-4 p-6 relative overflow-hidden">
+                             {/* Background Glow */}
+                             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-transparent pointer-events-none" />
+                             
+                             {/* Floating Elements Background */}
+                             <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                                {/* Top Right Gemini */}
+                                <svg className="absolute top-4 right-4 w-12 h-12 opacity-40 rotate-12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M21.8726 10.932C17.3888 10.932 13.9317 7.42591 13.9317 3.0137C13.9317 2.44962 13.4821 2 12.918 2C12.3539 2 11.9043 2.44962 11.9043 3.0137C11.9043 7.42591 8.44725 10.932 3.96342 10.932C3.39934 10.932 2.94971 11.3816 2.94971 11.9457C2.94971 12.5098 3.39934 12.9594 3.96342 12.9594C8.44725 12.9594 11.9043 16.4655 11.9043 20.8777C11.9043 21.4418 12.3539 21.8914 12.918 21.8914C13.4821 21.8914 13.9317 21.4418 13.9317 20.8777C13.9317 16.4655 17.3888 12.9594 21.8726 12.9594C22.4367 12.9594 22.8863 12.5098 22.8863 11.9457C22.8863 11.3816 22.4367 10.932 21.8726 10.932Z" fill="white" />
+                                </svg>
+
+                                {/* Bottom Left Gemini */}
+                                <svg className="absolute bottom-6 left-6 w-16 h-16 opacity-30 -rotate-12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M21.8726 10.932C17.3888 10.932 13.9317 7.42591 13.9317 3.0137C13.9317 2.44962 13.4821 2 12.918 2C12.3539 2 11.9043 2.44962 11.9043 3.0137C11.9043 7.42591 8.44725 10.932 3.96342 10.932C3.39934 10.932 2.94971 11.3816 2.94971 11.9457C2.94971 12.5098 3.39934 12.9594 3.96342 12.9594C8.44725 12.9594 11.9043 16.4655 11.9043 20.8777C11.9043 21.4418 12.3539 21.8914 12.918 21.8914C13.4821 21.8914 13.9317 21.4418 13.9317 20.8777C13.9317 16.4655 17.3888 12.9594 21.8726 12.9594C22.4367 12.9594 22.8863 12.5098 22.8863 11.9457C22.8863 11.3816 22.4367 10.932 21.8726 10.932Z" fill="white" />
+                                </svg>
+                                
+                                {/* Top Left Sparkle */}
+                                <Sparkles className="absolute top-10 left-8 w-6 h-6 text-amber-300 opacity-60 animate-pulse" />
+                                
+                                {/* Bottom Right Sparkle */}
+                                <Sparkles className="absolute bottom-12 right-10 w-8 h-8 text-amber-300 opacity-50" />
+
+                                {/* Middle Right Small Gemini */}
+                                <svg className="absolute top-1/2 right-4 w-8 h-8 opacity-25" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M21.8726 10.932C17.3888 10.932 13.9317 7.42591 13.9317 3.0137C13.9317 2.44962 13.4821 2 12.918 2C12.3539 2 11.9043 2.44962 11.9043 3.0137C11.9043 7.42591 8.44725 10.932 3.96342 10.932C3.39934 10.932 2.94971 11.3816 2.94971 11.9457C2.94971 12.5098 3.39934 12.9594 3.96342 12.9594C8.44725 12.9594 11.9043 16.4655 11.9043 20.8777C11.9043 21.4418 12.3539 21.8914 12.918 21.8914C13.4821 21.8914 13.9317 21.4418 13.9317 20.8777C13.9317 16.4655 17.3888 12.9594 21.8726 12.9594C22.4367 12.9594 22.8863 12.5098 22.8863 11.9457C22.8863 11.3816 22.4367 10.932 21.8726 10.932Z" fill="white" />
+                                </svg>
+                             </div>
+
+                            {/* Center Main Gemini Logo */}
+                            <div className="flex flex-col items-center gap-6 relative z-10">
+                                <div className="relative">
+                                    {/* Enhanced Glow Effect */}
+                                    <div className="absolute inset-0 bg-white/20 blur-3xl rounded-full scale-150" />
+                                    
+                                    <svg className="w-40 h-40 relative z-10 drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M21.8726 10.932C17.3888 10.932 13.9317 7.42591 13.9317 3.0137C13.9317 2.44962 13.4821 2 12.918 2C12.3539 2 11.9043 2.44962 11.9043 3.0137C11.9043 7.42591 8.44725 10.932 3.96342 10.932C3.39934 10.932 2.94971 11.3816 2.94971 11.9457C2.94971 12.5098 3.39934 12.9594 3.96342 12.9594C8.44725 12.9594 11.9043 16.4655 11.9043 20.8777C11.9043 21.4418 12.3539 21.8914 12.918 21.8914C13.4821 21.8914 13.9317 21.4418 13.9317 20.8777C13.9317 16.4655 17.3888 12.9594 21.8726 12.9594C22.4367 12.9594 22.8863 12.5098 22.8863 11.9457C22.8863 11.3816 22.4367 10.932 21.8726 10.932Z" fill="url(#gemini-gradient)" />
+                                        <defs>
+                                            <linearGradient id="gemini-gradient" x1="2.94971" y1="2" x2="22.8863" y2="21.8914" gradientUnits="userSpaceOnUse">
+                                                <stop stopColor="#4E8CF7" />
+                                                <stop offset="0.5" stopColor="#E2546D" />
+                                                <stop offset="1" stopColor="#F5D060" />
+                                            </linearGradient>
+                                        </defs>
+                                    </svg>
+                                </div>
+                                <span className="text-xl font-bold text-white tracking-wide drop-shadow-md">Powered by Gemini</span>
+                            </div>
+                        </div>
+                    <div className="relative z-10 flex flex-col h-full">
+                        <div className="mb-4">
+                            <div className="w-12 h-12 bg-white/20 rounded-xl grid place-items-center mb-6">
+                                <Wand2 className="text-white" />
+                            </div>
+                            <h3 className="text-2xl font-bold mb-3">AI Auto-Gen</h3>
+                            <p className="text-blue-100 leading-relaxed">Select your topic, difficulty, and marks. Our AI builds a balanced paper in 3 seconds flat.</p>
+                        </div>
+                        
+                        {/* Logos Area */}
+                        <div className="flex-1 w-full bg-blue-700/30 rounded-2xl border border-blue-500/30 flex flex-col items-center justify-center gap-6 mt-4 p-6 relative overflow-hidden">
+                             {/* Background Glow */}
+                             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-transparent pointer-events-none" />
+                             
+                             {/* Floating Elements Background */}
+                             <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                                {/* Top Right Gemini */}
+                                <svg className="absolute top-4 right-4 w-12 h-12 opacity-40 rotate-12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M21.8726 10.932C17.3888 10.932 13.9317 7.42591 13.9317 3.0137C13.9317 2.44962 13.4821 2 12.918 2C12.3539 2 11.9043 2.44962 11.9043 3.0137C11.9043 7.42591 8.44725 10.932 3.96342 10.932C3.39934 10.932 2.94971 11.3816 2.94971 11.9457C2.94971 12.5098 3.39934 12.9594 3.96342 12.9594C8.44725 12.9594 11.9043 16.4655 11.9043 20.8777C11.9043 21.4418 12.3539 21.8914 12.918 21.8914C13.4821 21.8914 13.9317 21.4418 13.9317 20.8777C13.9317 16.4655 17.3888 12.9594 21.8726 12.9594C22.4367 12.9594 22.8863 12.5098 22.8863 11.9457C22.8863 11.3816 22.4367 10.932 21.8726 10.932Z" fill="white" />
+                                </svg>
+
+                                {/* Bottom Left Gemini */}
+                                <svg className="absolute bottom-6 left-6 w-16 h-16 opacity-30 -rotate-12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M21.8726 10.932C17.3888 10.932 13.9317 7.42591 13.9317 3.0137C13.9317 2.44962 13.4821 2 12.918 2C12.3539 2 11.9043 2.44962 11.9043 3.0137C11.9043 7.42591 8.44725 10.932 3.96342 10.932C3.39934 10.932 2.94971 11.3816 2.94971 11.9457C2.94971 12.5098 3.39934 12.9594 3.96342 12.9594C8.44725 12.9594 11.9043 16.4655 11.9043 20.8777C11.9043 21.4418 12.3539 21.8914 12.918 21.8914C13.4821 21.8914 13.9317 21.4418 13.9317 20.8777C13.9317 16.4655 17.3888 12.9594 21.8726 12.9594C22.4367 12.9594 22.8863 12.5098 22.8863 11.9457C22.8863 11.3816 22.4367 10.932 21.8726 10.932Z" fill="white" />
+                                </svg>
+                                
+                                {/* Top Left Sparkle */}
+                                <Sparkles className="absolute top-10 left-8 w-6 h-6 text-amber-300 opacity-60 animate-pulse" />
+                                
+                                {/* Bottom Right Sparkle */}
+                                <Sparkles className="absolute bottom-12 right-10 w-8 h-8 text-amber-300 opacity-50" />
+
+                                {/* Middle Right Small Gemini */}
+                                <svg className="absolute top-1/2 right-4 w-8 h-8 opacity-25" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M21.8726 10.932C17.3888 10.932 13.9317 7.42591 13.9317 3.0137C13.9317 2.44962 13.4821 2 12.918 2C12.3539 2 11.9043 2.44962 11.9043 3.0137C11.9043 7.42591 8.44725 10.932 3.96342 10.932C3.39934 10.932 2.94971 11.3816 2.94971 11.9457C2.94971 12.5098 3.39934 12.9594 3.96342 12.9594C8.44725 12.9594 11.9043 16.4655 11.9043 20.8777C11.9043 21.4418 12.3539 21.8914 12.918 21.8914C13.4821 21.8914 13.9317 21.4418 13.9317 20.8777C13.9317 16.4655 17.3888 12.9594 21.8726 12.9594C22.4367 12.9594 22.8863 12.5098 22.8863 11.9457C22.8863 11.3816 22.4367 10.932 21.8726 10.932Z" fill="white" />
+                                </svg>
+                             </div>
+
+                            {/* Center Main Gemini Logo */}
+                            <div className="flex flex-col items-center gap-6 relative z-10">
+                                <div className="relative">
+                                    {/* Enhanced Glow Effect */}
+                                    <div className="absolute inset-0 bg-white/20 blur-3xl rounded-full scale-150" />
+                                    
+                                    <svg className="w-40 h-40 relative z-10 drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M21.8726 10.932C17.3888 10.932 13.9317 7.42591 13.9317 3.0137C13.9317 2.44962 13.4821 2 12.918 2C12.3539 2 11.9043 2.44962 11.9043 3.0137C11.9043 7.42591 8.44725 10.932 3.96342 10.932C3.39934 10.932 2.94971 11.3816 2.94971 11.9457C2.94971 12.5098 3.39934 12.9594 3.96342 12.9594C8.44725 12.9594 11.9043 16.4655 11.9043 20.8777C11.9043 21.4418 12.3539 21.8914 12.918 21.8914C13.4821 21.8914 13.9317 21.4418 13.9317 20.8777C13.9317 16.4655 17.3888 12.9594 21.8726 12.9594C22.4367 12.9594 22.8863 12.5098 22.8863 11.9457C22.8863 11.3816 22.4367 10.932 21.8726 10.932Z" fill="url(#gemini-gradient)" />
+                                        <defs>
+                                            <linearGradient id="gemini-gradient" x1="2.94971" y1="2" x2="22.8863" y2="21.8914" gradientUnits="userSpaceOnUse">
+                                                <stop stopColor="#4E8CF7" />
+                                                <stop offset="0.5" stopColor="#E2546D" />
+                                                <stop offset="1" stopColor="#F5D060" />
+                                            </linearGradient>
+                                        </defs>
+                                    </svg>
+                                </div>
+                                <span className="text-xl font-bold text-white tracking-wide drop-shadow-md">Powered by Gemini</span>
+                            </div>
+                        </div>
                     </div>
                 </motion.div>
 
@@ -302,7 +442,7 @@ export default function LandingPage() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: 0.1 }}
-                    className="md:col-span-2 bg-white rounded-3xl border border-slate-200 p-8 flex flex-col md:flex-row justify-between relative overflow-hidden hover:border-blue-200 hover:shadow-lg transition-all"
+                    className="md:col-span-2 bg-white rounded-3xl border border-slate-200 p-8 flex flex-col md:flex-row justify-between relative overflow-hidden hover:border-blue-200 hover:shadow-lg transition-all gap-6 md:gap-0"
                 >
                      <div className="max-w-xs z-10 relative">
                         <div className="w-12 h-12 bg-blue-50 rounded-xl grid place-items-center mb-6 text-blue-600">
@@ -315,7 +455,7 @@ export default function LandingPage() {
                     <img 
                         src="/image1.png" 
                         alt="PDF Formatting Preview" 
-                        className="absolute right-0 bottom-0 md:top-10 md:right-10 w-64 h-auto bg-white rounded-tl-2xl border-l border-t border-slate-200 shadow-sm translate-y-4 translate-x-4" 
+                        className="relative mt-auto -mb-8 -mr-8 w-full max-w-[240px] self-end rounded-tl-xl border-l border-t border-slate-200 shadow-sm md:absolute md:top-10 md:right-10 md:w-64 md:rounded-tl-2xl md:translate-y-4 md:translate-x-4 md:m-0" 
                     />
                 </motion.div>
 
@@ -467,12 +607,16 @@ export default function LandingPage() {
       </section>
 
       {/* About Section */}
-      <section className="py-24 bg-white" id="about">
-        <div className="container max-w-[1200px] mx-auto px-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+      <section className="py-24 bg-white relative overflow-hidden" id="about">
+        <div className="absolute inset-0 h-full w-full bg-[radial-gradient(#94a3b8_1px,transparent_0.1px)] [background-size:16px_16px] opacity-40 pointer-events-none" />
+        <div className="container max-w-[1200px] mx-auto px-6 relative z-10">
+            <div className="max-w-3xl mx-auto text-center">
+            <div className="max-w-3xl mx-auto text-center">
                  <motion.div 
-                    initial={{ opacity: 0, x: -30 }}
-                    whileInView={{ opacity: 1, x: 0 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                  >
                     <span className="text-blue-600 font-bold tracking-widest text-sm uppercase mb-2 block">Our Mission</span>
@@ -484,375 +628,244 @@ export default function LandingPage() {
                         Our goal is to give back 10 hours every week to every educator by automating the tedious parts of assessment creation.
                     </p>
 
-                    <div className="flex gap-12 pt-8 border-t border-slate-100">
+                    <div className="flex justify-center gap-12 pt-8 border-t border-slate-100">
+                    <div className="flex justify-center gap-12 pt-8 border-t border-slate-100">
                         <div>
-                            <h4 className="text-4xl font-extrabold text-blue-600 mb-1"><AnimatedCountUp to={500} />+</h4>
-                            <p className="font-bold text-slate-500 text-sm">Schools Partnered</p>
-                        </div>
-                        <div>
-                            <h4 className="text-4xl font-extrabold text-blue-600 mb-1"><AnimatedCountUp to={1.2} decimals={1} />M</h4>
+                            <h4 className="text-4xl font-extrabold text-blue-600 mb-1"><AnimatedCountUp to={50} />K+</h4>
                             <p className="font-bold text-slate-500 text-sm">Questions Banked</p>
                         </div>
                     </div>
                 </motion.div>
-                
-                <motion.div 
-                    initial={{ opacity: 0, x: 30 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    className="relative rounded-3xl overflow-hidden aspect-[4/5] bg-slate-100"
-                >
-                    <div className="absolute inset-0 bg-blue-500/10" />
-                     {/* Placeholder for About Image */}
-                     <div className="absolute inset-0 grid place-items-center text-slate-300">
-                        <Users size={64} />
-                     </div>
-                </motion.div>
             </div>
         </div>
       </section>
 
-      {/* Pricing / For Independent Teachers */}
-      <section className="py-20 bg-white border-b border-slate-100" id="pricing">
-        <div className="container max-w-[1000px] mx-auto px-6">
-            <div className="flex flex-col md:flex-row items-center gap-12">
+      {/* New Consolidated Pricing Section */}
+      <section className="py-24 bg-slate-50 relative overflow-hidden" id="pricing">
+        <div className="absolute inset-0 h-full w-full bg-[radial-gradient(#94a3b8_1px,transparent_0.1px)] [background-size:16px_16px] opacity-40 pointer-events-none" />
+        <div className="container max-w-[1400px] mx-auto px-6 relative z-10">
+            <div className="text-center max-w-3xl mx-auto mb-16">
+                <span className="inline-block px-4 py-1.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wider mb-4">Pricing</span>
+                <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">Plans for Every Stage</h2>
+                <p className="text-lg text-slate-500">From individual tutors to large university networks.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-center">
+                
+                {/* 1. Individual (Transactional) */}
                 <motion.div 
-                    initial={{ opacity: 0, x: -30 }}
-                    whileInView={{ opacity: 1, x: 0 }}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 0.6 }}
-                    className="flex-1 text-center md:text-left"
+                    className="bg-emerald-50/50 border border-emerald-100 rounded-[20px] p-6 flex flex-col hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 relative group h-full"
                 >
-                    <span className="inline-block px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold uppercase tracking-wider mb-4">For Tutors</span>
-                    <h2 className="text-3xl font-extrabold text-slate-900 mb-4">Teach on your own terms?</h2>
-                    <p className="text-lg text-slate-500 mb-6">
-                        No subscriptions. No annual contracts. Just buy credits and generate high-quality papers whenever you need them.
-                    </p>
-                    <ul className="space-y-3 mb-8 inline-block text-left">
-                        <li className="flex items-center gap-3 text-slate-700 font-medium">
-                            <CheckCircle2 size={18} className="text-emerald-500" /> Pay-as-you-go convenience
+                    <div className="mb-6">
+                        <div className="w-12 h-12 bg-emerald-100 rounded-xl grid place-items-center mb-4 text-emerald-600">
+                             <Zap size={24} />
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-900 mb-2">Individual</h3>
+                        <p className="text-sm text-slate-500 mb-4">Pay-as-you-go</p>
+                        <div className="flex items-baseline gap-1">
+                            <span className="text-4xl font-extrabold text-emerald-600">₹1</span>
+                            <span className="text-slate-500 font-medium text-sm">/ credit</span>
+                        </div>
+                         <p className="text-xs text-slate-400 mt-2 font-medium">No commitments.</p>
+                    </div>
+                    
+                    <ul className="space-y-3 mb-8 flex-1">
+                        <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                            <Check size={16} className="text-emerald-500 mt-0.5 shrink-0" />
+                            Use strictly when needed
                         </li>
-                        <li className="flex items-center gap-3 text-slate-700 font-medium">
-                            <CheckCircle2 size={18} className="text-emerald-500" /> ₹1 per MCQ generation
-                        </li>
-                         <li className="flex items-center gap-3 text-slate-700 font-medium">
-                            <CheckCircle2 size={18} className="text-emerald-500" /> Use strictly when needed
+                        <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                             <Check size={16} className="text-emerald-500 mt-0.5 shrink-0" />
+                            1 Credit = 1 MCQ
                         </li>
                     </ul>
-                </motion.div>
-                
-                 {/* Pay As You Go Card */}
-                <motion.div 
-                    initial={{ opacity: 0, x: 30 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: 0.2 }}
-                    className="w-full md:w-[400px] bg-emerald-50/50 border border-emerald-100 rounded-3xl p-8 flex flex-col hover:shadow-xl transition-all duration-300 relative overflow-hidden"
-                >
-                    <div className="absolute top-0 right-0 bg-emerald-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">Zero Commitment</div>
-                    <div className="mb-6">
-                        <h3 className="text-xl font-bold text-slate-900 mb-2">Individual Credit</h3>
-                        <p className="text-sm text-slate-500 mb-6">Buy tokens, generate instantly</p>
-                        <div className="flex items-baseline gap-1">
-                            <span className="text-5xl font-extrabold text-emerald-600">₹1</span>
-                            <span className="text-slate-500 font-medium">/ credit</span>
-                        </div>
-                        <p className="text-xs text-slate-400 mt-2 font-medium">1 Credit = 1 MCQ Generation</p>
-                    </div>
-                     <Link href="/auth/register?plan=individual" className="w-full py-4 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition-colors text-center shadow-lg shadow-emerald-200">
+
+                     <Link href="/auth/register?plan=individual" className="w-full py-3 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition-colors text-center shadow-lg shadow-emerald-200">
                         Start with 100 Credits
                     </Link>
                 </motion.div>
-            </div>
-        </div>
-      </section>
 
-      {/* Pricing / For Schools Section */}
-      <section className="py-24 bg-slate-50">
-        <div className="container max-w-[1200px] mx-auto px-6">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-                <span className="inline-block px-4 py-1.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wider mb-4" id="schools">For Schools & Institutes</span>
-                <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">Simple, Transparent Pricing</h2>
-                <p className="text-lg text-slate-500">Choose the plan that fits your institute size. Scale up with AI credits as you grow.</p>
-            </div>
-
-            {/* Plans Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-
-                {/* Starter Plan */}
+                {/* 2. Teams (Starter) */}
                 <motion.div 
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: 0.1 }}
-                    className="bg-white border border-slate-200 rounded-3xl flex flex-col hover:shadow-xl transition-all duration-300 overflow-hidden"
+                    className="bg-white border border-slate-200 rounded-[20px] p-6 flex flex-col hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 relative group h-full"
                 >
-                    <div className="p-8 pb-0">
-                        <div className="mb-6">
-                            <h3 className="text-xl font-bold text-slate-900 mb-2">Starter</h3>
-                            <p className="text-sm text-slate-500 mb-6">For small coaching institutes</p>
-                            <div className="flex items-baseline gap-1">
-                                <span className="text-4xl font-extrabold text-slate-900">₹20k</span>
-                                <span className="text-slate-500 font-medium">/ year</span>
-                            </div>
+                     <div className="mb-6">
+                        <div className="w-12 h-12 bg-slate-100 rounded-xl grid place-items-center mb-4 text-slate-600">
+                             <Users size={24} />
                         </div>
-                        <div className="pt-6 border-t border-slate-100">
-                            <motion.ul 
-                                initial="hidden"
-                                whileInView="visible"
-                                viewport={{ once: true }}
-                                variants={{
-                                    visible: { transition: { staggerChildren: 0.1, delayChildren: 0.3 } }
-                                }}
-                                className="space-y-4 mb-8"
-                            >
-                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
-                                    <Check size={16} className="text-slate-900 mt-0.5" />
-                                    Up to 3 Faculty Users
-                                </motion.li>
-                                <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
-                                    <Check size={16} className="text-slate-900 mt-0.5" />
-                                    MCQ Test Creation
-                                </motion.li>
-                                <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
-                                    <Check size={16} className="text-slate-900 mt-0.5" />
-                                    Standard Exam Templates
-                                </motion.li>
-                                <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
-                                    <Sparkles size={16} className="text-blue-600 mt-0.5" />
-                                    AI Question Generator (Basic)
-                                </motion.li>
-                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
-                                    <FileOutput size={16} className="text-blue-600 mt-0.5" />
-                                    Watermark-free PDF Export
-                                </motion.li>
-                            </motion.ul>
+                        <h3 className="text-xl font-bold text-slate-900 mb-2">Teams</h3>
+                        <p className="text-sm text-slate-500 mb-4">Small institutes</p>
+                        <div className="flex items-baseline gap-1">
+                            <span className="text-4xl font-extrabold text-slate-900">₹20k</span>
+                            <span className="text-slate-500 font-medium text-sm">/ year</span>
                         </div>
                     </div>
 
-                    <div className="mt-auto bg-gradient-to-b from-blue-50/50 to-blue-50 p-8 pt-6 border-t border-blue-100">
-                         <Link href="/auth/register?plan=starter" className="w-full block py-3 rounded-xl border-2 border-slate-200 bg-white font-bold text-slate-700 hover:border-blue-600 hover:text-blue-600 transition-colors text-center">
-                            Get Started
-                        </Link>
-                    </div>
+                    <ul className="space-y-3 mb-8 flex-1">
+                        <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                            <Check size={16} className="text-slate-900 mt-0.5 shrink-0" />
+                            3 Faculty Users
+                        </li>
+                        <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                            <Check size={16} className="text-slate-900 mt-0.5 shrink-0" />
+                            Unlimited Tests
+                        </li>
+                         <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                            <Check size={16} className="text-slate-900 mt-0.5 shrink-0" />
+                            Basic Analytics
+                        </li>
+                        <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                             <Check size={16} className="text-slate-900 mt-0.5 shrink-0" />
+                             Question Sharing
+                        </li>
+                        <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                             <Check size={16} className="text-slate-900 mt-0.5 shrink-0" />
+                             Collaborative Editing
+                        </li>
+                        <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                             <Check size={16} className="text-slate-900 mt-0.5 shrink-0" />
+                             PDF & Word Export
+                        </li>
+                    </ul>
+
+                     <Link href="/auth/register?plan=teams" className="w-full py-3 rounded-xl border-2 border-slate-200 text-slate-700 font-bold hover:border-slate-300 hover:bg-slate-50 transition-colors text-center">
+                        Get Started
+                    </Link>
                 </motion.div>
 
-                {/* Growth Plan */}
+                {/* 3. Institution (Featured) */}
                 <motion.div 
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: 0.2 }}
-                    className="bg-slate-900 text-white rounded-3xl flex flex-col shadow-2xl relative overflow-hidden transform md:-translate-y-4"
+                    className="bg-[#0B1120] text-white rounded-[20px] p-8 flex flex-col hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 relative group h-full xl:scale-110 z-10 border border-slate-800"
                 >
-                    <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider z-20">Most Popular</div>
-                     <div className="p-8 pb-0 relative z-10">
-                        <div className="mb-6">
-                            <h3 className="text-xl font-bold mb-2">Growth</h3>
-                            <p className="text-slate-400 text-sm mb-6">For medium sized institutes</p>
-                            <div className="flex items-baseline gap-1">
-                                <span className="text-4xl font-extrabold">₹50k</span>
-                                <span className="text-slate-400 font-medium">/ year</span>
-                            </div>
+                    <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl rounded-tr-[20px] uppercase tracking-wider">Most Popular</div>
+                    <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl rounded-tr-[20px] uppercase tracking-wider">Most Popular</div>
+                    
+                    <div className="mb-6">
+                        <div className="w-12 h-12 bg-blue-600/20 rounded-xl grid place-items-center mb-4 text-blue-400">
+                             <School size={24} />
                         </div>
-                        <div className="pt-6 border-t border-slate-700/50">
-                            <motion.ul 
-                                initial="hidden"
-                                whileInView="visible"
-                                viewport={{ once: true }}
-                                variants={{
-                                    visible: { transition: { staggerChildren: 0.1, delayChildren: 0.4 } }
-                                }}
-                                className="space-y-4 mb-8"
-                            >
-                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-200">
-                                    <Check size={16} className="text-white mt-0.5" />
-                                    Up to 10 Faculty Users
-                                </motion.li>
-                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-200">
-                                    <Check size={16} className="text-white mt-0.5" />
-                                    <span><span className="font-bold text-white">Unlimited</span> MCQ Tests</span>
-                                </motion.li>
-                                <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-200">
-                                    <Check size={16} className="text-white mt-0.5" />
-                                    Advanced Analytics
-                                </motion.li>
-                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-200">
-                                    <Sparkles size={16} className="text-blue-400 mt-0.5" />
-                                    <span className="font-bold text-white">Unlimited</span> AI Question Generator
-                                </motion.li>
-                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-200">
-                                    <BookOpen size={16} className="text-blue-400 mt-0.5" />
-                                    50k+ Question Bank Access
-                                </motion.li>
-                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-200">
-                                    <BrainCircuit size={16} className="text-blue-400 mt-0.5" />
-                                    Bloom's Taxonomy AI Analysis
-                                </motion.li>
-                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-200">
-                                    <School size={16} className="text-blue-400 mt-0.5" />
-                                    Institute Branding (Logo/Header)
-                                </motion.li>
-                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-200">
-                                    <Headphones size={16} className="text-blue-400 mt-0.5" />
-                                    Priority Email Support
-                                </motion.li>
-                            </motion.ul>
+                        <h3 className="text-2xl font-bold mb-2">Institution</h3>
+                         <p className="text-sm text-slate-400 mb-4">Growing schools</p>
+                        <div className="flex items-baseline gap-1">
+                            <span className="text-5xl font-extrabold">₹50k</span>
+                            <span className="text-slate-400 font-medium text-sm">/ year</span>
                         </div>
                     </div>
 
-                    <div className="mt-auto bg-gradient-to-b from-indigo-900/50 to-indigo-900 p-8 pt-6 border-t border-indigo-800 relative z-10">
-                        <Link href="/auth/register?plan=growth" className="w-full block py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors text-center shadow-lg shadow-blue-900/20">
-                            Get Started
-                        </Link>
-                    </div>
-                    
-                    {/* Background decoration */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+                    <ul className="space-y-3 mb-8 flex-1">
+                        <li className="flex items-start gap-3 text-sm font-medium text-slate-300">
+                            <Check size={16} className="text-blue-400 mt-0.5 shrink-0" />
+                            10 Faculty Users
+                        </li>
+                        <li className="flex items-start gap-3 text-sm font-medium text-slate-300">
+                            <Check size={16} className="text-blue-400 mt-0.5 shrink-0" />
+                             <span className="text-white font-bold">Unlimited</span> AI Generation
+                        </li>
+                         <li className="flex items-start gap-3 text-sm font-medium text-slate-300">
+                            <Check size={16} className="text-blue-400 mt-0.5 shrink-0" />
+                            Institute Branding
+                        </li>
+                         <li className="flex items-start gap-3 text-sm font-medium text-slate-300">
+                            <Check size={16} className="text-blue-400 mt-0.5 shrink-0" />
+                            Priority Support
+                        </li>
+                        <li className="flex items-start gap-3 text-sm font-medium text-slate-300">
+                             <Check size={16} className="text-blue-400 mt-0.5 shrink-0" />
+                             Department-level Controls
+                        </li>
+                        <li className="flex items-start gap-3 text-sm font-medium text-slate-300">
+                             <Check size={16} className="text-blue-400 mt-0.5 shrink-0" />
+                             Bulk Student Upload
+                        </li>
+                        <li className="flex items-start gap-3 text-sm font-medium text-slate-300">
+                             <Check size={16} className="text-blue-400 mt-0.5 shrink-0" />
+                             Advanced Performance Analytics
+                        </li>
+                        <li className="flex items-start gap-3 text-sm font-medium text-slate-300">
+                             <Check size={16} className="text-blue-400 mt-0.5 shrink-0" />
+                             Audit Logs
+                        </li>
+                    </ul>
+
+                     <Link href="/auth/register?plan=institution" className="w-full py-4 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors text-center shadow-lg shadow-blue-900/40">
+                        Get Started
+                    </Link>
                 </motion.div>
 
-                {/* Enterprise Plan */}
+                {/* 4. Enterprise (Custom) */}
                 <motion.div 
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: 0.3 }}
-                    className="bg-white border border-slate-200 rounded-3xl flex flex-col hover:shadow-xl transition-all duration-300 overflow-hidden"
+                    className="bg-white border border-slate-200 rounded-[20px] p-6 flex flex-col hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 relative group h-full"
                 >
-                    <div className="p-8 pb-0">
-                        <div className="mb-6">
-                            <h3 className="text-xl font-bold text-slate-900 mb-2">Enterprise</h3>
-                            <p className="text-sm text-slate-500 mb-6">For large chains & franchises</p>
-                            <div className="flex items-baseline gap-1">
-                                <span className="text-3xl font-extrabold text-slate-900">Custom</span>
-                            </div>
-                             <p className="text-xs text-slate-400 mt-1">₹1L – ₹3L / year</p>
+                     <div className="mb-6">
+                        <div className="w-12 h-12 bg-slate-100 rounded-xl grid place-items-center mb-4 text-slate-600">
+                             <Globe size={24} />
                         </div>
-                        <div className="pt-6 border-t border-slate-100">
-                            <motion.ul 
-                                initial="hidden"
-                                whileInView="visible"
-                                viewport={{ once: true }}
-                                variants={{
-                                    visible: { transition: { staggerChildren: 0.1, delayChildren: 0.5 } }
-                                }}
-                                className="space-y-4 mb-8"
-                            >
-                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
-                                    <Check size={16} className="text-slate-900 mt-0.5" />
-                                    <span><span className="font-bold text-slate-900">Unlimited</span> Faculty Users</span>
-                                </motion.li>
-                                <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
-                                    <Check size={16} className="text-slate-900 mt-0.5" />
-                                    Dedicated Success Manager
-                                </motion.li>
-                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
-                                    <Sparkles size={16} className="text-purple-600 mt-0.5" />
-                                    Custom AI Model Fine-tuning
-                                </motion.li>
-                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
-                                    <Database size={16} className="text-purple-600 mt-0.5" />
-                                    SSO & SCIM Provisioning
-                                </motion.li>
-                                  <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
-                                    <Globe size={16} className="text-purple-600 mt-0.5" />
-                                    Full White-label Portal
-                                </motion.li>
-                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
-                                    <ShieldCheck size={16} className="text-purple-600 mt-0.5" />
-                                    Enterprise-grade Security & Audit Logs
-                                </motion.li>
-                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
-                                    <Users size={16} className="text-purple-600 mt-0.5" />
-                                    Role-Based Access Control (RBAC)
-                                </motion.li>
-                                 <motion.li variants={{ hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }} className="flex items-start gap-3 text-sm font-medium text-slate-700">
-                                    <Zap size={16} className="text-purple-600 mt-0.5" />
-                                    Unlimited API Access
-                                </motion.li>
-                            </motion.ul>
+                        <h3 className="text-xl font-bold text-slate-900 mb-2">Enterprise</h3>
+                        <p className="text-sm text-slate-500 mb-4">Large organizations</p>
+                        <div className="flex items-baseline gap-1">
+                            <span className="text-3xl font-extrabold text-slate-900">Custom</span>
                         </div>
                     </div>
 
-                    <div className="mt-auto bg-gradient-to-b from-purple-50/50 to-purple-50 p-8 pt-6 border-t border-purple-100">
-                        <Link href="/contact" className="w-full block py-3 rounded-xl border-2 border-slate-200 bg-white font-bold text-slate-700 hover:border-purple-600 hover:text-purple-600 transition-colors text-center">
-                            Contact Sales
-                        </Link>
-                    </div>
+                    <ul className="space-y-3 mb-8 flex-1">
+                         <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                            <Check size={16} className="text-slate-900 mt-0.5 shrink-0" />
+                            SSO & SCIM
+                        </li>
+                        <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                            <Check size={16} className="text-slate-900 mt-0.5 shrink-0" />
+                            White-label Portal
+                        </li>
+                         <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                            <Check size={16} className="text-slate-900 mt-0.5 shrink-0" />
+                            API Access
+                        </li>
+                         <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                            <Check size={16} className="text-slate-900 mt-0.5 shrink-0" />
+                             Custom Contracts
+                        </li>
+                         <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                             <Check size={16} className="text-slate-900 mt-0.5 shrink-0" />
+                             Dedicated Success Manager
+                         </li>
+                         <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                             <Check size={16} className="text-slate-900 mt-0.5 shrink-0" />
+                             Custom Integrations (LMS/SIS)
+                         </li>
+                         <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                             <Check size={16} className="text-slate-900 mt-0.5 shrink-0" />
+                             Enterprise SLA (99.9% Uptime)
+                         </li>
+                         <li className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                             <Check size={16} className="text-slate-900 mt-0.5 shrink-0" />
+                             On-Premise / Private Cloud
+                         </li>
+                    </ul>
+
+                     <Link href="/contact" className="w-full py-3 rounded-xl border-2 border-slate-200 text-slate-700 font-bold hover:border-slate-300 hover:bg-slate-50 transition-colors text-center">
+                        Contact Sales
+                    </Link>
                 </motion.div>
-            </div>
 
-            {/* AI Credits & White Label Add-ons */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* AI Credits */}
-                <div className="bg-white rounded-3xl p-8 border border-slate-200">
-                    <div className="flex items-start justify-between mb-6">
-                        <div>
-                             <div className="flex items-center gap-2 mb-2">
-                                <Sparkles size={18} className="fill-amber-400 text-amber-500" />
-                                <h3 className="font-bold text-slate-900 text-lg">AI Credit Top-ups</h3>
-                             </div>
-                            <p className="text-sm text-slate-500">Optional expansion for heavy usage during exam seasons.</p>
-                        </div>
-                        <span className="bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-1 rounded-lg uppercase">Usage Based</span>
-                    </div>
-                    
-                    <div className="bg-slate-50 rounded-2xl p-4 mb-4">
-                        <div className="flex justify-between items-center mb-2">
-                             <span className="text-sm font-bold text-slate-700">500 Credits</span>
-                             <span className="text-sm font-bold text-slate-900">₹5,000</span>
-                        </div>
-                        <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                            <div className="bg-amber-400 w-[25%] h-full rounded-full" />
-                        </div>
-                    </div>
-                     <div className="bg-slate-50 rounded-2xl p-4 mb-4">
-                        <div className="flex justify-between items-center mb-2">
-                             <span className="text-sm font-bold text-slate-700">2,000 Credits</span>
-                             <span className="text-sm font-bold text-slate-900">₹15,000</span>
-                        </div>
-                         <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                            <div className="bg-amber-400 w-[50%] h-full rounded-full" />
-                        </div>
-                    </div>
-                     <div className="bg-slate-50 rounded-2xl p-4">
-                        <div className="flex justify-between items-center mb-2">
-                             <span className="text-sm font-bold text-slate-700">5,000 Credits</span>
-                             <span className="text-sm font-bold text-slate-900">₹30,000</span>
-                        </div>
-                         <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                            <div className="bg-amber-400 w-[80%] h-full rounded-full" />
-                        </div>
-                    </div>
-                </div>
-
-                {/* White Labeling */}
-                <div className="bg-indigo-900 rounded-3xl p-8 text-white relative overflow-hidden flex flex-col justify-center">
-                    <div className="relative z-10">
-                        <div className="w-12 h-12 bg-white/10 rounded-xl grid place-items-center mb-6">
-                            <School className="text-indigo-200" />
-                        </div>
-                        <h3 className="text-2xl font-bold mb-3">White-Label Licensing</h3>
-                        <p className="text-indigo-200 text-sm leading-relaxed mb-8">
-                            Make Question Hive your own. We provide custom branding, your own domain url, and a dedicated student test portal under your institute's name.
-                        </p>
-                        <div className="flex items-center gap-4">
-                             <div className="flex-1 py-3 px-4 bg-white/10 rounded-xl border border-white/10">
-                                <p className="text-xs text-indigo-300 font-bold uppercase tracking-wider mb-1">Pricing</p>
-                                <p className="font-bold">₹50k – ₹1L</p>
-                             </div>
-                              <Link href="/contact" className="px-6 py-4 bg-white text-indigo-900 rounded-xl font-bold hover:bg-indigo-50 transition-colors">
-                                Contact Us
-                            </Link>
-                        </div>
-                    </div>
-                    
-                     {/* Decoration */}
-                    <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-indigo-500/30 rounded-full blur-3xl pointer-events-none" />
-                </div>
             </div>
         </div>
       </section>
+
 
       {/* CTA Section */}
       <section className="py-24 px-6">
@@ -879,6 +892,42 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Contact Us Section */}
+      <section className="py-24 bg-white relative overflow-hidden" id="contact">
+          <div className="absolute inset-0 h-full w-full bg-[radial-gradient(#94a3b8_1px,transparent_0.1px)] [background-size:16px_16px] opacity-40 pointer-events-none" />
+          <div className="container max-w-[1200px] mx-auto px-6 relative z-10">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                  
+                  {/* Left Content */}
+                  <div>
+                      <span className="inline-block px-4 py-1.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-wider mb-4">Contact Us</span>
+                      <h2 className="text-4xl font-extrabold text-slate-900 mb-6">Let's Transform Your Institution Together</h2>
+                      <p className="text-lg text-slate-500 mb-8 leading-relaxed">
+                          Whether you're looking to modernize your assessments, save faculty time, or improve student outcomes, we're here to help.
+                      </p>
+                      
+                      <div className="space-y-6">
+                          <div className="flex items-start gap-4">
+                              <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 grid place-items-center shrink-0">
+                                  <Mail size={24} />
+                              </div>
+                              <div>
+                                  <h4 className="text-lg font-bold text-slate-900 mb-1">Email Us</h4>
+                                  <p className="text-slate-500">support@questionhive.in</p>
+                              </div>
+                          </div>
+                          
+
+                      </div>
+                  </div>
+
+                  {/* Right Form */}
+                  <ContactForm />
+
+              </div>
+          </div>
+      </section>
+
       {/* Footer */}
       <footer className="bg-[#0C4A6E] text-sky-200 pt-20 pb-8 relative overflow-hidden">
         <div className="absolute top-[-50%] left-[-10%] w-[50%] h-[100%] bg-[radial-gradient(circle,rgba(37,99,235,0.2)_0%,transparent_60%)] pointer-events-none animate-pulse" />
@@ -887,9 +936,8 @@ export default function LandingPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-16">
                 <div className="lg:col-span-2">
                     <Link href="/" className="flex items-center gap-2.5 font-bold text-xl text-white mb-6">
-                        <div className="w-8 h-8 bg-blue-500 rounded-lg grid place-items-center text-white shadow-lg">
-                            <Layers size={18} strokeWidth={2.5} />
-                        </div>
+                        <img src="/logo.jpg" alt="Logo" className="w-8 h-8 rounded-lg shadow-lg" />
+                        <img src="/logo.jpg" alt="Logo" className="w-8 h-8 rounded-lg shadow-lg" />
                         Question Hive
                     </Link>
                     <p className="text-sky-100/80 leading-relaxed max-w-sm text-sm">
@@ -931,9 +979,13 @@ export default function LandingPage() {
                 <p className="text-sm text-sky-200/60">&copy; 2026 Question Hive Inc. All rights reserved.</p>
                 <div className="flex gap-4">
                     <a href="#" className="w-10 h-10 rounded-full bg-white/5 hover:bg-blue-600 hover:text-white transition-all grid place-items-center"><Twitter size={18} /></a>
-                    <a href="#" className="w-10 h-10 rounded-full bg-white/5 hover:bg-blue-600 hover:text-white transition-all grid place-items-center"><Linkedin size={18} /></a>
+                    <a href="https://www.linkedin.com/company/question-hive/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 hover:bg-blue-600 hover:text-white transition-all grid place-items-center"><Linkedin size={18} /></a>
+                    <a href="https://www.linkedin.com/company/question-hive/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 hover:bg-blue-600 hover:text-white transition-all grid place-items-center"><Linkedin size={18} /></a>
                     <a href="#" className="w-10 h-10 rounded-full bg-white/5 hover:bg-blue-600 hover:text-white transition-all grid place-items-center"><Github size={18} /></a>
-                    <a href="#" className="w-10 h-10 rounded-full bg-white/5 hover:bg-blue-600 hover:text-white transition-all grid place-items-center"><Instagram size={18} /></a>
+                    <a href="https://www.instagram.com/questionhive.in/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 hover:bg-blue-600 hover:text-white transition-all grid place-items-center"><Instagram size={18} /></a>
+                    <a href="mailto:support@questionhive.in" className="w-10 h-10 rounded-full bg-white/5 hover:bg-blue-600 hover:text-white transition-all grid place-items-center"><Mail size={18} /></a>
+                    <a href="https://www.instagram.com/questionhive.in/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 hover:bg-blue-600 hover:text-white transition-all grid place-items-center"><Instagram size={18} /></a>
+                    <a href="mailto:support@questionhive.in" className="w-10 h-10 rounded-full bg-white/5 hover:bg-blue-600 hover:text-white transition-all grid place-items-center"><Mail size={18} /></a>
                 </div>
             </div>
         </div>

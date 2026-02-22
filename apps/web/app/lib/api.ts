@@ -8,7 +8,7 @@ import { getSession } from './google-auth';
  * This client will automatically use the current origin as the base URL
  * and handle authentication tokens from localStorage
  */
-export const apiClient = createBrowserApiClient('http://localhost:8080');
+export const apiClient = createBrowserApiClient('/api');
 
 /**
  * Authentication helper functions

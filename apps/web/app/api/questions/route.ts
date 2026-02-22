@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { db } from '../../lib/db';
 import { questions, difficultyLevels, questionTypes } from '@repo/db';
 import { eq, and, sql, desc, ilike } from 'drizzle-orm';
+import { getQuestions } from '@/server/db/queries/questions';
+import { handleApiError, AppErrors } from '@/lib/error-handler';
+import { FetchQuestionsSchema, validateInput } from '@/lib/validators';
 
 export async function GET(request: Request) {
   try {
@@ -56,14 +59,8 @@ export async function GET(request: Request) {
         .orderBy(desc(questions.createdAt));
 
     return NextResponse.json({ 
-        success: true, 
-        data,
-        pagination: {
-            page,
-            limit,
-            total,
-            totalPages: Math.ceil(total / limit)
-        }
+      success: true, 
+      ...result
     });
 
   } catch (e: unknown) {

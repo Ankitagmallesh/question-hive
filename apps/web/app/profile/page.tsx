@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
+import AppLoader from "../../components/ui/AppLoader";
 import { useSupabaseAuth } from "../hooks/useSupabaseAuth";
-import { Loader2, Save, User as UserIcon, Mail, Phone, MapPin, FileText, Pencil } from "lucide-react";
+import { signOut } from "../lib/google-auth";
+import { Loader2, Save, User as UserIcon, Mail, Phone, MapPin, FileText, Pencil, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ProfilePage() {
@@ -18,6 +21,18 @@ export default function ProfilePage() {
     const [stats, setStats] = useState({ papers: 0, questions: 0 });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const router = useRouter();
+
+    const handleLogout = async () => {
+        try {
+            await signOut();
+            toast.success('Logged out successfully');
+            router.push('/auth/login');
+        } catch (error) {
+            console.error("Logout error:", error);
+            toast.error('Failed to log out');
+        }
+    };
 
     useEffect(() => {
         if (!authLoading && authUser?.email) {
@@ -82,8 +97,8 @@ export default function ProfilePage() {
     if (authLoading || loading) {
         return (
             <DashboardLayout>
-                <div className="flex h-[80vh] items-center justify-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                    <AppLoader text="Loading Profile..." />
                 </div>
             </DashboardLayout>
         );
@@ -102,15 +117,15 @@ export default function ProfilePage() {
                     <div className="md:col-span-1 space-y-6">
                         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center text-center">
                             <div className="relative group">
-                                <div className="w-24 h-24 rounded-full bg-indigo-100 flex items-center justify-center mb-4 text-indigo-600 border-4 border-white shadow-lg overflow-hidden">
+                                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-indigo-100 flex items-center justify-center mb-4 text-indigo-600 border-4 border-white shadow-lg overflow-hidden">
                                     {profile.avatarUrl ? (
                                         <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                                     ) : (
-                                        <span className="text-3xl font-bold">{dbUser.name ? dbUser.name.charAt(0).toUpperCase() : 'U'}</span>
+                                        <span className="text-3xl sm:text-4xl font-bold">{dbUser.name ? dbUser.name.charAt(0).toUpperCase() : 'U'}</span>
                                     )}
                                 </div>
-                                <label className="absolute bottom-4 right-0 p-1.5 bg-white rounded-full shadow-md border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors text-slate-600">
-                                    <Pencil size={14} />
+                                <label className="absolute bottom-6 sm:bottom-8 right-0 p-2 bg-white rounded-full shadow-md border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors text-slate-600">
+                                    <Pencil size={16} />
                                     <input 
                                         type="file" 
                                         accept="image/*"
@@ -157,7 +172,13 @@ export default function ProfilePage() {
                                 </div>
                             </div>
 
-
+                            <button 
+                                onClick={handleLogout}
+                                className="mt-6 w-full flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200 text-red-600 rounded-xl font-semibold hover:bg-red-50 hover:border-red-200 transition-all shadow-sm"
+                            >
+                                <LogOut size={16} />
+                                Log Out
+                            </button>
                         </div>
                     </div>
 
@@ -244,9 +265,9 @@ export default function ProfilePage() {
                                     <button 
                                         type="submit" 
                                         disabled={saving}
-                                        className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:hover:translate-y-0"
+                                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:hover:translate-y-0"
                                     >
-                                        {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                                        {saving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
                                         Save Changes
                                     </button>
                                 </div>
