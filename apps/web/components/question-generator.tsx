@@ -83,13 +83,13 @@ export function QuestionGenerator({ onQuestionsGenerated, difficultyLevel, subje
   useEffect(() => {
     const savedSessions = localStorage.getItem("questionhive-sessions")
     if (savedSessions) {
-      const parsedSessions = JSON.parse(savedSessions).map((session: any) => ({
-        ...session,
-        createdAt: new Date(session.createdAt),
-        lastUpdated: new Date(session.lastUpdated),
-        messages: session.messages.map((msg: any) => ({
-          ...msg,
-          timestamp: new Date(msg.timestamp),
+      const parsedSessions = JSON.parse(savedSessions).map((session: unknown) => ({
+        ...(session as Record<string, unknown>),
+        createdAt: new Date((session as { createdAt: string }).createdAt),
+        lastUpdated: new Date((session as { lastUpdated: string }).lastUpdated),
+        messages: (session as { messages: { timestamp: string; [key: string]: unknown }[] }).messages.map((msg: unknown) => ({
+          ...(msg as Record<string, unknown>),
+          timestamp: new Date((msg as { timestamp: string }).timestamp),
         })),
       }))
       setSessions(parsedSessions)
@@ -160,7 +160,7 @@ export function QuestionGenerator({ onQuestionsGenerated, difficultyLevel, subje
     if (currentSessionId === sessionId) {
       const remainingSessions = sessions.filter((s) => s.id !== sessionId)
       if (remainingSessions.length > 0) {
-        const nextSession = remainingSessions[0]
+        const nextSession = remainingSessions[0]!
         setCurrentSessionId(nextSession.id)
         setMessages(nextSession.messages)
       } else {
@@ -289,7 +289,6 @@ export function QuestionGenerator({ onQuestionsGenerated, difficultyLevel, subje
       }
 
       const data = await response.json()
-
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
@@ -314,7 +313,7 @@ export function QuestionGenerator({ onQuestionsGenerated, difficultyLevel, subje
       const errorAssistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: `❌ **Connection Error**: Unable to reach the QuestionHive AI service.\n\n💡 **Please try again in a moment.** If the problem persists, check your internet connection.`,
+        content: '❌ **Connection Error**: Unable to reach the QuestionHive AI service.\n\n💡 **Please try again in a moment.** If the problem persists, check your internet connection.',
         timestamp: new Date(),
       }
 
@@ -345,7 +344,7 @@ export function QuestionGenerator({ onQuestionsGenerated, difficultyLevel, subje
     let questionCounter = 0
 
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim()
+      const line = lines[i]?.trim() ?? ''
 
       if (line.match(/^(\d+\.|Q\d+|Question \d+|Q\d+\.)/i)) {
         if (currentQuestion.text) {

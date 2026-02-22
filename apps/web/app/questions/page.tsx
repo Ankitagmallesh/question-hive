@@ -1,60 +1,133 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { GraduationCap } from 'lucide-react';
 import { Button } from "../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import { Card, CardContent } from "../components/ui/card";
+import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Separator } from "../components/ui/separator";
-import type { User } from '@repo/types';
+import { Input } from "../components/ui/input";
+import { Input } from "../components/ui/input";
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
+import { useDebounce } from '../hooks/useDebounce';
+import { useDebounce } from '../hooks/useDebounce';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
 import { Question } from '../lib/questions-data';
 import AppLoader from '../../components/ui/AppLoader';
 import CreateQuestionModal from './CreateQuestionModal';
 
+const DEBOUNCE_MS = 400;
+const LIMIT = 20;
+
+const TYPE_OPTIONS = [
+    { value: '', label: 'All types' },
+    { value: 'MCQ', label: 'MCQ' },
+    { value: 'Short', label: 'Short' },
+    { value: 'Long', label: 'Long' },
+    { value: 'Numerical', label: 'Numerical' },
+];
+
+const DIFFICULTY_OPTIONS = [
+    { value: '', label: 'All difficulties' },
+    { value: 'easy', label: 'Easy' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'hard', label: 'Hard' },
+];
+
+const DEBOUNCE_MS = 400;
+const LIMIT = 20;
+
+const TYPE_OPTIONS = [
+    { value: '', label: 'All types' },
+    { value: 'MCQ', label: 'MCQ' },
+    { value: 'Short', label: 'Short' },
+    { value: 'Long', label: 'Long' },
+    { value: 'Numerical', label: 'Numerical' },
+];
+
+const DIFFICULTY_OPTIONS = [
+    { value: '', label: 'All difficulties' },
+    { value: 'easy', label: 'Easy' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'hard', label: 'Hard' },
+];
+
 export default function QuestionsPage() {
     const router = useRouter();
-    const { user, loading: authLoading } = useSupabaseAuth(); // Keep for auth check
+    const { user, loading: authLoading } = useSupabaseAuth();
+    const { user, loading: authLoading } = useSupabaseAuth();
     const [questions, setQuestions] = useState<Question[]>([]);
     const [loading, setLoading] = useState(true);
-    
-    // Filters & Pagination State
+
+    const [search, setSearch] = useState('');
+    const [filterType, setFilterType] = useState('');
+    const [filterDifficulty, setFilterDifficulty] = useState('');
+    const debouncedSearch = useDebounce(search, DEBOUNCE_MS);
+    const debouncedType = useDebounce(filterType, DEBOUNCE_MS);
+    const debouncedDifficulty = useDebounce(filterDifficulty, DEBOUNCE_MS);
+
+
+    const [search, setSearch] = useState('');
+    const [filterType, setFilterType] = useState('');
+    const [filterDifficulty, setFilterDifficulty] = useState('');
+    const debouncedSearch = useDebounce(search, DEBOUNCE_MS);
+    const debouncedType = useDebounce(filterType, DEBOUNCE_MS);
+    const debouncedDifficulty = useDebounce(filterDifficulty, DEBOUNCE_MS);
+
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [refreshCounter, setRefreshCounter] = useState(0);
 
-    const LIMIT = 20;
+    const abortRef = useRef<AbortController | null>(null);
+    const prevFiltersRef = useRef({ search: '', type: '', difficulty: '' });
+    const lastFetchRef = useRef<{ page: number; search: string; type: string; difficulty: string } | null>(null);
 
-    useEffect(() => {
-        if (authLoading) return;
-        if (!user) {
-            router.push('/auth/login');
-            return;
-        }
-            loadQuestions();
-    }, [authLoading, user, router, currentPage]);
+    const loadQuestions = useCallback(async (opts: { page: number; search: string; type: string; difficulty: string }) => {
+        // Skip duplicate fetches (e.g., when setCurrentPage triggers re-render after filter change)
+        const fetchKey = `${opts.page}-${opts.search}-${opts.type}-${opts.difficulty}`;
+        const lastKey = lastFetchRef.current 
+            ? `${lastFetchRef.current.page}-${lastFetchRef.current.search}-${lastFetchRef.current.type}-${lastFetchRef.current.difficulty}`
+            : null;
+        if (fetchKey === lastKey) return;
 
-    const loadQuestions = async () => {
+        if (abortRef.current) abortRef.current.abort();
+        abortRef.current = new AbortController();
+        const { signal } = abortRef.current;
+
+        lastFetchRef.current = opts;
         setLoading(true);
         try {
             const params = new URLSearchParams({
-                page: String(currentPage),
-                limit: String(LIMIT)
+                page: String(opts.page),
+                limit: String(LIMIT),
+                page: String(opts.page),
+                limit: String(LIMIT),
             });
+            if (opts.search) params.set('search', opts.search);
+            if (opts.type) params.set('type', opts.type);
+            if (opts.difficulty) params.set('difficulty', opts.difficulty);
+            if (opts.search) params.set('search', opts.search);
+            if (opts.type) params.set('type', opts.type);
+            if (opts.difficulty) params.set('difficulty', opts.difficulty);
 
-            const res = await fetch(`/api/questions?${params.toString()}`);
+            const res = await fetch(`/api/questions?${params.toString()}`, { signal });
+            const res = await fetch(`/api/questions?${params.toString()}`, { signal });
             const json = await res.json();
-            
+
+
             if (json.success) {
-                const mapped: Question[] = json.data.map((q: any) => ({
+                const mapped: Question[] = json.data.map((q: { id: string; content: string; questionType?: string; difficulty?: string; marks?: string | number; createdAt: string }) => ({
+                const mapped: Question[] = json.data.map((q: { id: string; content: string; questionType?: string; difficulty?: string; marks?: string | number; createdAt: string }) => ({
                     id: q.id,
                     text: q.content,
-                    subject: '—', 
-                    chapter: '—', 
+                    subject: '—',
+                    chapter: '—',
+                    subject: '—',
+                    chapter: '—',
                     type: (q.questionType || 'mcq').toLowerCase(),
                     difficulty: (q.difficulty || 'medium').toLowerCase(),
                     marks: Number(q.marks) || 1,
@@ -66,12 +139,55 @@ export default function QuestionsPage() {
                     setTotalCount(json.pagination.total);
                 }
             }
-        } catch (error) {
-            console.error('Failed to load questions:', error);
+        } catch (err) {
+            if ((err as Error).name === 'AbortError') return;
+            console.error('Failed to load questions:', err);
+            lastFetchRef.current = null; // Reset on error so we can retry
         } finally {
             setLoading(false);
+            abortRef.current = null;
+            abortRef.current = null;
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        if (authLoading) return;
+        if (!user) {
+            router.push('/auth/login');
+            return;
+        }
+
+        const prev = prevFiltersRef.current;
+        const filtersChanged =
+            prev.search !== debouncedSearch || prev.type !== debouncedType || prev.difficulty !== debouncedDifficulty;
+        if (filtersChanged) {
+            setCurrentPage(1);
+            prevFiltersRef.current = { search: debouncedSearch, type: debouncedType, difficulty: debouncedDifficulty };
+        }
+        const pageToUse = filtersChanged ? 1 : currentPage;
+
+        loadQuestions({ page: pageToUse, search: debouncedSearch, type: debouncedType, difficulty: debouncedDifficulty });
+    }, [authLoading, user, router, currentPage, debouncedSearch, debouncedType, debouncedDifficulty, refreshCounter, loadQuestions]);
+    }, []);
+
+    useEffect(() => {
+        if (authLoading) return;
+        if (!user) {
+            router.push('/auth/login');
+            return;
+        }
+
+        const prev = prevFiltersRef.current;
+        const filtersChanged =
+            prev.search !== debouncedSearch || prev.type !== debouncedType || prev.difficulty !== debouncedDifficulty;
+        if (filtersChanged) {
+            setCurrentPage(1);
+            prevFiltersRef.current = { search: debouncedSearch, type: debouncedType, difficulty: debouncedDifficulty };
+        }
+        const pageToUse = filtersChanged ? 1 : currentPage;
+
+        loadQuestions({ page: pageToUse, search: debouncedSearch, type: debouncedType, difficulty: debouncedDifficulty });
+    }, [authLoading, user, router, currentPage, debouncedSearch, debouncedType, debouncedDifficulty, refreshCounter, loadQuestions]);
 
 
 
@@ -125,7 +241,51 @@ export default function QuestionsPage() {
                         </div>
                     </div>
 
-
+                    {/* Search & Filters (debounced; API runs only after {DEBOUNCE_MS}ms idle) */}
+                    <div className="mb-6 flex flex-wrap items-center gap-3">
+                        <div className="relative flex-1 min-w-[200px] max-w-md">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                            </span>
+                            <Input
+                                type="search"
+                                placeholder="Search by question text…"
+                                value={search}
+                                onChange={handleSearchChange}
+                                className="pl-9"
+                                aria-label="Search questions"
+                            />
+                        </div>
+                        <select
+                            value={filterType}
+                            onChange={handleFilterTypeChange}
+                            className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            aria-label="Filter by type"
+                        >
+                            {TYPE_OPTIONS.map((o) => (
+                                <option key={o.value || 'all'} value={o.value}>{o.label}</option>
+                            ))}
+                        </select>
+                        <select
+                            value={filterDifficulty}
+                            onChange={handleFilterDifficultyChange}
+                            className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            aria-label="Filter by difficulty"
+                        >
+                            {DIFFICULTY_OPTIONS.map((o) => (
+                                <option key={o.value || 'all'} value={o.value}>{o.label}</option>
+                            ))}
+                        </select>
+                        {((search || filterType || filterDifficulty)) && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleClearFilters}
+                            >
+                                Clear
+                            </Button>
+                        )}
+                    </div>
 
                 {/* Questions List */}
                 <div className="space-y-4">
@@ -209,27 +369,39 @@ export default function QuestionsPage() {
                                 Previous
                             </Button>
                             
-                            {/* Simple Page Indicator for now */}
-                            <div className="flex items-center px-4 text-sm font-medium text-gray-700">
-                                Page {currentPage} of {totalPages}
-                            </div>
+                        const handleNextPage = React.useCallback(() => {
+                            setCurrentPage(p => Math.min(totalPages, p + 1));
+                        }, [totalPages]);
 
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
-                                disabled={currentPage === totalPages}
-                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                            >
-                                Next
-                            </Button>
+                        const handleCloseCreateModal = React.useCallback(() => {
+                            setShowCreateModal(false);
+                        }, []);
+
+                        const handleCreateSuccess = React.useCallback(() => {
+                            setRefreshCounter(c => c + 1);
+                        }, []);
+
+                        {/* Simple Page Indicator for now */}
+                        <div className="flex items-center px-4 text-sm font-medium text-gray-700">
+                            Page {currentPage} of {totalPages}
                         </div>
-                        <div className="text-xs text-slate-500">
-                            Showing {(currentPage - 1) * LIMIT + 1} - {Math.min(currentPage * LIMIT, totalCount)} of {totalCount} questions
-                        </div>
+
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            disabled={currentPage === totalPages}
+                            onClick={handleNextPage}
+                        >
+                            Next
+                        </Button>
                     </div>
-                )}
-            </main>
-        </div>
+                    <div className="text-xs text-slate-500">
+                        Showing {(currentPage - 1) * LIMIT + 1} - {Math.min(currentPage * LIMIT, totalCount)} of {totalCount} questions
+                    </div>
+                </div>
+            )}
+        </main>
+    </div>
 
             <CreateQuestionModal 
                 isOpen={showCreateModal}

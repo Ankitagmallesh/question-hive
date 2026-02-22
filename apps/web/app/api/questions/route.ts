@@ -6,38 +6,65 @@ import { FetchQuestionsSchema, validateInput } from '@/lib/validators';
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    
-    // Parse and validate integers safely
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = parseInt(searchParams.get('limit') || '20', 10);
-    const subjectIdParam = searchParams.get('subjectId');
-    const chapterIdParam = searchParams.get('chapterId');
-    
-    // Validate input
-    const queryValidation = validateInput(FetchQuestionsSchema, {
-      page: isNaN(page) ? 1 : page,
-      limit: isNaN(limit) ? 20 : limit,
-      subjectId: subjectIdParam ? parseInt(subjectIdParam, 10) : undefined,
-      chapterId: chapterIdParam ? parseInt(chapterIdParam, 10) : undefined,
-      difficulty: searchParams.get('difficulty') || undefined,
-      type: searchParams.get('type') || undefined,
-    });
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '20');
+    const search = searchParams.get('search')?.trim() || searchParams.get('q')?.trim() || '';
+    const type = searchParams.get('type')?.trim() || '';
+    const difficulty = searchParams.get('difficulty')?.trim() || '';
 
-    if (!queryValidation.success) {
-      throw AppErrors.BadRequest(`Invalid query parameters: ${queryValidation.error}`);
-    }
+    const offset = (page - 1) * limit;
 
-    const result = await getQuestions({ 
-      page: queryValidation.data.page, 
-      limit: queryValidation.data.limit 
-    });
+    const conditions = [];
+    if (search) conditions.push(ilike(questions.content, `%${search}%`));
+    if (type) conditions.push(eq(questionTypes.name, type));
+    if (difficulty) conditions.push(eq(difficultyLevels.name, difficulty));
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    // Base Query for Data
+    const baseQuery = db
+      .select({
+        id: questions.id,
+        content: questions.content,
+        marks: questions.marks,
+        difficultyLevelId: questions.difficultyLevelId,
+        difficulty: difficultyLevels.name,
+        questionType: questionTypes.name,
+        questionTypeId: questions.questionTypeId,
+        createdAt: questions.createdAt,
+      })
+      .from(questions)
+      .leftJoin(difficultyLevels, eq(questions.difficultyLevelId, difficultyLevels.id))
+      .leftJoin(questionTypes, eq(questions.questionTypeId, questionTypes.id))
+      
+    // Apply filters - logic removed
+    let queryWithFilters: any = baseQuery;
+
+    // Get Total Count (separate query or window function)
+    // Drizzle doesn't support easy window functions yet for count(*), so easier to run a count query.
+    // Optimizing: Create a count query with same filters.
+    const countQuery = db
+      .select({ count: sql<number>`count(*)` })
+      .from(questions)
+      .leftJoin(difficultyLevels, eq(questions.difficultyLevelId, difficultyLevels.id))
+      .leftJoin(questionTypes, eq(questions.questionTypeId, questionTypes.id));
+    const countQuery = whereClause ? countBase.where(whereClause) : countBase;
+
+    const [totalResult] = await countQuery;
+    const total = Number(totalResult?.count || 0);
+
+    // Execute Data Query with Pagination
+    const data = await queryWithFilters
+        .limit(limit)
+        .offset(offset)
+        .orderBy(desc(questions.createdAt));
 
     return NextResponse.json({ 
       success: true, 
       ...result
     });
 
-  } catch (error) {
-    return handleApiError(error, process.env.NODE_ENV === 'development');
+  } catch (e: any) {
+    console.error('API Error:', e);
+    return NextResponse.json({ success: false, error: e.message }, { status: 500 });
   }
 }

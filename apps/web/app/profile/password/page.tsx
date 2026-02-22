@@ -13,7 +13,7 @@ export default function ChangePasswordPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [errors, setErrors] = useState<any>({});
+    const [errors, setErrors] = useState<Record<string, string>>({});
     const [formData, setFormData] = useState({
         currentPassword: '',
         newPassword: '',
@@ -97,6 +97,7 @@ export default function ChangePasswordPage() {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <AppLoader text="Loading..." />
                 <AppLoader text="Loading..." />
             </div>
         );

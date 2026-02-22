@@ -11,7 +11,7 @@ import type {
 } from '@repo/types';
 
 // Custom API Response type for the client
-interface ClientApiResponse<T = any> {
+interface ClientApiResponse<T = unknown> {
     success: boolean;
     data?: T;
     error?: string;
@@ -83,7 +83,7 @@ type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 interface RequestOptions {
     method?: HttpMethod;
     headers?: Record<string, string>;
-    body?: any;
+    body?: unknown;
     timeout?: number;
 }
 
@@ -395,14 +395,14 @@ export class ApiClient {
                 method: 'DELETE',
             }),
 
-        generate: (config: any) =>
+        generate: (config: unknown) =>
             this.request<QuestionPaper>(API_ENDPOINTS.QUESTION_PAPERS.GENERATE, {
                 method: 'POST',
                 body: config,
             }),
 
         getTemplates: () =>
-            this.request<any[]>(API_ENDPOINTS.QUESTION_PAPERS.TEMPLATES),
+            this.request<unknown[]>(API_ENDPOINTS.QUESTION_PAPERS.TEMPLATES),
     };
 }
 

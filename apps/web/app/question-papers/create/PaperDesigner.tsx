@@ -1,49 +1,222 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
+    DndContext, 
+    closestCenter,
     KeyboardSensor,
     PointerSensor,
     useSensor,
     useSensors,
+    DragOverlay,
+    defaultDropAnimationSideEffects,
+    DragStartEvent,
     DragEndEvent
 } from '@dnd-kit/core';
 import {
     arrayMove,
+    SortableContext,
     sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+    useSortable,
 } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { toast } from 'sonner';
-import { experimental_useObject } from '@ai-sdk/react';
-import { z } from 'zod';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 import { getSupabase } from '../../lib/supabase-client';
 import DashboardLayout from '../../../components/layouts/DashboardLayout';
-import AppLoader from '../../../components/ui/AppLoader';
 import { 
     Eye, 
+    Save, 
+    ArrowDown, 
     LayoutTemplate, 
+    Search, 
+    Trash2, 
+    GripVertical, 
+    FileText, 
+    ChevronDown, 
+    ChevronRight,
     Loader2,
+    MoveLeft,
+    Download
 } from 'lucide-react';
 import './create.css';
-import { useDebounce } from '../../hooks/useDebounce';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "../../../components/ui/alert-dialog";
+import { RichTextEditor } from './RichTextEditor';
 
-import { SettingsForm } from './components/SettingsForm';
-import { QuestionList } from './components/QuestionList';
-import { AIChatInterface } from './components/AIChatInterface';
-import { PaperContent } from './components/PaperContent';
-import { PreviewPanel } from './components/PreviewPanel';
-import { Question, PaperSettings, ChatMessage } from './types';
+// --- Types ---
+interface Question {
+    id: string;
+    text: string;
+    type: string; 
+    difficulty: 'easy' | 'medium' | 'hard';
+    chapter?: string;
+    options?: {
+        id: string;
+        text: string;
+        order: number;
+    }[];
+    marks?: number;
+}
+
+interface PaperSettings {
+    title: string;
+    chapters: string[];
+    duration: string;
+    totalMarks: string;
+    difficulty: 'easy' | 'mixed' | 'hard';
+    
+    // Branding & Layout
+    institution: string;
+    logo: string | null;
+    logoPosition: 'left' | 'center' | 'right';
+    font: 'jakarta' | 'merriweather' | 'inter' | 'mono';
+    template: 'classic' | 'modern' | 'minimal';
+    layout: 'single' | 'double';
+    margin: 'S' | 'M' | 'L';
+    fontSize: number;
+    lineHeight: number;
+    metaFontSize: number;
+    
+    // Formatting
+    pageBorder: 'none' | 'border-simple' | 'border-double';
+    answerSpace: 'none' | 'lines' | 'box';
+    separator: 'none' | 'solid' | 'double' | 'dashed';
+    
+    // Instructions & Content
+    date: string;
+    instructions: string;
+    watermark: string;
+    
+    // Student Details
+    studentName: boolean;
+    rollNumber: boolean;
+    classSection: boolean;
+    dateField: boolean;
+    invigilatorSign: boolean;
+    studentDetailsGap?: number;
+
+    // Content Alignment
+    contentAlignment?: 'left' | 'center' | 'justify';
+    
+    // Footer
+    footerText: string;
+    roughWorkArea: 'none' | 'right' | 'bottom';
+    pageNumbering: 'page-x-of-y' | 'x-slash-y' | 'hidden';
+}
+
+// --- Components ---
+
+const SortableQuestionItem = ({ question, index, onRemove }: { question: Question, index: number, onRemove: (id: string) => void }) => {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({ id: question.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+        <div 
+            ref={setNodeRef} 
+            style={style} 
+            className="paper-item"
+            {...attributes} 
+            {...listeners}
+        >
+            <i className="ri-delete-bin-line remove-item" onClick={(e) => { e.stopPropagation(); onRemove(question.id); }}></i>
+            <div className="flex gap-3">
+                <span className="font-bold text-slate-900 shrink-0">{index + 1}.</span>
+                <div className="flex-1 pr-16">
+                    <div 
+                        className="font-medium text-slate-900 mb-1 leading-relaxed"
+                        style={{ minHeight: '1.2em' }}
+                    >
+                        {question.text || 'Question Text Missing'}
+                        {question.marks ? <span className="float-right font-normal text-slate-500" style={{ fontSize: '0.85em' }}>[{question.marks} marks]</span> : null}
+                    </div>
+                    {question.options && question.options.length > 0 && (
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2" style={{ fontSize: '0.9em' }}>
+                             {question.options.map((opt: { id: string; text: string; order: number }, idx) => (
+                             {question.options.map((opt: { id: string; text: string; order: number }, idx) => (
+                                <div key={opt.id} className="text-slate-600">
+                                    <span className="font-semibold mr-1 text-indigo-600">({String.fromCharCode(65 + idx)})</span> 
+                                    {opt.text}
+                                </div>
+                             ))}
+                        </div>
+                    )}
+                </div>
+        </div>
+        </div>
+    );
+};
+
+const ChapterSelect = ({ options, selectedChapters, onChange }: { options: { id: string; name: string }[], selectedChapters: string[], onChange: (val: string) => void }) => {
+const ChapterSelect = ({ options, selectedChapters, onChange }: { options: { id: string; name: string }[], selectedChapters: string[], onChange: (val: string) => void }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // If chapters are selected, show "Add another chapter", otherwise "Select Chapter"
+    // Or just always "Select Chapter" since tags show the current state? 
+    // Let's go with "Select Chapter" to be a clear call to action for adding more.
+    const placeholderText = "Select Chapter";
+
+    return (
+        <div className="relative w-full" ref={dropdownRef}>
+            <div 
+                className={`input-box cursor-pointer flex justify-between items-center ${isOpen ? 'ring-2 ring-indigo-100 border-indigo-500' : ''}`}
+                onClick={() => setIsOpen(!isOpen)}
+            >
+                <span className="text-slate-600">{placeholderText}</span>
+                <i className={`ri-arrow-down-s-line transition-transform text-slate-500 ${isOpen ? 'rotate-180' : ''}`}></i>
+            </div>
+            
+            {isOpen && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-100">
+                    <div className="p-1">
+                        {options.map((opt) => {
+                            const isSelected = selectedChapters.includes(opt.name);
+                            return (
+                                <div 
+                                    key={opt.id}
+                                    className={`px-3 py-2 text-sm rounded-md cursor-pointer transition-colors flex justify-between items-center ${isSelected ? 'bg-indigo-50 text-indigo-700 font-medium' : 'hover:bg-slate-50 text-slate-700'}`}
+                                    onClick={() => {
+                                        onChange(opt.name);
+                                        setIsOpen(false);
+                                    }}
+                                >
+                                    <span>{opt.name}</span>
+                                    {isSelected && <i className="ri-check-line"></i>}
+                                </div>
+                            );
+                        })}
+                        {options.length === 0 && (
+                            <div className="px-3 py-2 text-sm text-slate-400 text-center">No chapters found</div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
 
 export default function PaperDesigner() {
     const router = useRouter();
@@ -51,10 +224,6 @@ export default function PaperDesigner() {
     
     // --- State ---
     const [leftPanelWidth, setLeftPanelWidth] = useState(50); // percentage
-    const [mobileTab, setMobileTab] = useState<'editor' | 'preview'>('editor');
-    
-    // Touch swipe detection for mobile - REMOVED
-    
     const containerRef = useRef<HTMLDivElement>(null);
     const [chaptersList, setChaptersList] = useState<{id: string, name: string}[]>([]);
 
@@ -72,7 +241,7 @@ export default function PaperDesigner() {
         layout: 'single',
         margin: 'M',
         fontSize: 14,
-        lineHeight: 1,
+        lineHeight: 1.5,
         metaFontSize: 12,
         
         pageBorder: 'none',
@@ -81,7 +250,7 @@ export default function PaperDesigner() {
         
         date: (new Date().toISOString().split('T')[0]) as string,
         instructions: '<ul><li>All questions are compulsory.</li><li>Calculators are not allowed.</li></ul>',
-        watermark: 'Question Hive',
+        watermark: '',
         
         studentName: true,
         rollNumber: true,
@@ -105,10 +274,12 @@ export default function PaperDesigner() {
     const [showPreviewModal, setShowPreviewModal] = useState(false);
     const [priorityChapter, setPriorityChapter] = useState<string | null>(null);
     const [zoomLevel, setZoomLevel] = useState(75);
+    const [zoomLevel, setZoomLevel] = useState(75);
 
     useEffect(() => {
         if (typeof window !== 'undefined' && window.innerWidth < 1024) {
             setZoomLevel(70);
+            setZoomLevel(80);
         }
     }, []);
 
@@ -116,6 +287,7 @@ export default function PaperDesigner() {
     const [sourceQuestions, setSourceQuestions] = useState<Question[]>([]);
     const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
     const [isExportAlertOpen, setIsExportAlertOpen] = useState(false);
+    const [subjectId, setSubjectId] = useState<number | null>(null);
     const searchParams = useSearchParams();
     // --- AI Chat Logic with Streaming ---
     const { object, submit, isLoading: isStreaming } = experimental_useObject({
@@ -139,6 +311,8 @@ export default function PaperDesigner() {
                 setChatMessages(prev => {
                     const newHistory = [...prev];
                     const lastMsg = newHistory[newHistory.length - 1];
+                    if (lastMsg && lastMsg.role === 'assistant') {
+                    if (lastMsg && lastMsg.role === 'assistant') {
                     if (lastMsg && lastMsg.role === 'assistant') {
                         lastMsg.content = `I've generated ${object.questions?.length} questions for you. Click on any question to add it to your paper.`;
                         lastMsg.questions = object.questions as Question[];
@@ -170,7 +344,7 @@ export default function PaperDesigner() {
 
 
 
-    const handleSendMessage = (text?: string) => {
+    const handleSendMessage = useCallback((text?: string) => {
         const prompt = text || chatInput.trim();
         if (!prompt || isStreaming) return;
         
@@ -183,7 +357,7 @@ export default function PaperDesigner() {
         setChatMessages(prev => [...prev, { role: 'assistant', content: 'QuestionHive is thinking...', questions: undefined }]);
         
         submit({ prompt });
-    };
+    }, [chatInput, isStreaming, submit]);
 
     // --- Auto-Generate from URL ---
     const hasTriggeredAutoRef = useRef(false);
@@ -230,13 +404,6 @@ export default function PaperDesigner() {
         if (!authLoading && !user) router.push('/auth/login');
     }, [authLoading, user, router]);
 
-    // Auto-Select Tab from URL
-    useEffect(() => {
-        if (searchParams.get('mode') === 'auto') {
-            setActiveTab('auto');
-        }
-    }, [searchParams]);
-
     // Fetch Chapters
     useEffect(() => {
         const fetchChapters = async () => {
@@ -269,12 +436,8 @@ export default function PaperDesigner() {
         }
     }, [searchParams]);
 
-    // --- Draft Persistence (DB-Only) ---
-    // 1. Debounce Changes
-    const debouncedSettings = useDebounce(settings, 1500); 
-    const debouncedQuestions = useDebounce(paperQuestions, 1500);
-    
-    // 2. Auto-Save Effect
+    // --- Draft Persistence ---
+    // 1. Auto-save to LocalStorage
     useEffect(() => {
         const autoSave = async () => {
              // Only auto-save if we have content and user is logged in
@@ -331,37 +494,59 @@ export default function PaperDesigner() {
     }, [debouncedSettings, debouncedQuestions]); // Trigger when these stabilize
 
     
-    // 3. Load logic - API ONLY
+    // 3. Extract subjectId from URL
     useEffect(() => {
+        const subjectIdParam = searchParams.get('subjectId');
+        if (subjectIdParam) {
+            setSubjectId(parseInt(subjectIdParam, 10));
+        }
+    }, [searchParams]);
+
+    // 4. Load logic - API ONLY
+    const savedId = searchParams.get('savedId');
+    useEffect(() => {
+        const loadPaper = async () => {
+            if (!user?.id) return;
         const loadPaper = async () => {
             if (!user?.id) return;
 
             const savedId = searchParams.get('savedId');
-            if (!savedId) return;
 
-            try {
-                const res = await fetch(`/api/question-papers/${savedId}`);
-                if (res.ok) {
-                    const json = await res.json();
-                    if (json.success && json.paper) {
-                        setSettings(s => ({ ...s, ...json.paper.settings }));
-                        setPaperQuestions(json.paper.paperQuestions);
-                    }
-                }
-            } catch (e) {
-                console.error("Failed to load paper from API", e);
-                toast.error("Could not load the saved paper.");
+        if (resume) {
+            const saved = localStorage.getItem(`current_paper_draft_${user.id}`);
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.settings) setSettings(s => ({...s, ...parsed.settings}));
+                    if (parsed.paperQuestions) setPaperQuestions(parsed.paperQuestions);
+                } catch (e) { console.error(e); }
             }
-        };
-
-        loadPaper();
-    }, [searchParams.get('savedId'), user]); // Only reload if ID changes or user changes
+        } else if (savedId) {
+            const allSaved = localStorage.getItem(`saved_papers_${user.id}`);
+            if (allSaved) {
+                try {
+                    const papers = JSON.parse(allSaved);
+                    const found = papers.find((p: { id: string }) => p.id === savedId);
+                    if (found) {
+                        setSettings(s => ({...s, ...found.settings}));
+                        setPaperQuestions(found.paperQuestions);
+                    }
+                } catch (e) { console.error(e); }
+            }
+        }
+    }, [searchParams, user]);
 
     const [isSaving, setIsSaving] = useState(false);
+    // Removed useToast hook
 
     const handleSavePaper = async () => {
         if (!settings.title) {
             toast.error("Please enter a paper title");
+            return;
+        }
+
+        if (!subjectId) {
+            toast.error("Please select a subject before saving");
             return;
         }
 
@@ -370,18 +555,14 @@ export default function PaperDesigner() {
         try {
             const savedId = searchParams.get('savedId');
             
-            const safeSettings = {
-                ...settings,
-                duration: parseInt(settings.duration || '0') || 0,
-                totalMarks: parseInt(settings.totalMarks || '0') || 0,
-            };
-
+            // Construct Payload
             const payload = {
-                id: savedId, 
+                id: savedId ? parseInt(savedId, 10) : undefined, 
                 settings: safeSettings,
                 paperQuestions,
                 status: 'Saved', // Finalized Status
-                email: user?.email 
+                email: user?.email,
+                subjectId: subjectId
             };
 
             const response = await fetch('/api/question-papers', {
@@ -404,16 +585,16 @@ export default function PaperDesigner() {
                 router.replace(`?${newParams.toString()}`);
             }
 
-            toast.success("Paper saved successfully!");
+            toast.success("Paper saved to database successfully!");
 
-        } catch (error: any) {
+        } catch (error: unknown) {
+        } catch (error: unknown) {
             console.error('Save failed:', error);
             toast.error(error.message || "Failed to save paper.");
         } finally {
             setIsSaving(false);
         }
     };
-
 
 
     const PAGE_SIZE = 10;
@@ -438,7 +619,7 @@ export default function PaperDesigner() {
                 // 1. Fetch lightweight metadata for ALL matching questions to sort fully
                 let idQuery = supabase
                     .from('questions')
-                    .select(`id, difficulty_levels(name), chapters!inner(name)`, { count: 'exact' });
+                    .select('id, difficulty_levels(name), chapters!inner(name)', { count: 'exact' });
 
                 if (selectedChapters.length > 0) {
                     idQuery = idQuery.in('chapters.name', selectedChapters);
@@ -455,22 +636,27 @@ export default function PaperDesigner() {
                 setTotalCount(total || 0);
 
                 // 2. Sort in memory (Priority -> Difficulty)
-                const sortedIds = allIds.sort((a: any, b: any) => {
+                const sortedIds = allIds.sort((a: { id: any; difficulty_levels: { name: any }[]; chapters: { name: any }[] }, b: { id: any; difficulty_levels: { name: any }[]; chapters: { name: any }[] }) => {
+                const sortedIds = allIds.sort((a: { id: any; difficulty_levels: { name: any }[]; chapters: { name: any }[] }, b: { id: any; difficulty_levels: { name: any }[]; chapters: { name: any }[] }) => {
                     // Priority Chapter
-                    const aIsPriority = a.chapters?.name === priorityChapter;
-                    const bIsPriority = b.chapters?.name === priorityChapter;
+                    const aIsPriority = a.chapters?.[0]?.name === priorityChapter;
+                    const bIsPriority = b.chapters?.[0]?.name === priorityChapter;
+                    const aIsPriority = a.chapters?.[0]?.name === priorityChapter;
+                    const bIsPriority = b.chapters?.[0]?.name === priorityChapter;
                     if (aIsPriority && !bIsPriority) return -1;
                     if (!aIsPriority && bIsPriority) return 1;
 
                     // Difficulty
                     const diffWeight: {[k: string]: number} = { 'easy': 1, 'medium': 2, 'hard': 3 };
-                    const aWeight = diffWeight[a.difficulty_levels?.name?.toLowerCase() || ''] || 4;
-                    const bWeight = diffWeight[b.difficulty_levels?.name?.toLowerCase() || ''] || 4;
+                    const aWeight = diffWeight[a.difficulty_levels?.[0]?.name?.toLowerCase() || ''] || 4;
+                    const bWeight = diffWeight[b.difficulty_levels?.[0]?.name?.toLowerCase() || ''] || 4;
+                    const aWeight = diffWeight[a.difficulty_levels?.[0]?.name?.toLowerCase() || ''] || 4;
+                    const bWeight = diffWeight[b.difficulty_levels?.[0]?.name?.toLowerCase() || ''] || 4;
                     return aWeight - bWeight;
                 });
 
                 // 3. Slice for current page
-                const slicedIds = sortedIds.slice(from, to).map((x: any) => x.id);
+                const slicedIds = sortedIds.slice(from, to).map(x => x.id);
 
                 if (slicedIds.length === 0) {
                     setSourceQuestions([]);
@@ -498,17 +684,18 @@ export default function PaperDesigner() {
                     const orderedData = slicedIds.map(id => fullData.find(d => d.id === id)).filter(Boolean);
                     
                      // Transform
-                     const transformed = orderedData.map((q: any) => ({
-                        id: q.id,
-                        text: q.content,
-                        type: q.question_types?.name,
-                        difficulty: q.difficulty_levels?.name,
-                        chapter: q.chapters?.name,
-                        options: q.question_options?.map((o: any) => ({
+                     const transformed = orderedData.map(q => ({
+                        id: q?.id,
+                        text: q?.content,
+                        type: q?.question_types?.[0]?.name,
+                        difficulty: q?.difficulty_levels?.[0]?.name,
+                        chapter: q?.chapters?.[0]?.name,
+                        options: q?.question_options?.map(o => ({
                             id: o.id,
                             text: o.option_text,
                             order: o.option_order
-                        })).sort((a: any, b: any) => a.order - b.order)
+                        })).sort((a, b) => a.order - b.order)
+                        })).sort((a, b) => a.order - b.order)
                     }));
                     setSourceQuestions(transformed);
                     setHasMore(transformed.length === PAGE_SIZE);
@@ -541,17 +728,19 @@ export default function PaperDesigner() {
 
                 if (data) {
                     // Transform Data
-                    const transformed = data.map((q: any) => ({
+                    const transformed = data.map((q) => ({
+                    const transformed = data.map((q) => ({
                         id: q.id,
                         text: q.content,
-                        type: q.question_types?.name,
-                        difficulty: q.difficulty_levels?.name,
-                        chapter: q.chapters?.name,
-                        options: q.question_options?.map((o: any) => ({
+                        type: q.question_types?.[0]?.name,
+                        difficulty: q.difficulty_levels?.[0]?.name,
+                        chapter: q.chapters?.[0]?.name,
+                        options: q.question_options?.map((o) => ({
                             id: o.id,
                             text: o.option_text,
                             order: o.option_order
-                        })).sort((a: any, b: any) => a.order - b.order)
+                        })).sort((a, b) => a.order - b.order)
+                        })).sort((a, b) => a.order - b.order)
                     }));
                     setSourceQuestions(transformed);
                     setHasMore(transformed.length === PAGE_SIZE);
@@ -576,8 +765,8 @@ export default function PaperDesigner() {
         const { active, over } = event;
         if (active.id !== over?.id) {
             setPaperQuestions((items) => {
-                const oldIndex = items.findIndex(i => (i.instanceId || i.id) === active.id);
-                const newIndex = items.findIndex(i => (i.instanceId || i.id) === over?.id);
+                const oldIndex = items.findIndex(i => i.id === active.id);
+                const newIndex = items.findIndex(i => i.id === over?.id);
                 return arrayMove(items, oldIndex, newIndex);
             });
         }
@@ -592,7 +781,8 @@ export default function PaperDesigner() {
     };
     
     // Using any to avoid complicated mouse event types across browser/React
-    const handleResizeMouseMove = (e: any) => {
+    const handleResizeMouseMove = (e: MouseEvent) => {
+    const handleResizeMouseMove = (e: MouseEvent) => {
         if (containerRef.current) {
             const containerWidth = containerRef.current.offsetWidth;
             const newLeftWidth = ((e.clientX - containerRef.current.getBoundingClientRect().left) / containerWidth) * 100;
@@ -609,12 +799,7 @@ export default function PaperDesigner() {
     // --- Actions ---
     const addToPaper = (q: Question) => {
         if (!paperQuestions.find(item => item.id === q.id)) {
-            const questionWithInstance = {
-                ...q,
-                marks: 4,
-                instanceId: `new-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-            };
-            setPaperQuestions([...paperQuestions, questionWithInstance]);
+            setPaperQuestions([...paperQuestions, q]);
             
             // Auto-calculate metrics: 1 Q = 4 Marks, 1 Min
             const currentMarks = parseInt(settings.totalMarks) || 0;
@@ -623,9 +808,18 @@ export default function PaperDesigner() {
             // Set default layout and border when first question is added
             const isFirstQuestion = paperQuestions.length === 0;
             
+            // Set default layout and border when first question is added
+            const isFirstQuestion = paperQuestions.length === 0;
+            
             setSettings({
                 ...settings,
                 totalMarks: String(currentMarks + 4),
+                duration: String(currentDuration + 1),
+                // Apply defaults on first question add
+                ...(isFirstQuestion && {
+                    layout: '2-col',
+                    pageBorder: 'simple'
+                })
                 duration: String(currentDuration + 1),
                 // Apply defaults on first question add
                 ...(isFirstQuestion && {
@@ -670,8 +864,8 @@ export default function PaperDesigner() {
         });
     }, [sourceQuestions, searchQuery, settings.difficulty, settings.chapters, priorityChapter]);
 
-    const removeFromPaper = (idOrInstanceId: string) => {
-        setPaperQuestions(paperQuestions.filter(q => (q.instanceId || q.id) !== idOrInstanceId));
+    const removeFromPaper = (id: string) => {
+        setPaperQuestions(paperQuestions.filter(q => q.id !== id));
         
         // Auto-calculate metrics
         const currentMarks = parseInt(settings.totalMarks) || 0;
@@ -683,6 +877,7 @@ export default function PaperDesigner() {
             duration: String(Math.max(0, currentDuration - 1))
         });
     };
+
 
 
 
@@ -698,12 +893,9 @@ export default function PaperDesigner() {
         }
     };
 
-    // --- Touch Swipe Handlers for Mobile Navigation - REMOVED ---
-
-
     // --- PDF Export Function using Puppeteer API ---
     // --- PDF Export Function using Puppeteer API ---
-    const handleExportClick = () => {
+    const handleExportPDF = async () => {
         if (paperQuestions.length === 0) {
             toast.error('No questions to export', {
                 description: 'Please add some questions to your paper first.'
@@ -764,30 +956,66 @@ export default function PaperDesigner() {
                 }
             }
 
+            // First, trigger a save to ensure the DB record matches the export
+            toast.info('Saving changes before export...', { duration: 2000 });
+            
+            const savedId = searchParams.get('savedId');
+            const safeSettings = {
+                ...settings,
+                duration: parseInt(settings.duration || '0') || 0,
+                totalMarks: parseInt(settings.totalMarks || '0') || 0,
+            };
+
+            const savePayload = {
+                id: savedId, 
+                settings: safeSettings,
+                paperQuestions,
+                status: 'Saved', 
+                email: user?.email 
+            };
+
+            const saveRes = await fetch('/api/question-papers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(savePayload)
+            });
+
+            if (!saveRes.ok) {
+                console.warn("Pre-export save failed, continuing with export anyway.");
+            } else {
+                const saveResult = await saveRes.json();
+                if (saveResult.paperId && (!savedId || savedId !== String(saveResult.paperId))) {
+                    const newParams = new URLSearchParams(searchParams.toString());
+                    newParams.set('savedId', String(saveResult.paperId));
+                    router.replace(`?${newParams.toString()}`, { scroll: false });
+                }
+            }
+
             toast.info('Generating PDF...', {
                 description: 'This may take a few seconds.'
             });
 
             // Prepare data for the API
             const paperData = {
-                title: settings.title,
-                institution: settings.institution,
-                duration: settings.duration,
-                totalMarks: settings.totalMarks,
-                template: settings.template,
-                font: settings.font,
-                fontSize: settings.fontSize,
-                margin: settings.margin,
-                
-                // New Branding Fields
-                logo: settings.logo,
-                logoPosition: settings.logoPosition,
-                layout: settings.layout,
-                lineHeight: settings.lineHeight,
-                answerSpace: settings.answerSpace,
-                separator: settings.separator,
-                pageBorder: settings.pageBorder,
-                metaFontSize: settings.metaFontSize,
+                data: {
+                    title: settings.title,
+                    institution: settings.institution,
+                    duration: settings.duration,
+                    totalMarks: settings.totalMarks,
+                    template: settings.template,
+                    font: settings.font,
+                    fontSize: settings.fontSize,
+                    margin: settings.margin,
+                    
+                    // New Branding Fields
+                    logo: settings.logo,
+                    logoPosition: settings.logoPosition,
+                    layout: settings.layout,
+                    lineHeight: settings.lineHeight,
+                    answerSpace: settings.answerSpace,
+                    separator: settings.separator,
+                    pageBorder: settings.pageBorder,
+                    metaFontSize: settings.metaFontSize,
 
                 date: settings.date,
                 instructions: settings.instructions,
@@ -802,7 +1030,6 @@ export default function PaperDesigner() {
                 footerText: settings.footerText,
                 roughWorkArea: settings.roughWorkArea,
                 pageNumbering: settings.pageNumbering,
-                withAnswerKey: settings.withAnswerKey,
                 questions: paperQuestions.map(q => ({
                     id: q.id,
                     text: q.text,
@@ -842,7 +1069,29 @@ export default function PaperDesigner() {
                  // But let's simplify the existing block to be more robust.
             }
             
+
             if (!response.ok) {
+                let errorMessage = 'Failed to generate PDF';
+                try {
+                    const errData = await response.json();
+                    errorMessage = errData.error || errorMessage;
+                } catch (e) {
+                    errorMessage = response.statusText || errorMessage;
+                }
+                
+                // Special handling for insufficient credits
+                if (response.status === 403) {
+                     // logic handled above if it was JSON, but let's re-parse or trust the error message?
+                     // Actually, if 403, we might have already parsed it.
+                     // optimizing...
+                }
+                 // If it was 403 and we got JSON, we already have the info. 
+                 // But let's simplify the existing block to be more robust.
+            }
+            
+            if (!response.ok) {
+                 const errData = await response.json().catch(() => ({}));
+                 
                  const errData = await response.json().catch(() => ({}));
                  
                 // Special handling for insufficient credits
@@ -857,34 +1106,25 @@ export default function PaperDesigner() {
                 }
 
                 throw new Error(errData.error || response.statusText || 'Failed to generate PDF');
-            }
-            
-            // Check for credit update header
-            const remainingCredits = response.headers.get('X-Credits-Remaining');
-            if (remainingCredits) {
-                // Manually update the user credits in the UI if possible
-                window.location.reload(); 
+
+                throw new Error(errData.error || response.statusText || 'Failed to generate PDF');
             }
 
-            // Get Content Type to determine extension (PDF vs ZIP)
-            const contentType = response.headers.get('content-type');
-            const fileExtension = contentType && contentType.includes('zip') ? 'zip' : 'pdf';
-
-            // Get the blob
-            const fileBlob = await response.blob();
+            // Get the PDF blob
+            const pdfBlob = await response.blob();
             
             // Create download link
-            const url = window.URL.createObjectURL(fileBlob);
+            const url = window.URL.createObjectURL(pdfBlob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `${settings.title.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.${fileExtension}`;
+            link.download = `${settings.title.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
 
-            toast.success(fileExtension === 'zip' ? 'Paper & Key Downloaded!' : 'PDF Downloaded!', {
-                description: 'Your files have been saved successfully.'
+            toast.success('PDF Downloaded!', {
+                description: 'Your paper has been saved successfully.'
             });
         } catch (error) {
             console.error('PDF export error:', error);
@@ -898,23 +1138,97 @@ export default function PaperDesigner() {
     const handleZoomOut = () => setZoomLevel(prev => Math.max(prev - 10, 50));
     const handleZoomReset = () => setZoomLevel(100);
 
+    const paginateQuestions = (questions: Question[]) => {
+        if (questions.length === 0) return [];
 
+        const pages: Question[][] = [];
+        let currentPage: Question[] = [];
+        
+        // A4 in mm: 210 × 297mm
+        // Converting to approximate px at 96dpi: 1mm ≈ 3.78px
+        const MM_TO_PX = 3.78;
+        const PAGE_HEIGHT_MM = 297;
+        const PAGE_HEIGHT = PAGE_HEIGHT_MM * MM_TO_PX; // ~1122px
+        const MARGIN_MM = 10; // 10mm padding we set in CSS
+        const MARGIN = MARGIN_MM * MM_TO_PX;
+        
+        const HEADER_HEIGHT = 100; // Title, meta, institution (smaller estimate)
+        const FOOTER_HEIGHT = 40; // Page number footer
+        
+        let availableHeight = PAGE_HEIGHT - (2 * MARGIN) - HEADER_HEIGHT - FOOTER_HEIGHT;
+        let currentHeight = 0;
 
+        questions.forEach((q) => {
+            // More accurate height estimation
+            const fontSize = settings.fontSize;
+            const lineHeight = fontSize * 1.4;
+            
+            // Estimate question text lines (more generous chars per line)
+            const charsPerLine = 70; // Approximate for A4 width
+            const textLines = Math.ceil(q.text.length / charsPerLine);
+            const textHeight = Math.max(textLines, 1) * lineHeight;
+            
+            // Options height (2 columns, so divide by 2)
+            let optionsHeight = 0;
+            if (q.options && q.options.length > 0) {
+                const optsRows = Math.ceil(q.options.length / 2);
+                optionsHeight = optsRows * 20; // ~20px per row
+            }
 
+            // Item height = text + options + padding (reduced from 30 to 20)
+            const itemHeight = textHeight + optionsHeight + 20;
 
+            if (currentHeight + itemHeight > availableHeight) {
+                // Push current page and start new
+                pages.push(currentPage);
+                currentPage = [];
+                currentHeight = 0;
+                // Subsequent pages have more space (no header)
+                availableHeight = PAGE_HEIGHT - (2 * MARGIN) - 30 - FOOTER_HEIGHT;
+            }
 
+            currentPage.push(q);
+            currentHeight += itemHeight;
+        });
 
+        if (currentPage.length > 0) pages.push(currentPage);
+        
+        return pages;
+    };
 
+    const PaperContent = () => {
+        const marginPx = getMargins();
+        const fontFamily = getFontFamily();
+        const pages = paginateQuestions(paperQuestions);
 
-    if (authLoading) {
-        return (
-            <DashboardLayout fullScreen={true}>
-                <div className="h-screen w-full flex items-center justify-center bg-gray-50">
-                    <AppLoader text="Verifying session..." />
+        if (paperQuestions.length === 0) {
+            return (
+                <div 
+                    className={`paper-sheet ${settings.template === 'modern' ? 't-modern' : settings.template === 'minimal' ? 't-minimal' : 't-classic'}`}
+                    style={{ 
+                        fontFamily,
+                        padding: `${marginPx}px`,
+                        fontSize: `${settings.fontSize}px`,
+                        marginBottom: '40px'
+                    }}
+                >
+                     <div className="paper-header">
+                        <div className="p-institution" style={{display: settings.institution ? 'block' : 'none'}}>{settings.institution}</div>
+                        <div className="p-title">{settings.title}</div>
+                        <div className="p-meta">
+                            <span>Duration: {settings.duration}</span>
+                            <span>Max Marks: {settings.totalMarks}</span>
+                        </div>
+                    </div>
+                    <div style={{textAlign: 'center', color: '#cbd5e1', marginTop: '50px'}}>
+                        <i className="ri-drag-move-2-line" style={{fontSize: '32px', marginBottom: '10px', display: 'block'}}></i>
+                        Click or drag questions to add here
+                    </div>
                 </div>
-            </DashboardLayout>
-        );
-    }
+            )
+        }
+
+        let globalIndex = 0;
 
     return (
         <DashboardLayout fullScreen={true}>
@@ -922,15 +1236,35 @@ export default function PaperDesigner() {
                 className={`main-container ${mobileTab === 'editor' ? 'editor-full' : 'preview-full'}`} 
                 ref={containerRef as React.RefObject<HTMLDivElement>}
             >
+            <div className={`main-container ${mobileTab === 'editor' ? 'editor-full' : 'preview-full'}`} ref={containerRef as React.RefObject<HTMLDivElement>}>
                 
                 <div 
                     className={`editor-panel ${mobileTab === 'editor' ? 'block' : 'hidden'} lg:block`} 
                     style={{ '--left-width': `${leftPanelWidth}%` } as React.CSSProperties} 
                     data-lenis-prevent
                 >
-                    <div className="editor-header sticky top-0 z-20 bg-white/80 px-4 lg:px-8 py-3 border-b border-slate-100/80 backdrop-blur-md shadow-sm transition-all duration-200">
+                    <div className="editor-header sticky top-0 z-20 bg-white -mt-4 -mx-4 pt-1 px-4 lg:-mt-8 lg:-mx-8 lg:pt-1 lg:px-8 pb-4 border-b border-slate-100/80 backdrop-blur-sm shadow-sm transition-all duration-200">
+                        <div>
+                            <div className="flex items-center gap-2 mb-1">
+                                <button onClick={() => router.back()} className="p-1 hover:bg-slate-100 rounded-full">
+                                    <i className="ri-arrow-left-line text-slate-500" style={{fontSize: '18px'}}></i>
+                    <div className="editor-header sticky top-0 z-20 bg-white/80 -mt-4 -mx-4 pt-4 px-4 lg:-mt-8 lg:-mx-8 lg:pt-4 lg:px-8 pb-3 border-b border-slate-100/80 backdrop-blur-md shadow-sm transition-all duration-200">
                         <div className="flex items-center justify-between w-full">
                             <div className="flex items-center gap-2 overflow-hidden">
+                                <button onClick={() => router.back()} className="p-2 hover:bg-slate-100 rounded-xl transition-colors shrink-0">
+                                    <i className="ri-arrow-left-line text-slate-700" style={{fontSize: '20px'}}></i>
+                                </button>
+                                <h1>Paper Designer</h1>
+                            </div>
+                            <div className="breadcrumbs">Home / {settings.chapters.join(', ')} / {settings.title}</div>
+                        </div>
+                        <div className="header-actions">
+                            <div className="hidden lg:flex items-center bg-slate-100 p-1 rounded-xl mr-2">
+                                <button 
+                                    onClick={() => setMobileTab('editor')}
+                                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${mobileTab === 'editor' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                >
+                                    Editor
                                 <div className="min-w-0">
                                     <h1 className="text-lg lg:text-2xl font-bold truncate">{settings.title || 'Paper Designer'}</h1>
                                     <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate">
@@ -948,29 +1282,53 @@ export default function PaperDesigner() {
                                     {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <i className="ri-save-line text-lg"></i>}
                                 </button>
                                 
-
-
                                 <button className="btn-action hidden lg:flex" onClick={handleSavePaper} disabled={isSaving}>
                                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <i className="ri-save-line"></i>}
                                     {isSaving ? 'Saving...' : 'Save'}
                                 </button>
-                                
-                                <div className="hidden lg:flex items-center gap-1 bg-slate-100 rounded-lg px-2 py-1">
-                                    <button className="p-1 hover:bg-slate-200 rounded text-slate-600 transition-colors" onClick={handleZoomOut} title="Zoom Out">
-                                        <i className="ri-subtract-line"></i>
-                                    </button>
-                                    <span className="text-xs font-bold w-10 text-center text-slate-700">{zoomLevel}%</span>
-                                    <button className="p-1 hover:bg-slate-200 rounded text-slate-600 transition-colors" onClick={handleZoomIn} title="Zoom In">
-                                        <i className="ri-add-line"></i>
-                                    </button>
-                                    <div className="w-px h-3 bg-slate-300 mx-1"></div>
-                                    <button className="p-1.5 hover:bg-slate-200 rounded text-slate-600 text-[10px] font-semibold transition-colors uppercase tracking-wider" onClick={handleZoomReset}>
-                                        Reset
-                                    </button>
-                                </div>
                             </div>
+                            <button className="btn-action hidden lg:flex" onClick={() => setShowPreviewModal(true)}><i className="ri-eye-line"></i> Popout</button>
+                            <div className="flex items-center gap-1 bg-slate-100 rounded-lg px-2 py-1">
+                                <button className="p-1 hover:bg-slate-200 rounded text-slate-600 transition-colors" onClick={handleZoomOut} title="Zoom Out">
+                                    <i className="ri-subtract-line"></i>
+                                </button>
+                                <span className="text-xs font-bold w-10 text-center text-slate-700">{zoomLevel}%</span>
+                                <button className="p-1 hover:bg-slate-200 rounded text-slate-600 transition-colors" onClick={handleZoomIn} title="Zoom In">
+                                    <i className="ri-add-line"></i>
+                                </button>
+                                <div className="w-px h-3 bg-slate-300 mx-1"></div>
+                                <button className="p-1.5 hover:bg-slate-200 rounded text-slate-600 text-[10px] font-semibold transition-colors uppercase tracking-wider" onClick={handleZoomReset}>
+                                    Reset
+                                </button>
+                            </div>
+                            <button className="btn-action" onClick={handleSavePaper} disabled={isSaving}>
+                                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <i className="ri-save-line"></i>}
+                                {isSaving ? 'Saving...' : 'Save'}
+                            </button>
                         </div>
                     </div>
+
+                    <div className="settings-card">
+                        
+                        <div className="row">
+                            <div className="col" style={{flex: 1}}>
+                                <label>Paper Title</label>
+                                <input type="text" className="input-box" value={settings.title} onChange={e => setSettings({...settings, title: e.target.value})} />
+                            </div>
+                            <div className="col">
+                                <label>Chapter</label>
+                                <ChapterSelect 
+                                    options={chaptersList} 
+                                    selectedChapters={settings.chapters}
+                                    onChange={(val) => {
+                                        if (!settings.chapters.includes(val)) {
+                                            setSettings(s => ({...s, chapters: [...s.chapters, val]}));
+                                            setCurrentPage(1);
+                                        }
+                                    }}
+                                />
+                            </div>
+                        </div>
 
                     <SettingsForm 
                         settings={settings} 
@@ -1051,6 +1409,34 @@ export default function PaperDesigner() {
                     onRemoveQuestion={removeFromPaper}
                     handleExportClick={handleExportClick}
                 />
+                <div className={`resizer hidden lg:flex`} onMouseDown={handleResizeMouseDown}></div>
+
+                <div
+                    className="preview-panel"
+                    data-lenis-prevent
+                    style={{
+                        overflow: 'auto',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: zoomLevel <= 100 ? 'flex-start' : 'center'
+                    }}
+                >
+
+                    <div className={`flex-1 bg-slate-50/50 p-8 flex overflow-auto ${zoomLevel <= 100 ? 'justify-start' : 'justify-center'}`}>
+                        <div
+                            style={{
+                                transform: `scale(${zoomLevel / 100})`,
+                                transformOrigin: 'top left',
+                                transition: 'transform 0.2s cubic-bezier(0.2, 0, 0, 1)',
+                                minHeight: '100%'
+                            }}
+                        >
+                            <PaperContent />
+                        </div>
+                    </div>
+                    
+                    <button className="fab-export" onClick={handleExportClick}><i className="ri-file-pdf-line"></i> Export PDF</button>
+                </div>
 
                 <AlertDialog open={isExportAlertOpen} onOpenChange={setIsExportAlertOpen}>
                     <AlertDialogContent>
@@ -1098,6 +1484,13 @@ export default function PaperDesigner() {
                                 onDragEnd={handleDragEnd}
                                 onRemoveQuestion={removeFromPaper}
                             />
+                            <PaperContent 
+                                settings={settings}
+                                paperQuestions={paperQuestions}
+                                sensors={sensors}
+                                onDragEnd={handleDragEnd}
+                                onRemoveQuestion={removeFromPaper}
+                            />
                         </div>
                     </div>
                 </div>
@@ -1116,6 +1509,19 @@ export default function PaperDesigner() {
                 <span className="font-semibold">Export PDF</span>
             </button>
 
+
+            {/* Floating Export Button for Mobile & Desktop - Fixed at Bottom */}
+            <button 
+                onClick={handleExportClick}
+                className="fixed bottom-6 right-6 bg-indigo-600 text-white px-5 py-3 rounded-full shadow-xl z-40 hover:bg-indigo-700 transition-all active:scale-95 flex items-center gap-2"
+                title="Export PDF"
+            >
+                <i className="ri-file-pdf-line text-xl"></i>
+                <span className="font-semibold">Export PDF</span>
+            </button>
+
+            {/* Mobile View Toggle (Fixed Above Bottom Nav) */}
+            <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white backdrop-blur-md px-1 py-1 rounded-full shadow-xl z-50 flex items-center gap-0.5 border border-slate-700/50">
             {/* Mobile View Toggle (Fixed Above Bottom Nav) */}
             <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white backdrop-blur-md px-1 py-1 rounded-full shadow-xl z-50 flex items-center gap-0.5 border border-slate-700/50">
                 <button 

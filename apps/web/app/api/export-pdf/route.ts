@@ -6,6 +6,7 @@ import { eq, sql, and, inArray } from 'drizzle-orm';
 // @ts-ignore
 import puppeteerCore from 'puppeteer-core';
 // @ts-ignore
+// @ts-ignore
 import chromium from '@sparticuz/chromium';
 import puppeteer from 'puppeteer';
 import JSZip from 'jszip';
@@ -398,6 +399,7 @@ function generatePaperHTML(data: PaperData): string {
 export async function POST(req: Request) {
     try {
         const data: PaperData = await req.json();
+        const data: PaperData = await req.json();
 
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -440,9 +442,10 @@ export async function POST(req: Request) {
                 // Production: Use puppeteer-core + @sparticuz/chromium
                 browser = await puppeteerCore.launch({
                     args: chromium.args,
-                    defaultViewport: chromium.defaultViewport,
+                    defaultViewport: { width: 800, height: 600 },
                     executablePath: await chromium.executablePath(),
-                    headless: chromium.headless,
+                    // @ts-ignore
+                    headless: chromium.headless === 'new' ? true : chromium.headless,
                 });
             } else {
                 // Local Development: Use standard puppeteer

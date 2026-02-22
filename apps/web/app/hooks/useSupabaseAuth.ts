@@ -45,6 +45,7 @@ export function useSupabaseAuth(): AuthState {
             // Map Supabase user to our shared User type
             const mapped: User = {
               id: localId, // Using local numeric ID
+              id: localId, // Using local numeric ID
               name: u?.user_metadata?.full_name || u?.email || 'User',
               email: u?.email || '',
               credits: credits,
@@ -54,7 +55,8 @@ export function useSupabaseAuth(): AuthState {
             setUser(mapped);
           }
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
+      } catch (error: unknown) {
         // Suppress "Failed to fetch" network errors to avoid full-screen overlay in dev
         if (error instanceof TypeError && error.message === 'Failed to fetch') {
              console.warn('Supabase Connection Error: Failed to fetch. Check your internet connection or SUPABASE_URL.');
