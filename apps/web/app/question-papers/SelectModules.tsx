@@ -135,6 +135,9 @@ export default function SelectModules() {
                 const res = await fetch(`/api/chapters?subjectId=${selectedSubjectId}`);
                 const json = await res.json();
                 if (json.success) {
+                    // Start with empty chapters then populate
+                    // Map generic qCount if not present (assuming API might not return it yet)
+                    const data = json.data.map((c: { qCount?: number; [key: string]: unknown }) => ({
                     const data = json.data.map((c: any) => ({
                         ...c,
                         qCount: c.qCount || Math.floor(Math.random() * 50) + 10 

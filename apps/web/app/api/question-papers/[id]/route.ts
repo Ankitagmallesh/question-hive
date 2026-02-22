@@ -36,6 +36,10 @@ export async function GET(
             paper
         });
 
+        return NextResponse.json({ success: true, message: 'Question paper deleted successfully' });
+    } catch (error: unknown) {
+        console.error('Delete Paper Error:', error);
+        return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });
     } catch (error: any) {
         console.error('Get Paper Error:', error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });

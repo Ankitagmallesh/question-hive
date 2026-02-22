@@ -1,4 +1,8 @@
 import { NextResponse } from 'next/server';
+import { db } from '../../lib/db';
+import { subjects, eq } from '@repo/db';
+
+type SubjectRow = { examId: number; [key: string]: unknown };
 import { getSubjects } from '../../server/db/queries/subjects';
 
 export async function GET(req: Request) {
@@ -7,6 +11,15 @@ export async function GET(req: Request) {
     const examId = searchParams.get('examId');
     const examIdNum = examId ? Number(examId) : undefined;
 
+    let data: SubjectRow[];
+    if (!examId) {
+      data = await db.select().from(subjects).orderBy(subjects.name);
+    } else {
+  const examIdNum = Number(examId);
+  // Filter manually to avoid cross-package Column type conflicts
+  const all = await db.select().from(subjects).orderBy(subjects.name);
+  data = all.filter((r: SubjectRow) => r.examId === examIdNum);
+    }
     const data = await getSubjects(examIdNum);
     return NextResponse.json({ success: true, data });
   } catch (e: unknown) {

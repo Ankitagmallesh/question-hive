@@ -19,6 +19,13 @@ interface SavedPaper {
     savedAt: string;
 }
 
+interface SavedPaper {
+    id: string;
+    settings: { title: string; chapters: unknown[]; difficulty: string };
+    paperQuestions: unknown[];
+    savedAt: string;
+}
+
 export default function SavedPapersPage() {
     const { user, loading } = useSupabaseAuth();
     const [savedPapers, setSavedPapers] = useState<SavedPaper[]>([]);

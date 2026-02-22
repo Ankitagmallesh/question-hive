@@ -50,6 +50,8 @@ export function useSupabaseAuth(): AuthState {
               email: u?.email || '',
               credits: credits,
               avatarUrl: u?.user_metadata?.avatar_url || undefined,
+              role: 'user',
+            };
               role: role as any,
             } as any;
             setUser(mapped);

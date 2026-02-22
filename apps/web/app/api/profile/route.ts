@@ -19,6 +19,9 @@ export async function GET(req: Request) {
         });
 
     } catch (error: unknown) {
+        console.error('Get Profile Error:', error);
+        const message = error instanceof Error ? error.message : String(error);
+        return NextResponse.json({ success: false, error: message }, { status: 500 });
     } catch (error: unknown) {
         console.error('Get Profile Error:', error);
         const message = error instanceof Error ? error.message : String(error);
@@ -45,6 +48,13 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ success: true, message: 'Profile updated successfully' });
 
+    } catch (error: unknown) {
+         console.error('Update Profile Error:', error);
+        let errorMessage = 'An unknown error occurred';
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        }
+        return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
     } catch (error: any) {
         console.error('Update Profile Error:', error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });

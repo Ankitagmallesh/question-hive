@@ -1,6 +1,14 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from "../components/ui/button";
+import { Card, CardContent } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
+import { Separator } from "../components/ui/separator";
+import { Input } from "../components/ui/input";
+import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
+import { useDebounce } from '../hooks/useDebounce';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "../components/ui/button";
@@ -36,6 +44,15 @@ const DIFFICULTY_OPTIONS = [
     { value: 'hard', label: 'Hard' },
 ];
 
+export default function QuestionsPage() {
+    const router = useRouter();
+    const { user, loading: authLoading } = useSupabaseAuth();
+    const [questions, setQuestions] = useState<Question[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const [search, _setSearch] = useState('');
+    const [filterType, _setFilterType] = useState('');
+    const [filterDifficulty, _setFilterDifficulty] = useState('');
 const DEBOUNCE_MS = 400;
 const LIMIT = 20;
 
@@ -79,6 +96,13 @@ export default function QuestionsPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
+    const [showCreateModal, _setShowCreateModal] = useState(false);
+    const [refreshCounter, _setRefreshCounter] = useState(0);
+
+    const abortRef = useRef<AbortController | null>(null);
+    const prevFiltersRef = useRef({ search: '', type: '', difficulty: '' });
+
+    const loadQuestions = useCallback(async (opts: { page: number; search: string; type: string; difficulty: string }) => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [refreshCounter, setRefreshCounter] = useState(0);
 
@@ -110,6 +134,12 @@ export default function QuestionsPage() {
             if (opts.search) params.set('search', opts.search);
             if (opts.type) params.set('type', opts.type);
             if (opts.difficulty) params.set('difficulty', opts.difficulty);
+
+            const res = await fetch(`/api/questions?${params.toString()}`, { signal });
+            const json = await res.json();
+
+            if (json.success) {
+                const mapped: Question[] = json.data.map((q: { id: string; content: string; questionType?: string; difficulty?: string; marks?: string | number; createdAt: string }) => ({
             if (opts.search) params.set('search', opts.search);
             if (opts.type) params.set('type', opts.type);
             if (opts.difficulty) params.set('difficulty', opts.difficulty);
@@ -142,6 +172,10 @@ export default function QuestionsPage() {
         } catch (err) {
             if ((err as Error).name === 'AbortError') return;
             console.error('Failed to load questions:', err);
+        } finally {
+            setLoading(false);
+            abortRef.current = null;
+        }
             lastFetchRef.current = null; // Reset on error so we can retry
         } finally {
             setLoading(false);
@@ -226,12 +260,15 @@ export default function QuestionsPage() {
                 {/* Main Content */}
                 <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
                     {/* Page Header */}
+                    <div className="mb-6">
+                        <div className="flex justify-between items-center">
                     <div className="mb-8">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <div>
                                 <h2 className="text-3xl font-bold text-gray-900">Questions</h2>
                                 <p className="mt-2 text-gray-600">Manage your question bank and create new questions</p>
                             </div>
+                            <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleShowCreateModal}>
                             <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700" onClick={() => setShowCreateModal(true)}>
                                 <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -288,23 +325,66 @@ export default function QuestionsPage() {
                     </div>
 
                 {/* Questions List */}
-                <div className="space-y-4">
-                    {questions.length === 0 ? (
-                        <Card>
-                            <CardContent className="text-center py-8">
-                                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
+                    <div className="space-y-4">
+                        {questions.length === 0 ? (
+                            <Card>
+                                <CardContent className="text-center py-8">
+                                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <h3 className="text-lg font-medium text-gray-900 mb-2">No questions found</h3>
+                                    <p className="text-gray-600 mb-4">Click &apos;Create Question&apos; to add one</p>
+                                </CardContent>
+                            </Card>
+                        ) : (
+                        const QuestionCardContent = ({ question }) => (
+                            <>
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex-1">
+                                        <p className="text-lg font-medium text-gray-900 mb-2">
+                                            {question.text}
+                                        </p>
+                                        <div className="flex items-center space-x-4 text-sm text-gray-600">
+                                            <span><strong>Subject:</strong> {question.subject}</span>
+                                            <span><strong>Chapter:</strong> {question.chapter}</span>
+                                            <span><strong>Marks:</strong> {question.marks}</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col space-y-2 ml-4">
+                                        <Badge className={getTypeColor(question.type)}>
+                                            {question.type.toUpperCase()}
+                                        </Badge>
+                                        <Badge className={getDifficultyColor(question.difficulty)}>
+                                            {question.difficulty}
+                                        </Badge>
+                                    </div>
                                 </div>
-                                <h3 className="text-lg font-medium text-gray-900 mb-2">No questions found</h3>
-                                <p className="text-gray-600 mb-4">Click 'Create Question' to add one</p>
-                            </CardContent>
-                        </Card>
-                    ) : (
+                                <Separator className="my-4" />
+                                <div className="flex justify-between items-center">
+                                    <div className="text-sm text-gray-500">
+                                        Created: {new Date(question.createdAt).toLocaleDateString()}
+                                    </div>
+                                    <div className="flex space-x-2">
+                                        <Button variant="outline" size="sm">
+                                            Edit
+                                        </Button>
+                                        <Button variant="outline" size="sm">
+                                            View
+                                        </Button>
+                                        <Button variant="destructive" size="sm">
+                                            Delete
+                                        </Button>
+                                    </div>
+                                </div>
+                            </>
+                        );
+
                         questions.map((question) => (
                             <Card key={question.id} className="hover:shadow-md transition-shadow">
                                 <CardContent className="p-6">
+                                    <QuestionCardContent question={question} />
                                     <div className="flex flex-col lg:flex-row justify-between items-start mb-4 gap-4">
                                         <div className="flex-1 w-full">
                                             <p className="text-lg font-medium text-slate-900 mb-2 break-words leading-relaxed">
@@ -373,6 +453,17 @@ export default function QuestionsPage() {
                             setCurrentPage(p => Math.min(totalPages, p + 1));
                         }, [totalPages]);
 
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                disabled={currentPage === totalPages}
+                                onClick={handleNextPage}
+                            >
+                                Next
+                            </Button>
+                        </div>
+                        <div className="text-xs text-slate-500">
+                            Showing {(currentPage - 1) * LIMIT + 1} - {Math.min(currentPage * LIMIT, totalCount)} of {totalCount} questions
                         const handleCloseCreateModal = React.useCallback(() => {
                             setShowCreateModal(false);
                         }, []);
@@ -405,6 +496,9 @@ export default function QuestionsPage() {
 
             <CreateQuestionModal 
                 isOpen={showCreateModal}
+                onClose={handleCloseCreateModal}
+                onSuccess={handleSuccessCreateModal}
+                userId={typeof user?.id === 'number' ? user.id : 1}
                 onClose={() => setShowCreateModal(false)}
                 onSuccess={loadQuestions}
                 userId={user?.id || 0}

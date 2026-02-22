@@ -7,6 +7,10 @@ export async function GET(req: Request) {
     const subjectId = searchParams.get('subjectId');
     const subjectIdNum = subjectId ? Number(subjectId) : undefined;
 
+    const data = subjectId
+      ? await db.select().from(chapters).where(eq(chapters.subjectId, Number(subjectId))).orderBy(chapters.name)
+      : await db.select().from(chapters).orderBy(chapters.name);
+
     const data = await getChapters(subjectIdNum);
     return NextResponse.json({ success: true, data });
   } catch (e: unknown) {

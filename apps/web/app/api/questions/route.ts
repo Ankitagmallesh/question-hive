@@ -1,4 +1,7 @@
 import { NextResponse } from 'next/server';
+import { db } from '../../lib/db';
+import { questions, difficultyLevels, questionTypes } from '@repo/db';
+import { eq, and, sql, desc, ilike } from 'drizzle-orm';
 import { getQuestions } from '@/server/db/queries/questions';
 import { handleApiError, AppErrors } from '@/lib/error-handler';
 import { FetchQuestionsSchema, validateInput } from '@/lib/validators';
@@ -34,15 +37,12 @@ export async function GET(request: Request) {
       })
       .from(questions)
       .leftJoin(difficultyLevels, eq(questions.difficultyLevelId, difficultyLevels.id))
-      .leftJoin(questionTypes, eq(questions.questionTypeId, questionTypes.id))
-      
-    // Apply filters - logic removed
-    let queryWithFilters: any = baseQuery;
+      .leftJoin(questionTypes, eq(questions.questionTypeId, questionTypes.id));
 
-    // Get Total Count (separate query or window function)
-    // Drizzle doesn't support easy window functions yet for count(*), so easier to run a count query.
-    // Optimizing: Create a count query with same filters.
-    const countQuery = db
+    const queryWithFilters = whereClause ? baseQuery.where(whereClause) : baseQuery;
+
+    // Count query with same filters
+    const countBase = db
       .select({ count: sql<number>`count(*)` })
       .from(questions)
       .leftJoin(difficultyLevels, eq(questions.difficultyLevelId, difficultyLevels.id))
@@ -63,8 +63,8 @@ export async function GET(request: Request) {
       ...result
     });
 
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('API Error:', e);
-    return NextResponse.json({ success: false, error: e.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: (e as Error).message }, { status: 500 });
   }
 }

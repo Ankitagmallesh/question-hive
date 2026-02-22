@@ -22,6 +22,9 @@ export default function LoginPage() {
         rememberMe: false
     });
     const [showPassword, setShowPassword] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [isLoading, setIsLoading] = useState(false);
+    const [isCheckingSession, setIsCheckingSession] = useState(true);
     const [showPassword, setShowPassword] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -179,6 +182,7 @@ export default function LoginPage() {
                 apiClient.setAuthToken(data.session.access_token);
                 if (data.session.refresh_token) {
                     localStorage.setItem('refresh_token', data.session.refresh_token);
+                }
             });
 
             if (error) {
@@ -232,6 +236,9 @@ export default function LoginPage() {
                 <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-500 rounded-full blur-3xl opacity-20 -ml-20 -mb-20"></div>
 
                 <div className="relative z-10 flex items-center gap-2 font-bold text-2xl">
+                    <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center text-white shadow-lg">
+                        <Hexagon className="w-5 h-5 fill-indigo-500 text-white" />
+                    </div>
                     <img src="/logo.jpg" alt="Logo" className="w-8 h-8 rounded-lg shadow-lg" />
                     Question Hive
                 </div>
@@ -250,6 +257,9 @@ export default function LoginPage() {
                         <div>
                             <p className="font-bold text-white">Prof. Sarah Jenkins</p>
                             <p className="text-sm text-slate-400">Head of Mathematics, Stanford High</p>
+                        </div>
+                    </div>
+                </div>
                         </div>
                     </div>
                     </div>
@@ -311,6 +321,9 @@ export default function LoginPage() {
                             <p className="text-slate-500">Please enter your details to access your dashboard.</p>
                         </div>
 
+                        {errors.general && (
+                            <div className="mb-6 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm">
+
                 <div className="relative z-10">
                     <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Secure Institutional Access</p>
                     <div className="flex items-center gap-2 text-slate-400 text-xs">
@@ -351,6 +364,8 @@ export default function LoginPage() {
                          {!hasSupabaseEnv && (
                              <div className="mb-6 p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-sm">
                                 Supabase keys missing in .env.local used for OAuth
+                            </div>
+                        )}
                         
                          {!hasSupabaseEnv && (
                              <div className="mb-6 p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-sm">
@@ -441,6 +456,22 @@ export default function LoginPage() {
                             </div>
                             {errors.password && <p className="text-sm text-red-600 mt-1">{errors.password}</p>}
                         </div>
+
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                                <input 
+                                    id="remember-me" 
+                                    name="rememberMe" 
+                                    type="checkbox" 
+                                    checked={formData.rememberMe}
+                                    onChange={handleChange}
+                                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer" 
+                                />
+                                <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-600 cursor-pointer">Remember me for 30 days</label>
+                            </div>
+                            <div className="text-sm">
+                                <Link href="/auth/forgot-password" className="font-bold text-indigo-600 hover:text-indigo-500 hover:underline">Forgot password?</Link>
+                            </div>
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
@@ -497,6 +528,7 @@ export default function LoginPage() {
                             {isLoading ? 'Signing in...' : 'Sign in'}
                         </button>
                     </form>
+
                         <button 
                             type="submit" 
                             disabled={isLoading}

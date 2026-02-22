@@ -104,6 +104,17 @@ const initializeDrizzle = (): ReturnType<typeof drizzle> => {
 
 export const db = initializeDrizzle();
 
+// Proxy enables keeping `db.<method>` usage while lazy-initializing
+export const db = new Proxy({}, {
+  get(_t, prop) {
+    const inst = ensureDb() as unknown;
+    return (inst as Record<PropertyKey, unknown>)[prop];
+  },
+  apply(_t: unknown, _this: unknown, args: unknown[]): unknown {
+    const inst = ensureDb() as unknown;
+    return typeof inst === 'function' ? (inst as (...args: unknown[]) => unknown)(...args) : inst;
+  }
+}) as unknown;
 // Graceful connection closing (for serverless cleanup)
 const gracefulShutdown = async () => {
   if (conn) {

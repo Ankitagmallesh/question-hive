@@ -40,6 +40,18 @@ export default function RegisterPage() {
     const [showSuccessDialog, setShowSuccessDialog] = useState(false);
     const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false);
 
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [isLoading, setIsLoading] = useState(false);
+    const [isCheckingSession, setIsCheckingSession] = useState(true);
+    const [institutions, setInstitutions] = useState<string[]>([
+        "Indian Institute of Technology, Madras",
+        "Indian Institute of Technology, Bombay",
+        "Indian Institute of Technology, Delhi",
+        "Anna University, Chennai",
+        "Delhi University",
+        "Vellore Institute of Technology",
+        "National Institute of Technology, Trichy"
+    ]);
         confirmPassword: '', 
         inviteCode: '',
     });
@@ -70,6 +82,16 @@ export default function RegisterPage() {
             } catch {
                 setIsCheckingSession(false);
             }
+        })();
+    }, [router]);
+
+    useEffect(() => {
+        fetch('/junior-colleges.json')
+            .then(res => res.json())
+            .then(data => setInstitutions(prev => [...prev, ...data]))
+            .catch(console.error);
+    }, []);
+
                 const supabase = getSupabase();
                 const { data } = await supabase.auth.getSession();
                 if (data.session) {
@@ -97,6 +119,8 @@ export default function RegisterPage() {
         if (type === 'checkbox') {
             const checked = (e.target as HTMLInputElement).checked;
             setFormData(prev => ({ ...prev, [name]: checked }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
             setFormData(prev => ({ ...prev, [name]: checked }));
             setFormData(prev => ({ ...prev, [name]: checked }));
         } else {
@@ -168,6 +192,15 @@ export default function RegisterPage() {
 
         try {
             const supabase = getSupabase();
+
+            // Clear any stale auth state (invalid refresh tokens) before registering
+            try {
+                await supabase.auth.signOut();
+            } catch (e) {
+                // non-fatal: continue to sign up even if signOut fails
+                console.debug('supabase signOut before signUp failed:', e);
+            }
+
             
             // Prepare metadata, filtering out undefined/empty values that might break triggers
             const metaData = {
@@ -195,6 +228,8 @@ export default function RegisterPage() {
                 // Success - Show dialog instead of direct redirect
                 setNeedsEmailConfirmation(true); // Always require confirmation flow
                 setShowSuccessDialog(true);
+            } else {
+                setErrors({ general: 'Registration failed.' });
             } else if (data.session || (data.user && !data.session)) {
                 // Success - Show dialog instead of direct redirect
                 setNeedsEmailConfirmation(true); // Always require confirmation flow
@@ -246,6 +281,39 @@ export default function RegisterPage() {
                         <div>
                             <p className="font-bold text-white">Dr. Rajesh Kumar</p>
                             <p className="text-sm text-slate-400">Senior Physics Faculty, Allen Institute</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="relative z-10">
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Trusted by 500+ Institutions</p>
+                    <div className="flex gap-6 opacity-50 grayscale">
+                        <div className="h-8 w-20 bg-white/20 rounded"></div>
+                        <div className="h-8 w-20 bg-white/20 rounded"></div>
+                        <div className="h-8 w-20 bg-white/20 rounded"></div>
+                        <div className="h-8 w-20 bg-white/20 rounded"></div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Right Side - Form */}
+            <div className="w-full lg:w-7/12 h-full overflow-y-auto" data-lenis-prevent>
+                <div className="w-full min-h-full flex flex-col justify-center items-center py-12 lg:py-20 px-6">
+                    <div className="max-w-md w-full">
+                        
+                        <div className="lg:hidden flex items-center gap-2 font-bold text-xl text-indigo-600 mb-8">
+                            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-lg">
+                                 <Hexagon className="w-5 h-5 fill-indigo-600 text-white" />
+                            </div>
+                            Question Hive
+                        </div>
+
+
+                        <div className="mb-8">
+                            <h1 className="text-3xl font-bold text-slate-900 mb-2">Create your faculty account</h1>
+                            <p className="text-slate-500">Join the network of academic professionals.</p>
+                        </div>
+
         <div className="h-screen flex overflow-hidden bg-white text-slate-900">
             {/* Left Side - Testimonials */}
             <div className="hidden lg:flex w-5/12 bg-slate-900 text-white flex-col justify-between p-12 relative overflow-hidden">
@@ -417,6 +485,48 @@ export default function RegisterPage() {
 
                             <div>
                                 <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="institution">Institution</label>
+                                <select 
+                                    name="institution"
+                                    value={formData.institution}
+                                    onChange={handleChange}
+                                    className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-700 bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 transition-all cursor-pointer"
+                                >
+                                    <option value="" disabled>Select Institution</option>
+                                    {institutions.map((inst, index) => (
+                                        <option key={index} value={inst}>{inst}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="department">Department</label>
+                                <select 
+                                    name="department"
+                                    value={formData.department}
+                                    onChange={handleChange}
+                                    className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-slate-700 bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 transition-all cursor-pointer appearance-none"
+                                >
+                                    <option value="" disabled>Select Subject</option>
+                                    <option>Physics</option>
+                                    <option>Chemistry</option>
+                                    <option>Mathematics</option>
+                                    <option>Biology</option>
+                                    <option>Computer Science</option>
+                                    <option>Other</option>
+                                </select>
+                            </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="password">Password</label>
+                            <div className="relative">
+                                <input 
+                                    type={showPassword ? "text" : "password"}
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-1.5" htmlFor="institution">Institution</label>
                                 <div className="relative">
                                     <input 
                                         type="text" 
@@ -508,6 +618,9 @@ export default function RegisterPage() {
                                         <Eye className="w-5 h-5" />
                                     )}
                                 </button>
+                            </div>
+                            {errors.password && <p className="text-sm text-red-600 mt-1">{errors.password}</p>}
+                        </div>
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
@@ -549,6 +662,7 @@ export default function RegisterPage() {
                                  </div>
                              )}
                          </div>
+
                          <div className="pt-2">
                              <button
                                 type="button"
@@ -626,6 +740,7 @@ export default function RegisterPage() {
                         Already have an account? <Link href="/auth/login" className="font-bold text-indigo-600 hover:underline">Sign in</Link>
                     </div>
                 </div>
+            </div>
             </div>
                     </form>
 
